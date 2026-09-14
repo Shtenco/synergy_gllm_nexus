@@ -92,6 +92,26 @@ class NeuralGraphRealizer(nn.Module):
         y, _ = self.gru(x, h0)
         return self.out(y)
 
+    def generate(self, graph_state: torch.Tensor, vocab: CharVocab, max_new_tokens: int = 128) -> str:
+        if graph_state.dim() == 1:
+            graph_state = graph_state.unsqueeze(0)
+        table = vocab.stoi
+        token = torch.tensor([[table[vocab.BOS]]], dtype=torch.long, device=graph_state.device)
+        hidden = torch.tanh(self.graph_to_hidden(graph_state)).unsqueeze(0)
+        generated: list[int] = []
+        eos_id = table[vocab.EOS]
+        with torch.no_grad():
+            for _ in range(max_new_tokens):
+                embedded = self.token_emb(token)
+                output, hidden = self.gru(embedded, hidden)
+                logits = self.out(output[:, -1])
+                next_id = int(torch.argmax(logits, dim=-1).item())
+                if next_id == eos_id:
+                    break
+                generated.append(next_id)
+                token = torch.tensor([[next_id]], dtype=torch.long, device=graph_state.device)
+        return vocab.decode(generated)
+
     def save_checkpoint(self, path: str | Path, vocab: CharVocab) -> None:
         torch.save({
             "format_version": 1,
