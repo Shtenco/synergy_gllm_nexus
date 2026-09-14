@@ -112,3 +112,4 @@ class GLLMResponse:
     confidence: float = 0.0
     cognition_logits: tuple[float, ...] = ()
     cognition_steps: int = 0
+    realizer_mode: str = "deterministic"
