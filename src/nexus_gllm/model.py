@@ -4,6 +4,8 @@ from pathlib import Path
 import torch
 
 from .answer import AnswerResolver
+from .compiler_neural import CompilerCharVocab, NeuralRussianGraphCompiler
+from .compiler_proposal import NeuralParseProposal, ProposalValidator
 from .compiler_ru import RussianGraphCompiler
 from .graph import DynamicHyperGraph
 from .persistence import save_graph_json, load_graph_json
@@ -11,6 +13,7 @@ from .realizer_ru import DeterministicRussianRealizer, NeuralGraphRealizer, Char
 from .recurrent import GraphRecurrentCore
 from .rules import RuleEngine
 from .schema import GLLMResponse
+from .temporal import EventGraphReasoner
 from .tensorizer import GraphTensorizer
 from .workspace import WorkspaceRetriever
 
@@ -34,6 +37,11 @@ class NexusGLLM:
         self.core_checkpoint_info: dict | None = None
         self.neural_realizer: NeuralGraphRealizer | None = None
         self.neural_vocab: CharVocab | None = None
+        self.neural_compiler: NeuralRussianGraphCompiler | None = None
+        self.compiler_vocab: CompilerCharVocab | None = None
+        self.compiler_relations: tuple[str, ...] = ()
+        self.compiler_checkpoint_info: dict | None = None
+        self.proposal_validator = ProposalValidator(default_threshold=0.80)
 
     def load_core_checkpoint(self, path: str | Path) -> dict:
         checkpoint = torch.load(Path(path), map_location="cpu", weights_only=False)
@@ -64,8 +72,101 @@ class NexusGLLM:
         self.neural_realizer = model
         self.neural_vocab = vocab
 
+    def load_compiler_checkpoint(self, path: str | Path) -> dict:
+        model, vocab, relations, meta = NeuralRussianGraphCompiler.load_checkpoint(path)
+        if "abstain" not in relations:
+            raise ValueError("compiler relation vocabulary must contain abstain")
+        unsupported = set(relations) - ProposalValidator.DEFAULT_RELATIONS
+        if unsupported:
+            raise ValueError(f"compiler checkpoint contains unsupported relations: {sorted(unsupported)}")
+        self.neural_compiler = model
+        self.compiler_vocab = vocab
+        self.compiler_relations = relations
+        self.compiler_checkpoint_info = dict(meta)
+        return dict(meta)
+
+    def _mark_neural_edge(self, edge_id: str | None, confidence: float) -> None:
+        if edge_id and edge_id in self.graph.edges:
+            edge = self.graph.edges[edge_id]
+            edge.provenance = "compiler:neural:validated"
+            edge.confidence = min(edge.confidence, float(confidence))
+            edge.metadata["validated_neural_compiler"] = True
+
+    def learn_proposal(self, text: str, proposal: NeuralParseProposal) -> dict:
+        validation = self.proposal_validator.validate(text, proposal)
+        result = {
+            "accepted": validation.accepted,
+            "reason": validation.reason,
+            "abstention": validation.is_abstention,
+            "relation": proposal.relation,
+            "confidence": proposal.confidence,
+        }
+        if not validation.accepted or validation.is_abstention:
+            return result
+
+        subject = proposal.subject_text or ""
+        obj = proposal.object_text or ""
+        edge_id: str | None = None
+
+        if proposal.relation in {"older_than", "located_in", "owned_by", "is_a"}:
+            templates = {
+                "older_than": f"{subject} старше {obj}",
+                "located_in": f"{subject} находится в {obj}",
+                "owned_by": f"{subject} принадлежит {obj}",
+                "is_a": f"{subject} является {obj}",
+            }
+            update = self.compiler.compile_statement(templates[proposal.relation], self.graph)
+            if update is not None:
+                edge_id = update.target_id
+            else:
+                active = [e for e in self.graph.find_edges(proposal.relation) if e.active]
+                if active:
+                    edge_id = active[-1].id
+        elif proposal.relation in {"before", "after", "causes"}:
+            temporal = EventGraphReasoner(self.graph)
+            source_id = temporal.ensure_event(subject, confidence=proposal.confidence, provenance="compiler:neural:validated")
+            target_id = temporal.ensure_event(obj, confidence=proposal.confidence, provenance="compiler:neural:validated")
+            if proposal.relation == "before":
+                edge_id = temporal.add_before(source_id, target_id, confidence=proposal.confidence)
+            elif proposal.relation == "after":
+                edge_id = temporal.add_after(source_id, target_id, confidence=proposal.confidence)
+            else:
+                edge_id = temporal.add_cause(source_id, target_id, confidence=proposal.confidence)
+        else:
+            return {**result, "accepted": False, "reason": "relation_not_runtime_mutable"}
+
+        self._mark_neural_edge(edge_id, proposal.confidence)
+        self.rules.infer(self.graph)
+        return {**result, "edge_id": edge_id}
+
+    def _deterministic_learn_fallback(self, text: str):
+        try:
+            return self.compiler.compile_statement(text, self.graph)
+        except ValueError as ordinary_error:
+            try:
+                return self.compiler.compile_event_statement(text, self.graph)
+            except ValueError:
+                raise ordinary_error
+
     def learn(self, text: str):
-        update = self.compiler.compile_statement(text, self.graph)
+        if self.neural_compiler is not None and self.compiler_vocab is not None and self.compiler_relations:
+            proposal = self.neural_compiler.predict(text, self.compiler_vocab, self.compiler_relations)
+            neural_result = self.learn_proposal(text, proposal)
+            if neural_result["accepted"] and not neural_result["abstention"]:
+                return neural_result
+            try:
+                update = self._deterministic_learn_fallback(text)
+                self.rules.infer(self.graph)
+                return {
+                    "accepted": True,
+                    "reason": "deterministic_fallback",
+                    "neural": neural_result,
+                    "update": update,
+                }
+            except ValueError:
+                return neural_result
+
+        update = self._deterministic_learn_fallback(text)
         self.rules.infer(self.graph)
         return update
 
