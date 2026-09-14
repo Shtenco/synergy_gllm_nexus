@@ -16,6 +16,8 @@ from .workspace import WorkspaceRetriever
 
 
 class NexusGLLM:
+    CORE_CONFIG = {"node_dim": 32, "edge_types": 8, "hidden_dim": 64, "op_count": 6}
+
     def __init__(self, graph: DynamicHyperGraph | None = None, neural_seed: int = 17, cognition_steps: int = 3) -> None:
         self.graph = graph or DynamicHyperGraph()
         self.compiler = RussianGraphCompiler()
@@ -23,12 +25,35 @@ class NexusGLLM:
         self.resolver = AnswerResolver()
         self.realizer = DeterministicRussianRealizer()
         self.workspace = WorkspaceRetriever()
-        self.tensorizer = GraphTensorizer(node_dim=32, edge_type_buckets=8)
+        self.tensorizer = GraphTensorizer(node_dim=self.CORE_CONFIG["node_dim"], edge_type_buckets=self.CORE_CONFIG["edge_types"])
         self.cognition_steps = cognition_steps
         with torch.random.fork_rng(devices=[]):
             torch.manual_seed(neural_seed)
-            self.core = GraphRecurrentCore(node_dim=32, edge_types=8, hidden_dim=64, op_count=6)
+            self.core = GraphRecurrentCore(**self.CORE_CONFIG)
         self.core.eval()
+        self.core_checkpoint_info: dict | None = None
+
+    def load_core_checkpoint(self, path: str | Path) -> dict:
+        checkpoint = torch.load(Path(path), map_location="cpu", weights_only=False)
+        config = checkpoint.get("config")
+        if not isinstance(config, dict):
+            raise ValueError("checkpoint config is missing")
+        for key, expected in self.CORE_CONFIG.items():
+            actual = config.get(key)
+            if actual != expected:
+                raise ValueError(f"incompatible checkpoint {key}: expected {expected}, got {actual}")
+        state_dict = checkpoint.get("state_dict")
+        if not isinstance(state_dict, dict):
+            raise ValueError("checkpoint state_dict is missing")
+        self.core.load_state_dict(state_dict, strict=True)
+        self.core.eval()
+        self.core_checkpoint_info = {
+            "format_version": int(checkpoint.get("format_version", 1)),
+            "config": dict(config),
+            "seed": checkpoint.get("seed"),
+            "epochs": checkpoint.get("epochs"),
+        }
+        return dict(self.core_checkpoint_info)
 
     def learn(self, text: str):
         update = self.compiler.compile_statement(text, self.graph)
