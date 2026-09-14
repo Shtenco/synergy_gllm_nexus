@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from math import prod
 
 from .graph import DynamicHyperGraph
+from .schema import MutationOp
 
 
 @dataclass(frozen=True)
@@ -13,6 +14,8 @@ class ConsolidationReport:
     retracted_conflicts: int = 0
     semantic_promotions: int = 0
     protected_retained: int = 0
+    start_version: int = 0
+    end_version: int = 0
 
 
 class GraphConsolidator:
@@ -48,6 +51,7 @@ class GraphConsolidator:
                     edge.sources = self._replace(edge.sources, duplicate, primary)
                     edge.targets = self._replace(edge.targets, duplicate, primary)
                 graph.cards[primary].consolidation_strength += max(0.1, dup_card.confidence)
+                graph._record(MutationOp.MERGE, duplicate, merged_into=primary, source="sleep")
                 merged += 1
         return merged
 
@@ -71,12 +75,14 @@ class GraphConsolidator:
             primary.consolidation_strength += float(len(ids) - 1)
             primary.provenance = "sleep:semantic"
             primary.metadata["evidence_edges"] = sorted(ids)
+            graph._record(MutationOp.UPDATE, primary_id, source="sleep", confidence=primary.confidence)
             promoted += 1
             for duplicate_id in sorted(ids)[1:]:
                 duplicate = graph.edges[duplicate_id]
                 duplicate.active = False
                 duplicate.metadata["merged_into"] = primary_id
                 duplicate.metadata["sleep_merged"] = True
+                graph._record(MutationOp.MERGE, duplicate_id, merged_into=primary_id, source="sleep")
                 merged += 1
         return merged, promoted
 
@@ -95,6 +101,7 @@ class GraphConsolidator:
                 )
                 keep = ranked[0]
                 graph.edges[keep].consolidation_strength += 1.0
+                graph._record(MutationOp.UPDATE, keep, source="sleep", exclusive_winner=True)
                 for edge_id in ranked[1:]:
                     edge = graph.edges[edge_id]
                     if edge.targets == graph.edges[keep].targets:
@@ -102,6 +109,7 @@ class GraphConsolidator:
                     edge.active = False
                     edge.metadata["sleep_retracted"] = True
                     edge.metadata["superseded_by"] = keep
+                    graph._record(MutationOp.RETRACT, edge_id, source="sleep", superseded_by=keep)
                     retracted += 1
         return retracted
 
@@ -114,15 +122,18 @@ class GraphConsolidator:
             evidence_count = int(card.metadata.get("evidence_count", 1))
             if evidence_count > 1:
                 card.consolidation_strength += float(evidence_count - 1)
+                graph._record(MutationOp.UPDATE, card.id, source="sleep", consolidation_strength=card.consolidation_strength)
             if card.metadata.get("protected"):
                 protected += 1
             if evidence_count >= 2 and card.provenance not in {"authority", "sleep:semantic"}:
                 card.metadata.setdefault("episodic_provenance", card.provenance)
                 card.provenance = "sleep:semantic"
+                graph._record(MutationOp.UPDATE, card.id, source="sleep", semantic_promotion=True)
                 promoted += 1
         return promoted, protected
 
     def run(self, graph: DynamicHyperGraph) -> ConsolidationReport:
+        start_version = graph.version
         merged_nodes = self._merge_duplicate_nodes(graph)
         merged_edges, edge_promotions = self._merge_duplicate_edges(graph)
         retracted_conflicts = self._resolve_exclusive_conflicts(graph)
@@ -133,4 +144,6 @@ class GraphConsolidator:
             retracted_conflicts=retracted_conflicts,
             semantic_promotions=edge_promotions + card_promotions,
             protected_retained=protected_retained,
+            start_version=start_version,
+            end_version=graph.version,
         )
