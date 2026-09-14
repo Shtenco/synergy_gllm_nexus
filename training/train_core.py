@@ -12,6 +12,7 @@ from nexus_gllm.recurrent import GraphRecurrentCore, GraphTensorBatch
 from training.dataset import GLLMDataset
 
 OP_ANSWER = 5
+OP_RETRACT = 4
 
 
 def _vec(label: str, dim: int) -> torch.Tensor:
@@ -20,11 +21,21 @@ def _vec(label: str, dim: int) -> torch.Tensor:
     return torch.tensor(values, dtype=torch.float32)
 
 
+def target_operation(record: dict) -> int:
+    return int(record.get("target_op", OP_ANSWER))
+
+
 def record_to_batch(record: dict, node_dim: int = 32) -> GraphTensorBatch:
     entities = record["entities"]
     node_states = torch.stack([_vec(name, node_dim) for name in entities], dim=0).unsqueeze(0)
-    edge_index = torch.tensor([[[0, 1], [1, 2]]], dtype=torch.long)
-    edge_types = torch.tensor([[1, 1]], dtype=torch.long)
+    pairs = record.get("edge_index", [[0, 1], [1, 2]])
+    types = record.get("edge_types", [1] * len(pairs))
+    if pairs:
+        edge_index = torch.tensor([pairs], dtype=torch.long)
+        edge_types = torch.tensor([types], dtype=torch.long)
+    else:
+        edge_index = torch.empty((1, 0, 2), dtype=torch.long)
+        edge_types = torch.empty((1, 0), dtype=torch.long)
     node_mask = torch.ones(1, len(entities), dtype=torch.bool)
     return GraphTensorBatch(node_states=node_states, edge_index=edge_index, edge_types=edge_types, node_mask=node_mask)
 
@@ -34,15 +45,16 @@ def train(path: Path, out: Path, epochs: int = 3, lr: float = 3e-3, seed: int = 
     dataset = GLLMDataset(path, split="train")
     if not len(dataset):
         raise ValueError("training split is empty")
-    model = GraphRecurrentCore(node_dim=32, edge_types=8, hidden_dim=64, op_count=6)
+    config = {"node_dim": 32, "edge_types": 8, "hidden_dim": 64, "op_count": 6}
+    model = GraphRecurrentCore(**config)
     opt = torch.optim.AdamW(model.parameters(), lr=lr)
     last_loss = 0.0
     model.train()
     for _ in range(epochs):
         for row in dataset.rows:
-            batch = record_to_batch(row)
+            batch = record_to_batch(row, node_dim=config["node_dim"])
             logits = model(batch, steps=3).operation_logits
-            target = torch.tensor([OP_ANSWER], dtype=torch.long)
+            target = torch.tensor([target_operation(row)], dtype=torch.long)
             loss = F.cross_entropy(logits, target)
             opt.zero_grad(set_to_none=True)
             loss.backward()
@@ -50,8 +62,20 @@ def train(path: Path, out: Path, epochs: int = 3, lr: float = 3e-3, seed: int = 
             opt.step()
             last_loss = float(loss.detach())
     out.parent.mkdir(parents=True, exist_ok=True)
-    torch.save({"state_dict": model.state_dict(), "config": {"node_dim": 32, "edge_types": 8, "hidden_dim": 64, "op_count": 6}, "seed": seed, "epochs": epochs}, out)
-    return {"examples": len(dataset), "epochs": epochs, "last_loss": last_loss, "checkpoint": str(out)}
+    torch.save({
+        "state_dict": model.state_dict(),
+        "config": config,
+        "seed": seed,
+        "epochs": epochs,
+        "format_version": 1,
+    }, out)
+    return {
+        "examples": len(dataset),
+        "epochs": epochs,
+        "last_loss": last_loss,
+        "checkpoint": str(out),
+        "tasks": sorted({row["task"] for row in dataset.rows}),
+    }
 
 
 def main() -> None:
