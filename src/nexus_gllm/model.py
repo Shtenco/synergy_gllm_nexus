@@ -7,12 +7,13 @@ from .answer import AnswerResolver
 from .compiler_neural import CompilerCharVocab, NeuralRussianGraphCompiler
 from .compiler_proposal import NeuralParseProposal, ProposalValidator
 from .compiler_ru import RussianGraphCompiler
+from .consolidation import GraphConsolidator, ConsolidationReport
 from .graph import DynamicHyperGraph
 from .persistence import save_graph_json, load_graph_json
 from .realizer_ru import DeterministicRussianRealizer, NeuralGraphRealizer, CharVocab, answer_graph_vector
 from .recurrent import GraphRecurrentCore
 from .rules import RuleEngine
-from .schema import GLLMResponse
+from .schema import AnswerGraph, GLLMResponse, NodeType
 from .temporal import EventGraphReasoner
 from .tensorizer import GraphTensorizer
 from .workspace import WorkspaceRetriever
@@ -170,6 +171,9 @@ class NexusGLLM:
         self.rules.infer(self.graph)
         return update
 
+    def sleep(self) -> ConsolidationReport:
+        return GraphConsolidator().run(self.graph)
+
     def _cognize(self, workspace) -> tuple[float, ...]:
         batch = self.tensorizer.tensorize(self.graph, workspace)
         with torch.no_grad():
@@ -187,10 +191,70 @@ class NexusGLLM:
             return deterministic, "deterministic_fallback"
         return candidate, "neural_guarded"
 
+    def _answer_event_question(self, text: str) -> AnswerGraph:
+        query = self.compiler.compile_event_question(text)
+        temporal = EventGraphReasoner(self.graph)
+
+        if query.kind == "temporal_choice":
+            left_id = temporal._event_id(query.left or "")
+            right_id = temporal._event_id(query.right or "")
+            if left_id not in self.graph.cards or right_id not in self.graph.cards:
+                return AnswerGraph(None, 0.0, "temporal_choice", provenance="temporal")
+            left_before = temporal.before(left_id, right_id)
+            if left_before.holds:
+                return AnswerGraph(
+                    self.graph.cards[left_id].label,
+                    left_before.confidence,
+                    "temporal_choice",
+                    support_node_ids=(left_id, right_id),
+                    support_edge_ids=left_before.support_edge_ids,
+                    provenance="temporal",
+                )
+            right_before = temporal.before(right_id, left_id)
+            if right_before.holds:
+                return AnswerGraph(
+                    self.graph.cards[right_id].label,
+                    right_before.confidence,
+                    "temporal_choice",
+                    support_node_ids=(right_id, left_id),
+                    support_edge_ids=right_before.support_edge_ids,
+                    provenance="temporal",
+                )
+            return AnswerGraph(None, 0.0, "temporal_choice", provenance="temporal")
+
+        if query.kind == "cause_of":
+            target_id = temporal._event_id(query.target or "")
+            if target_id not in self.graph.cards:
+                return AnswerGraph(None, 0.0, "cause_of", provenance="causal")
+            candidates: list[tuple[int, str, tuple[str, ...], float]] = []
+            for card in self.graph.cards.values():
+                if card.type != NodeType.EVENT or card.id == target_id:
+                    continue
+                path = temporal.causes(card.id, target_id)
+                if path.holds:
+                    candidates.append((len(path.support_edge_ids), card.id, path.support_edge_ids, path.confidence))
+            if not candidates:
+                return AnswerGraph(None, 0.0, "cause_of", provenance="causal")
+            _, source_id, support, confidence = sorted(candidates, key=lambda item: (item[0], item[1]))[0]
+            return AnswerGraph(
+                self.graph.cards[source_id].label,
+                confidence,
+                "cause_of",
+                support_node_ids=(source_id, target_id),
+                support_edge_ids=support,
+                provenance="causal",
+            )
+
+        raise ValueError(f"unsupported event query kind: {query.kind}")
+
     def ask(self, text: str, prefer_neural_realizer: bool = False) -> GLLMResponse:
-        query = self.compiler.compile_question(text, self.graph)
-        self.rules.infer(self.graph)
-        answer = self.resolver.resolve(self.graph, query)
+        try:
+            query = self.compiler.compile_question(text, self.graph)
+            self.rules.infer(self.graph)
+            answer = self.resolver.resolve(self.graph, query)
+        except ValueError:
+            answer = self._answer_event_question(text)
+
         seed_ids = list(answer.support_node_ids)
         ws = self.workspace.retrieve(self.graph, seed_ids, limit=min(128, max(1, len(self.graph.cards))))
         cognition_logits = self._cognize(ws)
