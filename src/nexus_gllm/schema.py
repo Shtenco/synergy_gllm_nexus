@@ -74,6 +74,8 @@ class TypedHyperEdge:
     provenance: str = "runtime"
     active: bool = True
     latent: list[float] = field(default_factory=list)
+    consolidation_strength: float = 0.0
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not self.id or not self.sources or not self.targets or not self.relation:
