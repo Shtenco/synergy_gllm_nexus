@@ -23,8 +23,11 @@ def _stable_id(label: str) -> str:
 def _canonical_name(name: str) -> str:
     name = name.strip(" .,!?:;\"'()")
     low = name.casefold()
-    # Minimal transparent morphology for common masculine genitive proper names.
+    # Minimal transparent morphology for common masculine Russian proper names.
     if low.endswith(("иса", "ора", "она", "тра")) and len(name) > 4:
+        name = name[:-1]
+        low = name.casefold()
+    if low.endswith(("ону", "ису", "ору", "тру")) and len(name) > 4:
         name = name[:-1]
     return name
 
@@ -36,6 +39,7 @@ class RussianGraphCompiler:
         (re.compile(r"^(.+?)\s+принадлежит\s+(.+?)\.?$", re.I), "owned_by", NodeType.ENTITY, NodeType.PERSON),
         (re.compile(r"^(.+?)\s+(?:—\s*)?(?:это|является)\s+(.+?)\.?$", re.I), "is_a", NodeType.ENTITY, NodeType.CONCEPT),
     )
+    _exclusive_relations = {"owned_by", "located_in"}
 
     def _ensure(self, graph: DynamicHyperGraph, label: str, type_: NodeType) -> str:
         label = _canonical_name(label)
@@ -53,16 +57,26 @@ class RussianGraphCompiler:
             src = self._ensure(graph, m.group(1), src_type)
             dst = self._ensure(graph, m.group(2), dst_type)
             edge_id = f"e:{src}:{relation}:{dst}"
-            if edge_id not in graph.edges:
-                return graph.add_edge(TypedHyperEdge(
-                    id=edge_id,
-                    sources=(src,),
-                    targets=(dst,),
-                    relation=relation,
-                    confidence=1.0,
-                    provenance="compiler:ru:v1",
-                ))
-            return None
+
+            if relation in self._exclusive_relations:
+                for edge in list(graph.find_edges(relation)):
+                    if edge.sources == (src,) and edge.targets != (dst,):
+                        graph.retract_edge(edge.id)
+
+            existing = graph.edges.get(edge_id)
+            if existing is not None:
+                if not existing.active:
+                    existing.active = True
+                return None
+
+            return graph.add_edge(TypedHyperEdge(
+                id=edge_id,
+                sources=(src,),
+                targets=(dst,),
+                relation=relation,
+                confidence=1.0,
+                provenance="compiler:ru:v1",
+            ))
         raise ValueError(f"unsupported Russian statement: {text}")
 
     def compile_question(self, text: str, graph: DynamicHyperGraph) -> GraphQuery:
