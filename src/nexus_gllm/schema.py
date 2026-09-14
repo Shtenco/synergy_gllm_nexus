@@ -110,3 +110,5 @@ class GLLMResponse:
     answer_graph: AnswerGraph
     workspace_trace: tuple[str, ...] = ()
     confidence: float = 0.0
+    cognition_logits: tuple[float, ...] = ()
+    cognition_steps: int = 0
