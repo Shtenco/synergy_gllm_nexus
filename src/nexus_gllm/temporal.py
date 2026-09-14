@@ -25,9 +25,12 @@ class EventGraphReasoner:
         return " ".join(text.strip().split())
 
     @classmethod
-    def _event_id(cls, label: str) -> str:
+    def event_id(cls, label: str) -> str:
         norm = cls._norm(label).casefold()
         return "ev_" + hashlib.sha1(norm.encode("utf-8")).hexdigest()[:12]
+
+    # Backward-compatible internal alias for early Ω-1.1 code.
+    _event_id = event_id
 
     def ensure_event(
         self,
@@ -39,7 +42,7 @@ class EventGraphReasoner:
         time_label: str | None = None,
         provenance: str = "event:deterministic",
     ) -> str:
-        node_id = self._event_id(label)
+        node_id = self.event_id(label)
         if node_id not in self.graph.cards:
             self.graph.add_card(
                 GraphCard(
@@ -136,7 +139,6 @@ class EventGraphReasoner:
         return self._add_relation("before", event_a, event_b, confidence=confidence)
 
     def add_after(self, event_a: str, event_b: str, *, confidence: float = 1.0) -> str:
-        # A after B is stored canonically as B before A.
         return self.add_before(event_b, event_a, confidence=confidence)
 
     def add_cause(self, cause: str, effect: str, *, confidence: float = 1.0) -> str:
@@ -149,7 +151,6 @@ class EventGraphReasoner:
         return self._add_relation("object", event, entity, confidence=confidence)
 
     def materialize_closure(self) -> tuple[str, ...]:
-        """Materialize safe derived temporal/causal closure edges for inspection/training."""
         created: list[str] = []
         event_ids = [card.id for card in self.graph.cards.values() if card.type == NodeType.EVENT]
         for source in event_ids:
