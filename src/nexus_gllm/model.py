@@ -7,7 +7,7 @@ from .answer import AnswerResolver
 from .compiler_ru import RussianGraphCompiler
 from .graph import DynamicHyperGraph
 from .persistence import save_graph_json, load_graph_json
-from .realizer_ru import DeterministicRussianRealizer
+from .realizer_ru import DeterministicRussianRealizer, NeuralGraphRealizer, CharVocab, answer_graph_vector
 from .recurrent import GraphRecurrentCore
 from .rules import RuleEngine
 from .schema import GLLMResponse
@@ -32,6 +32,8 @@ class NexusGLLM:
             self.core = GraphRecurrentCore(**self.CORE_CONFIG)
         self.core.eval()
         self.core_checkpoint_info: dict | None = None
+        self.neural_realizer: NeuralGraphRealizer | None = None
+        self.neural_vocab: CharVocab | None = None
 
     def load_core_checkpoint(self, path: str | Path) -> dict:
         checkpoint = torch.load(Path(path), map_location="cpu", weights_only=False)
@@ -55,6 +57,13 @@ class NexusGLLM:
         }
         return dict(self.core_checkpoint_info)
 
+    def load_realizer_checkpoint(self, path: str | Path) -> None:
+        model, vocab = NeuralGraphRealizer.load_checkpoint(path)
+        if model.graph_dim != 32:
+            raise ValueError(f"incompatible realizer graph_dim: {model.graph_dim}")
+        self.neural_realizer = model
+        self.neural_vocab = vocab
+
     def learn(self, text: str):
         update = self.compiler.compile_statement(text, self.graph)
         self.rules.infer(self.graph)
@@ -66,14 +75,25 @@ class NexusGLLM:
             out = self.core(batch, steps=self.cognition_steps)
         return tuple(round(float(v), 8) for v in out.operation_logits[0].cpu())
 
-    def ask(self, text: str) -> GLLMResponse:
+    def _realize(self, answer, prefer_neural_realizer: bool) -> tuple[str, str]:
+        deterministic = self.realizer.realize(answer, self.graph)
+        if not prefer_neural_realizer or self.neural_realizer is None or self.neural_vocab is None:
+            return deterministic, "deterministic"
+        candidate = self.neural_realizer.generate(answer_graph_vector(answer, 32), self.neural_vocab, max_new_tokens=128).strip()
+        if answer.answer_value is None:
+            return deterministic, "deterministic_fallback"
+        if answer.answer_value not in candidate:
+            return deterministic, "deterministic_fallback"
+        return candidate, "neural_guarded"
+
+    def ask(self, text: str, prefer_neural_realizer: bool = False) -> GLLMResponse:
         query = self.compiler.compile_question(text, self.graph)
         self.rules.infer(self.graph)
         answer = self.resolver.resolve(self.graph, query)
         seed_ids = list(answer.support_node_ids)
         ws = self.workspace.retrieve(self.graph, seed_ids, limit=min(128, max(1, len(self.graph.cards))))
         cognition_logits = self._cognize(ws)
-        rendered = self.realizer.realize(answer, self.graph)
+        rendered, realizer_mode = self._realize(answer, prefer_neural_realizer)
         return GLLMResponse(
             text=rendered,
             answer_graph=answer,
@@ -81,6 +101,7 @@ class NexusGLLM:
             confidence=answer.confidence,
             cognition_logits=cognition_logits,
             cognition_steps=self.cognition_steps,
+            realizer_mode=realizer_mode,
         )
 
     def save(self, path: str | Path) -> None:
