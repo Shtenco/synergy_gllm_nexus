@@ -97,13 +97,14 @@ Prior probability defaults to 0.5 unless an explicit authority prior is supplied
 
 ## Revision rule
 
-Each evidence contribution is converted to a signed log-likelihood-like increment:
+Evidence polarity carries the sign. Reliability/confidence determine a non-negative magnitude around the neutral 0.5 point:
 
 ```text
-weight = logit(clamp(source_reliability * evidence_confidence, eps, 1-eps))
+signal = clamp(source_reliability * evidence_confidence, 0, 1)
+weight = logit(clamp(0.5 + 0.5 * signal, eps, 1-eps))
 ```
 
-Support adds the weight; attack subtracts it.
+Support adds `weight`; attack subtracts `weight`. Therefore zero-confidence or zero-reliability evidence is neutral rather than accidentally becoming evidence in the opposite direction.
 
 Posterior is `sigmoid(total_log_odds)`.
 
