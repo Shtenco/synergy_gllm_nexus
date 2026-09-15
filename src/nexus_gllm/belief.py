@@ -60,7 +60,7 @@ class BeliefGraph:
         sources: SourceRegistry,
         *,
         prior: float = 0.5,
-        active_threshold: float = 0.75,
+        active_threshold: float = 0.70,
         retracted_threshold: float = 0.25,
     ) -> None:
         self.ledger = ledger
@@ -73,9 +73,6 @@ class BeliefGraph:
 
     @staticmethod
     def _evidence_strength(record: EvidenceRecord) -> float:
-        # Reliability=0 or confidence=0 is neutral evidence, not negative evidence.
-        # The support/attack polarity carries the sign; this function returns only
-        # a non-negative magnitude on the log-odds scale.
         signal = max(0.0, min(1.0, record.source_reliability * record.confidence))
         centered = _clamp_probability(0.5 + 0.5 * signal)
         return max(0.0, _logit(centered))
@@ -131,13 +128,25 @@ class BeliefGraph:
     def snapshots(self) -> tuple[BeliefSnapshot, ...]:
         return tuple(self._snapshots[key] for key in sorted(self._snapshots))
 
-    def set_contradictions(self, key: BeliefKey, contradiction_ids: tuple[str, ...]) -> BeliefSnapshot:
+    def set_contradictions(
+        self,
+        key: BeliefKey,
+        contradiction_ids: tuple[str, ...],
+        *,
+        status_override: str | None = None,
+    ) -> BeliefSnapshot:
         current = self.get(key)
+        if status_override is not None:
+            status = status_override
+        elif contradiction_ids and current.posterior > 0.5:
+            status = "disputed"
+        else:
+            status = current.status
         updated = BeliefSnapshot(
             key=current.key,
             posterior=current.posterior,
             log_odds=current.log_odds,
-            status="disputed" if contradiction_ids and current.status == "active" else current.status,
+            status=status,
             support_evidence_ids=current.support_evidence_ids,
             attack_evidence_ids=current.attack_evidence_ids,
             contradiction_set_ids=tuple(sorted(set(contradiction_ids))),
