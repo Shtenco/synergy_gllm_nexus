@@ -1,0 +1,42 @@
+{
+  "banks_sha256": {
+    "blind2a": "80a1e8de2e63caffa67ccb4cdfceb7215a73a82d2a7e7acc468d7bf6aa7b78ba",
+    "blind2b": "af6898d787e882445ef49fce5f9516bff8d063e8f00c0c644b9afc12851edc18",
+    "shadow": "e3dce4d39895efe8cafc87b2fd7b0e5311ec826b5a54f153a7ce4d337407457e",
+    "train": "173819f365c82f12e706fc81673085b90fedc967c38a294182db80d2dcfd3915"
+  },
+  "blind2a_role": "sealed synthetic adversarial relation generalization",
+  "blind2b_role": "sealed longer human-like Russian relation generalization",
+  "blind_used_for_model_selection": false,
+  "contamination": [
+    {"a":"train","b":"shadow","normalized_surface_overlap":0,"template_hash_overlap":0},
+    {"a":"train","b":"blind2a","normalized_surface_overlap":0,"template_hash_overlap":0},
+    {"a":"train","b":"blind2b","normalized_surface_overlap":0,"template_hash_overlap":0},
+    {"a":"shadow","b":"blind2a","normalized_surface_overlap":0,"template_hash_overlap":0},
+    {"a":"shadow","b":"blind2b","normalized_surface_overlap":0,"template_hash_overlap":0},
+    {"a":"blind2a","b":"blind2b","normalized_surface_overlap":0,"template_hash_overlap":0}
+  ],
+  "created_before_model_code": true,
+  "generator_sha256": "8e9e132e8e0a03ccdd1df5c7582a77e34c85e3c258bb00b728d80c991e9b9d14",
+  "manifest_sha256_local": "85d152462c750c5f6362c1503b7ce2ba261091df76214b0b4561462810c2ac0f",
+  "name": "NEXUS GLLM Omega-1.4 pre-code frozen evaluation suite",
+  "seed": 14017,
+  "shadow_role": "only Omega-1.4 semantic/threshold/hyperparameter selection surface",
+  "splits": {
+    "shadow": {
+      "count": 12000,
+      "sha256": "8f290c239548b27582cd805a48f7ce14a583f10cc142e27a16318283426595c4",
+      "relation_counts": {"abstain":1714,"before":1714,"causes":1714,"is_a":1714,"located_in":1715,"older_than":1714,"owned_by":1715}
+    },
+    "blind2a": {
+      "count": 10000,
+      "sha256": "5330b1fb9c3b215aa70703381a78dd50d9b6d8fe05acc1c85716c7758ed5222b",
+      "relation_counts": {"abstain":1428,"before":1428,"causes":1428,"is_a":1429,"located_in":1429,"older_than":1429,"owned_by":1429}
+    },
+    "blind2b": {
+      "count": 2000,
+      "sha256": "2bbd717a2830ee32aff8cc283c428f7aa78d6fdb842363a1b0fbd59138365973",
+      "relation_counts": {"abstain":285,"before":286,"causes":285,"is_a":286,"located_in":286,"older_than":286,"owned_by":286}
+    }
+  }
+}
