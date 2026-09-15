@@ -28,6 +28,45 @@ SPLIT_PREFIX = {
     "blind": ("bl", "blsrc", "BL"),
 }
 
+RELATION_SURFACES = {
+    "train": {
+        "owned_by": "{s} принадлежит {o}",
+        "located_in": "{s} находится в {o}",
+        "is_a": "{s} является {o}",
+        "older_than": "{s} старше {o}",
+    },
+    "dev": {
+        "owned_by": "Владельцем {s} является {o}",
+        "located_in": "{s} расположен в {o}",
+        "is_a": "{s} относится к классу {o}",
+        "older_than": "{s} по возрасту старше, чем {o}",
+    },
+    "blind": {
+        "owned_by": "{o} владеет объектом {s}",
+        "located_in": "Местонахождение {s} — {o}",
+        "is_a": "К категории {o} относится {s}",
+        "older_than": "По сравнению с {o}, {s} старше",
+    },
+}
+
+TEMPORAL_SURFACE = {
+    "train": "Сначала {a}, потом {b}.",
+    "dev": "После того как {a}, произошло {b}.",
+    "blind": "{b} случилось вслед за тем, как {a}.",
+}
+
+CAUSAL_SURFACE = {
+    "train": "{a}, поэтому {b}.",
+    "dev": "{b} произошло вследствие того, что {a}.",
+    "blind": "Причиной того, что {b}, стало событие: {a}.",
+}
+
+ABSTAIN_SURFACE = {
+    "train": "Возможно, {s} связан с {o}, но данных недостаточно",
+    "dev": "Нет достаточных оснований утверждать связь между {s} и {o}",
+    "blind": "Сведения о связи {s} с {o} противоречивы и недостаточны",
+}
+
 
 def _allocation(total: int) -> dict[str, int]:
     raw = {task: total * weight / TOTAL_WEIGHT for task, weight in TASK_WEIGHTS.items()}
@@ -39,10 +78,15 @@ def _allocation(total: int) -> dict[str, int]:
     return base
 
 
-def _template(split: str, task: str) -> tuple[str, str]:
+def _relation_text(split: str, relation: str, subject: str, obj: str) -> tuple[str, str]:
+    surface = RELATION_SURFACES[split][relation]
+    return surface.format(s=subject, o=obj), surface
+
+
+def _template(split: str, task: str, surface_template: str) -> tuple[str, str]:
     _, _, code = SPLIT_PREFIX[split]
-    template_id = f"{code}:{task}:v1"
-    return template_id, hashlib.sha256(template_id.encode("utf-8")).hexdigest()[:16]
+    template_id = f"{code}:{task}:{hashlib.sha256(surface_template.encode('utf-8')).hexdigest()[:10]}"
+    return template_id, hashlib.sha256(surface_template.encode("utf-8")).hexdigest()[:16]
 
 
 def _obs(text: str, source: str, confidence: float, seq: int, polarity: str = "support") -> dict:
@@ -63,44 +107,34 @@ def _row(split: str, task: str, i: int, rng: random.Random) -> dict:
     source_a = f"{source_prefix}-{i:06d}-a"
     source_b = f"{source_prefix}-{i:06d}-b"
     source_c = f"{source_prefix}-{i:06d}-c"
-    template_id, template_hash = _template(split, task)
     observations: list[dict] = []
     relation = "owned_by"
     expected = {"status": "active", "object": obj_a, "gradient_steps": 0}
     protected = False
     order_pattern = "single"
+    surface_template = ""
 
     if task == "ordinary_relation":
-        variant = i % 4
-        if variant == 0:
-            relation = "owned_by"
-            text = f"{subject} принадлежит {obj_a}"
-        elif variant == 1:
-            relation = "located_in"
-            text = f"{subject} находится в {obj_a}"
-        elif variant == 2:
-            relation = "is_a"
-            text = f"{subject} является {obj_a}"
-        else:
-            relation = "older_than"
-            text = f"{subject} старше {obj_a}"
+        relation = ("owned_by", "located_in", "is_a", "older_than")[i % 4]
+        text, surface_template = _relation_text(split, relation, subject, obj_a)
         observations = [_obs(text, source_a, 0.95, 1)]
 
     elif task == "contradictory_evidence":
         relation = "owned_by"
-        observations = [
-            _obs(f"{subject} принадлежит {obj_a}", source_a, 0.72, 1),
-            _obs(f"{subject} принадлежит {obj_b}", source_b, 0.98, 2),
-        ]
+        text_a, surface_template = _relation_text(split, relation, subject, obj_a)
+        text_b, _ = _relation_text(split, relation, subject, obj_b)
+        observations = [_obs(text_a, source_a, 0.72, 1), _obs(text_b, source_b, 0.98, 2)]
         expected = {"status": "disputed", "object": obj_b, "gradient_steps": 0, "contradiction": True}
         order_pattern = "weak_then_strong_conflict"
 
     elif task == "source_reliability":
         relation = "owned_by"
+        text_a, surface_template = _relation_text(split, relation, subject, obj_a)
+        text_b, _ = _relation_text(split, relation, subject, obj_b)
         observations = [
-            _obs(f"{subject} принадлежит {obj_a}", source_a, 0.90, 1),
-            _obs(f"{subject} принадлежит {obj_a}", source_a, 0.90, 2),
-            _obs(f"{subject} принадлежит {obj_b}", source_b, 0.90, 3),
+            _obs(text_a, source_a, 0.90, 1),
+            _obs(text_a, source_a, 0.90, 2),
+            _obs(text_b, source_b, 0.90, 3),
         ]
         expected = {
             "status": "active",
@@ -117,7 +151,8 @@ def _row(split: str, task: str, i: int, rng: random.Random) -> dict:
         relation = "before"
         event_a = f"{subject} начался"
         event_b = f"{obj_a} завершился"
-        observations = [_obs(f"Сначала {event_a}, потом {event_b}.", source_a, 0.95, 1)]
+        surface_template = TEMPORAL_SURFACE[split]
+        observations = [_obs(surface_template.format(a=event_a, b=event_b), source_a, 0.95, 1)]
         expected = {"status": "active", "before": [event_a, event_b], "gradient_steps": 0}
         order_pattern = "temporal_sequence"
 
@@ -125,44 +160,48 @@ def _row(split: str, task: str, i: int, rng: random.Random) -> dict:
         relation = "causes"
         cause = f"{subject} усилился"
         effect = f"{obj_a} произошло"
-        observations = [_obs(f"{cause}, поэтому {effect}.", source_a, 0.95, 1)]
+        surface_template = CAUSAL_SURFACE[split]
+        observations = [_obs(surface_template.format(a=cause, b=effect), source_a, 0.95, 1)]
         expected = {"status": "active", "cause": cause, "effect": effect, "gradient_steps": 0}
         order_pattern = "cause_then_effect"
 
     elif task == "multi_source_agreement":
         relation = "owned_by"
+        text_a, surface_template = _relation_text(split, relation, subject, obj_a)
         observations = [
-            _obs(f"{subject} принадлежит {obj_a}", source_a, 0.78, 1),
-            _obs(f"{subject} принадлежит {obj_a}", source_b, 0.82, 2),
-            _obs(f"{subject} принадлежит {obj_a}", source_c, 0.88, 3),
+            _obs(text_a, source_a, 0.78, 1),
+            _obs(text_a, source_b, 0.82, 2),
+            _obs(text_a, source_c, 0.88, 3),
         ]
         expected = {"status": "active", "object": obj_a, "gradient_steps": 0, "agreement": 3}
         order_pattern = "three_source_agreement"
 
     elif task == "continual_memory_retention":
         relation = "located_in"
-        observations = [_obs(f"{subject} находится в {obj_a}", source_a, 0.97, 1)]
+        text_a, surface_template = _relation_text(split, relation, subject, obj_a)
+        observations = [_obs(text_a, source_a, 0.97, 1)]
         expected = {"status": "active", "object": obj_a, "gradient_steps": 0, "retain_after_sleep": True}
         order_pattern = "learn_then_sleep_retain"
 
     elif task == "misinformation_correction":
         relation = "located_in"
-        observations = [
-            _obs(f"{subject} находится в {obj_b}", source_a, 0.68, 1),
-            _obs(f"{subject} находится в {obj_a}", source_b, 0.99, 2),
-        ]
+        text_b, surface_template = _relation_text(split, relation, subject, obj_b)
+        text_a, _ = _relation_text(split, relation, subject, obj_a)
+        observations = [_obs(text_b, source_a, 0.68, 1), _obs(text_a, source_b, 0.99, 2)]
         expected = {"status": "disputed", "object": obj_a, "gradient_steps": 0, "correction": True}
         order_pattern = "misinformation_then_correction"
 
     elif task == "abstention_unknown":
         relation = "unknown"
-        observations = [_obs(f"Возможно, {subject} связан с {obj_a}, но данных недостаточно", source_a, 0.20, 1)]
+        surface_template = ABSTAIN_SURFACE[split]
+        observations = [_obs(surface_template.format(s=subject, o=obj_a), source_a, 0.20, 1)]
         expected = {"status": "unknown", "object": None, "gradient_steps": 0, "abstain": True}
         order_pattern = "uncertain_observation"
 
     elif task == "protected_facts_rollback":
         relation = "is_a"
-        observations = [_obs(f"{subject} является {obj_a}", source_a, 1.0, 1)]
+        text_a, surface_template = _relation_text(split, relation, subject, obj_a)
+        observations = [_obs(text_a, source_a, 1.0, 1)]
         expected = {"status": "active", "object": obj_a, "gradient_steps": 0, "protected_exact": 1.0}
         protected = True
         order_pattern = "protected_then_candidate_update"
@@ -170,6 +209,7 @@ def _row(split: str, task: str, i: int, rng: random.Random) -> dict:
     else:
         raise ValueError(f"unknown task: {task}")
 
+    template_id, template_hash = _template(split, task, surface_template)
     return {
         "id": f"{split}-{task}-{i:06d}",
         "split": split,
@@ -183,6 +223,7 @@ def _row(split: str, task: str, i: int, rng: random.Random) -> dict:
         "protected": protected,
         "template_id": template_id,
         "template_hash": template_hash,
+        "surface_template": surface_template,
         "order_pattern": order_pattern,
         "provenance": "synthetic:omega1.2:stage-a",
     }
@@ -217,17 +258,20 @@ def build_manifest(rows: list[dict], *, seed: int) -> dict:
     counts = Counter(row["split"] for row in rows)
     task_counts: dict[str, dict[str, int]] = {}
     template_hashes: dict[str, list[str]] = {}
+    surface_hashes: dict[str, list[str]] = {}
     for split in ("train", "dev", "blind"):
         split_rows = [row for row in rows if row["split"] == split]
         task_counts[split] = dict(sorted(Counter(row["task"] for row in split_rows).items()))
         template_hashes[split] = sorted({row["template_hash"] for row in split_rows})
+        surface_hashes[split] = sorted({hashlib.sha256(row["surface_template"].encode("utf-8")).hexdigest() for row in split_rows})
     canonical = "\n".join(json.dumps(row, ensure_ascii=False, sort_keys=True, separators=(",", ":")) for row in rows)
     return {
-        "version": "omega1.2-stage-a",
+        "version": "omega1.2-stage-a-surface-disjoint",
         "seed": seed,
         "counts": {name: counts.get(name, 0) for name in ("train", "dev", "blind")},
         "task_counts": task_counts,
         "template_hashes": template_hashes,
+        "surface_hashes": surface_hashes,
         "sha256": hashlib.sha256(canonical.encode("utf-8")).hexdigest(),
     }
 
