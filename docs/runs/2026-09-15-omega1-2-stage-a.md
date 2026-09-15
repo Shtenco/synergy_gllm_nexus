@@ -40,7 +40,7 @@ This is a deliberately synthetic belief-reference gate. It is **not** a claim of
 
 ## Derived neural compiler corpus
 
-One Russian→Graph target was derived from every Stage-A situation:
+One Russian→Graph target was derived from every **surface-disjoint v2** Stage-A situation:
 
 - train: 100,000;
 - dev: 10,000;
@@ -48,7 +48,9 @@ One Russian→Graph target was derived from every Stage-A situation:
 
 Raw compiler-corpus SHA-256:
 
-`d3ea1b9afb01f371cba9b18ccd2296885a9c382730e0791984b42d8afda09d45`
+`738a8457f38ec8eb75ccc85bd18f713d5df8611e267900f8747de7f78ceebf2a`
+
+The neural checkpoint was trained on the train partition and then re-evaluated on the corrected surface-disjoint dev/blind partitions **without additional training**.
 
 ## Native neural compiler smoke
 
@@ -58,8 +60,8 @@ A small CPU-only character BiGRU challenger was trained from scratch on the **fu
 - hidden dim: 16 per direction;
 - no pretrained tokenizer;
 - no pretrained LLM;
-- dev relation accuracy: **40%**;
-- blind relation accuracy: **40%**;
+- corrected surface-disjoint dev relation accuracy: **40%**;
+- corrected surface-disjoint blind relation accuracy: **40%**;
 - dev strict structure accuracy: **0%**;
 - blind strict structure accuracy: **0%**;
 - elapsed wall time in the available CPU runner: about **19.6 s**.
