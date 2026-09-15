@@ -20,15 +20,19 @@ def test_default_stage_a_has_exact_sizes_and_train_distribution():
     assert len(rows) == 120000
 
 
-def test_split_templates_sources_and_entities_are_disjoint():
+def test_split_templates_sources_entities_and_surface_forms_are_disjoint():
     rows = generate_records(seed=17, train_total=1000, dev_total=100, blind_total=100)
     by_split = {name: [r for r in rows if r["split"] == name] for name in ("train", "dev", "blind")}
     template_sets = {name: {r["template_id"] for r in values} for name, values in by_split.items()}
+    surface_sets = {name: {r["surface_template"] for r in values} for name, values in by_split.items()}
     source_prefixes = {name: {r["observations"][0]["source"].split("-")[0] for r in values} for name, values in by_split.items()}
     entity_prefixes = {name: {r["subject"].split("_")[0] for r in values} for name, values in by_split.items()}
     assert template_sets["train"].isdisjoint(template_sets["dev"])
     assert template_sets["train"].isdisjoint(template_sets["blind"])
     assert template_sets["dev"].isdisjoint(template_sets["blind"])
+    assert surface_sets["train"].isdisjoint(surface_sets["dev"])
+    assert surface_sets["train"].isdisjoint(surface_sets["blind"])
+    assert surface_sets["dev"].isdisjoint(surface_sets["blind"])
     assert source_prefixes == {"train": {"trsrc"}, "dev": {"devsrc"}, "blind": {"blsrc"}}
     assert entity_prefixes == {"train": {"tr"}, "dev": {"dev"}, "blind": {"bl"}}
 
