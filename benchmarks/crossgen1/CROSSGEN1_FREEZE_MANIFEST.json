@@ -1,0 +1,18 @@
+{
+  "created_before_crossgen_reruns": true,
+  "generator_sha256": "4af3a0a849abce40620b71775771361f0c6d546898622ce65d491e0060a9b414",
+  "name": "NEXUS CROSSGEN-1 PRIVATE 12K",
+  "panel_counts": {
+    "CONTEXT": 2000,
+    "FAR_TRANSFER": 2000,
+    "GRAPH": 2000,
+    "OOD_OVERFIT": 2000,
+    "REASON": 2000,
+    "RU_LANG": 2000
+  },
+  "schema_sha256": "fc0814ea72ac28e5eb473310cd7c3544416ab2bec66989a3b260e755bbc287b6",
+  "seed": 16092026,
+  "suite_count": 12000,
+  "suite_sha256": "2e7462e2ddf418205ac09bf56932f6e91a5240688c79352727e032c11cb5cdf7",
+  "task_text_committed_to_github": false
+}
