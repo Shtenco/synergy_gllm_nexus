@@ -1,0 +1,39 @@
+{
+  "blind3_contract": {
+    "blind_tuning_forbidden": true,
+    "candidate_recall_at_48_target": 0.99,
+    "invalid_accepted_target": 0.0,
+    "nota_precision_target": 0.98
+  },
+  "blind_used_for_model_selection": false,
+  "contamination": [
+    {"a":"shadow3","b":"blind3a","normalized_surface_overlap":0,"template_hash_overlap":0},
+    {"a":"shadow3","b":"blind3b","normalized_surface_overlap":0,"template_hash_overlap":0},
+    {"a":"blind3a","b":"blind3b","normalized_surface_overlap":0,"template_hash_overlap":0}
+  ],
+  "created_before_model_code": true,
+  "generator_sha256": "7879d3762f6d93709056b25670cdcf1a647ef63282468d2edfd67d11e76a6ab4",
+  "name": "NEXUS GLLM Omega-1.5 Blind-3 pre-model-code freeze",
+  "seed": 15017,
+  "selection_split": "shadow3",
+  "splits": {
+    "shadow3": {
+      "count": 12000,
+      "sha256": "68aadb444aeb7c108733b55a3e1ae55ff5b53842070ad34c400107084f3cb1e4",
+      "relation_counts": {"abstain":1714,"before":1714,"causes":1714,"is_a":1714,"located_in":1715,"older_than":1714,"owned_by":1715},
+      "argument_width_counts": {"1":3428,"2":3998,"3":3146,"4":3432,"5":3428,"6":3140}
+    },
+    "blind3a": {
+      "count": 10000,
+      "sha256": "9d642ad3ed11e9c7f858937c83396a21259a821847680a23977f16e77ab2049a",
+      "relation_counts": {"abstain":1428,"before":1428,"causes":1428,"is_a":1429,"located_in":1429,"older_than":1429,"owned_by":1429},
+      "argument_width_counts": {"1":2860,"2":3333,"3":2621,"4":2856,"5":2856,"6":2618}
+    },
+    "blind3b": {
+      "count": 2000,
+      "sha256": "2b707b34a79247099a154d338d44db682c65bea2d895b1613966825240130ef3",
+      "relation_counts": {"abstain":285,"before":286,"causes":285,"is_a":286,"located_in":286,"older_than":286,"owned_by":286},
+      "argument_width_counts": {"1":570,"2":666,"3":528,"4":575,"5":570,"6":521}
+    }
+  }
+}
