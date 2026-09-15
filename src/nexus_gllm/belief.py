@@ -73,8 +73,12 @@ class BeliefGraph:
 
     @staticmethod
     def _evidence_strength(record: EvidenceRecord) -> float:
-        combined = _clamp_probability(record.source_reliability * record.confidence)
-        return _logit(combined)
+        # Reliability=0 or confidence=0 is neutral evidence, not negative evidence.
+        # The support/attack polarity carries the sign; this function returns only
+        # a non-negative magnitude on the log-odds scale.
+        signal = max(0.0, min(1.0, record.source_reliability * record.confidence))
+        centered = _clamp_probability(0.5 + 0.5 * signal)
+        return max(0.0, _logit(centered))
 
     def _compute(self, key: BeliefKey) -> BeliefSnapshot:
         records = self.ledger.for_proposition(key.as_tuple())
