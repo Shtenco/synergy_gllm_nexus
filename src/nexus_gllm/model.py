@@ -1,19 +1,24 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 import torch
 
 from .answer import AnswerResolver
+from .belief import BeliefGraph, BeliefKey, BeliefSnapshot, BeliefUpdate
 from .compiler_neural import CompilerCharVocab, NeuralRussianGraphCompiler
 from .compiler_proposal import NeuralParseProposal, ProposalValidator
-from .compiler_ru import RussianGraphCompiler
+from .compiler_ru import RussianGraphCompiler, _canonical_name
 from .consolidation import GraphConsolidator, ConsolidationReport
+from .contradiction import ContradictionEngine
+from .evidence import EvidenceLedger, EvidenceRecord
 from .graph import DynamicHyperGraph
 from .persistence import save_graph_json, load_graph_json
 from .realizer_ru import DeterministicRussianRealizer, NeuralGraphRealizer, CharVocab, answer_graph_vector
 from .recurrent import GraphRecurrentCore
 from .rules import RuleEngine
 from .schema import AnswerGraph, GLLMResponse, NodeType
+from .source_reliability import SourceRegistry, SourceReliability
 from .temporal import EventGraphReasoner
 from .tensorizer import GraphTensorizer
 from .workspace import WorkspaceRetriever
@@ -21,6 +26,12 @@ from .workspace import WorkspaceRetriever
 
 class NexusGLLM:
     CORE_CONFIG = {"node_dim": 32, "edge_types": 8, "hidden_dim": 64, "op_count": 6}
+    _BELIEF_PATTERNS = (
+        (re.compile(r"^(.+?)\s+старше\s+(.+?)\.?$", re.I), "older_than"),
+        (re.compile(r"^(.+?)\s+находится\s+в\s+(.+?)\.?$", re.I), "located_in"),
+        (re.compile(r"^(.+?)\s+принадлежит\s+(.+?)\.?$", re.I), "owned_by"),
+        (re.compile(r"^(.+?)\s+(?:—\s*)?(?:это|является)\s+(.+?)\.?$", re.I), "is_a"),
+    )
 
     def __init__(self, graph: DynamicHyperGraph | None = None, neural_seed: int = 17, cognition_steps: int = 3) -> None:
         self.graph = graph or DynamicHyperGraph()
@@ -43,6 +54,11 @@ class NexusGLLM:
         self.compiler_relations: tuple[str, ...] = ()
         self.compiler_checkpoint_info: dict | None = None
         self.proposal_validator = ProposalValidator(default_threshold=0.80)
+
+        self.evidence_ledger = EvidenceLedger()
+        self.source_registry = SourceRegistry()
+        self.beliefs = BeliefGraph(self.evidence_ledger, self.source_registry)
+        self.contradictions = ContradictionEngine(self.beliefs)
 
     def load_core_checkpoint(self, path: str | Path) -> dict:
         checkpoint = torch.load(Path(path), map_location="cpu", weights_only=False)
@@ -171,6 +187,95 @@ class NexusGLLM:
         self.rules.infer(self.graph)
         return update
 
+    def _proposition_from_text(self, text: str) -> BeliefKey:
+        clean = " ".join(text.strip().split())
+        for pattern, relation in self._BELIEF_PATTERNS:
+            match = pattern.match(clean)
+            if not match:
+                continue
+            subject = _canonical_name(match.group(1))
+            obj = _canonical_name(match.group(2))
+            return BeliefKey(relation, subject, obj)
+        raise ValueError(f"unsupported belief observation: {text}")
+
+    def _project_belief_family(self, relation: str, subject: str) -> None:
+        candidates = [
+            snapshot
+            for snapshot in self.beliefs.snapshots()
+            if snapshot.key.relation == relation and snapshot.key.subject.casefold() == subject.casefold()
+        ]
+        if not candidates:
+            return
+        winner = max(candidates, key=lambda snapshot: (snapshot.posterior, snapshot.key.object))
+        if winner.posterior <= 0.5:
+            return
+
+        templates = {
+            "older_than": f"{winner.key.subject} старше {winner.key.object}",
+            "located_in": f"{winner.key.subject} находится в {winner.key.object}",
+            "owned_by": f"{winner.key.subject} принадлежит {winner.key.object}",
+            "is_a": f"{winner.key.subject} является {winner.key.object}",
+        }
+        if relation not in templates:
+            return
+        self.compiler.compile_statement(templates[relation], self.graph)
+        # The deterministic compiler already enforces exclusivity for owned_by/located_in.
+        # For non-exclusive relations no competing projection is retracted here.
+        for edge in self.graph.find_edges(relation, active_only=False):
+            if not edge.sources or edge.sources[0] not in self.graph.cards:
+                continue
+            source_label = self.graph.cards[edge.sources[0]].label
+            if source_label.casefold() != winner.key.subject.casefold():
+                continue
+            if relation in {"owned_by", "located_in"} and edge.targets:
+                target_label = self.graph.cards[edge.targets[0]].label
+                should_be_active = target_label.casefold() == winner.key.object.casefold()
+                if edge.active and not should_be_active:
+                    self.graph.retract_edge(edge.id)
+                elif should_be_active:
+                    edge.active = True
+                    edge.metadata["belief_posterior"] = winner.posterior
+                    edge.metadata["belief_status"] = winner.status
+                    edge.provenance = "belief:projected"
+
+    def observe(
+        self,
+        text: str,
+        *,
+        source: str,
+        confidence: float = 1.0,
+        sequence_index: int | None = None,
+        polarity: str = "support",
+    ) -> BeliefUpdate:
+        key = self._proposition_from_text(text)
+        source_state = self.source_registry.get(source)
+        record = EvidenceRecord.create(
+            proposition_key=key.as_tuple(),
+            polarity=polarity,
+            source_id=source_state.source_id,
+            source_reliability=source_state.reliability,
+            confidence=float(confidence),
+            sequence_index=sequence_index,
+            provenance="runtime:observe",
+        )
+        update = self.beliefs.observe(record)
+        self.contradictions.detect()
+        self._project_belief_family(key.relation, key.subject)
+        return update
+
+    def belief(self, relation: str, subject: str, object: str | None = None):
+        subject_norm = _canonical_name(subject)
+        if object is not None:
+            return self.beliefs.get(BeliefKey(relation, subject_norm, _canonical_name(object)))
+        return [
+            snapshot
+            for snapshot in self.beliefs.snapshots()
+            if snapshot.key.relation == relation and snapshot.key.subject.casefold() == subject_norm.casefold()
+        ]
+
+    def correct_source(self, source: str, *, was_correct: bool, weight: float = 1.0) -> SourceReliability:
+        return self.source_registry.update(source, was_correct=was_correct, weight=weight)
+
     def sleep(self) -> ConsolidationReport:
         return GraphConsolidator().run(self.graph)
 
@@ -196,8 +301,8 @@ class NexusGLLM:
         temporal = EventGraphReasoner(self.graph)
 
         if query.kind == "temporal_choice":
-            left_id = temporal._event_id(query.left or "")
-            right_id = temporal._event_id(query.right or "")
+            left_id = temporal.event_id(query.left or "")
+            right_id = temporal.event_id(query.right or "")
             if left_id not in self.graph.cards or right_id not in self.graph.cards:
                 return AnswerGraph(None, 0.0, "temporal_choice", provenance="temporal")
             left_before = temporal.before(left_id, right_id)
@@ -223,7 +328,7 @@ class NexusGLLM:
             return AnswerGraph(None, 0.0, "temporal_choice", provenance="temporal")
 
         if query.kind == "cause_of":
-            target_id = temporal._event_id(query.target or "")
+            target_id = temporal.event_id(query.target or "")
             if target_id not in self.graph.cards:
                 return AnswerGraph(None, 0.0, "cause_of", provenance="causal")
             candidates: list[tuple[int, str, tuple[str, ...], float]] = []
