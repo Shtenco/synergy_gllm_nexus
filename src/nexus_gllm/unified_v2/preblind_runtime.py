@@ -52,6 +52,7 @@ class UnifiedNexusV2Preblind:
         self.formal=FormalAuthorityAdapter(config.r78_module,expected_sha256=R78_SHA) if self._enabled('formal_authority') else None
         self.russian_binder=R72OperatorAdapter(config.r72_root) if self._enabled('russian_binder') else None
         self.morpholex=MorpholexAdapter(config.r714_root) if self._enabled('morpholex') else None
+        # Ω-1.5R2 carries both frozen semantic relation and relation-conditioned roles.
         role_stack=Omega15R2RoleAdapter(config.omega15r2_root,unified_rebuild_root=config.unified_v1_root) if (self._enabled('semantic_operator') or self._enabled('role_binder')) else None
         self.semantic=role_stack if self._enabled('semantic_operator') else None
         self.role=role_stack if self._enabled('role_binder') else None
@@ -130,6 +131,7 @@ class UnifiedNexusV2Preblind:
         return best
 
     def _context_query(self,text: str, *, topic: str) -> tuple[str,str,str]|None:
+        # Minimal deterministic context contract used by PREBLIND baseline.
         m=re.search(r'(?iu)кто\s+хранит\s+([^?!.]+)',text)
         if m:
             obj=m.group(1).strip().casefold()
@@ -159,6 +161,8 @@ class UnifiedNexusV2Preblind:
             provenance=(f'context:{topic}:owner:{obj}',),
         )
         self.workspace.add_candidate(proposal)
+        # Context memory is a user-provided, revision-aware local source. The
+        # governor remains the sole authority that promotes it to committed truth.
         from .contracts import EvidenceItem
         evidence=(EvidenceItem('ctx-evidence',proposal.provenance[0],supports=(claim_id,),trust=1.0,content_hash=claim_id),)
         self.bus.record_call('evidence_governor',claim_id)
