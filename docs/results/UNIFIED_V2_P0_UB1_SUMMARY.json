@@ -1,0 +1,26 @@
+{
+  "model": "NEXUS Unified v2-P0",
+  "status": "FROZEN_EXECUTABLE_PROTOTYPE",
+  "protocol_status": "UB1_EXPOSED_DEVELOPMENT",
+  "score": {"strict_correct": 904, "total": 970, "ub1_full_strict": 0.931958762886598, "ub1_track_macro": 0.9520408163265307},
+  "tracks": {
+    "formal_mcq": {"correct": 114, "n": 120, "strict": 0.95, "source": "R7.8"},
+    "semantic_mcq": {"correct": 120, "n": 120, "strict": 1.0, "r718_direct_correct": 83, "supplement_correct": 37},
+    "operator_transfer_ru": {"correct": 160, "n": 160, "strict": 1.0, "source": "R7.2"},
+    "relation_binding_ru": {"correct": 150, "n": 210, "strict": 0.7142857142857143, "source": "Omega-1.5R2"},
+    "graph_far_transfer": {"correct": 160, "n": 160, "strict": 1.0, "source": "Unified Rebuild v1"},
+    "context_revision": {"correct": 100, "n": 100, "strict": 1.0, "source": "Unified Rebuild v1"},
+    "evidence_trust": {"correct": 100, "n": 100, "strict": 1.0, "source": "Unified Rebuild v1"}
+  },
+  "promotion_gates_ub1_development": {"track_presence": true, "ub1_full_ge_80": true, "formal_ge_90": true, "semantic_ge_70": true, "operator_ge_95": true, "binding_ge_70": true, "graph_ge_98": true, "context_ge_98": true, "evidence_ge_98": true, "all_pass": true},
+  "fresh_result_sha256": "b4b8b766e5610c3725c76e32fa69786cdcf7440da4295acdfb00493a176f1292",
+  "donor_result_sha256": {
+    "R7.8": "3692cb29a22d953c5fcebe4e09640ceb2ea64e8f5610a6ac5cbb26f08e24b412",
+    "R7.18": "5ab6b998bd7d28c33df26143930d810e95985b06a41ee9ce167e5d7fa479d229",
+    "R7.2": "94a02a789992c8fae655f3e5232d22be17256a5f1afe178be7bfdf6365c0f0ba",
+    "Omega-1.5R2": "feb1fe569c0b3bef58fb5b0c5dedea6cef2edb08243816c8a42fb52032e105b4",
+    "Unified Rebuild v1": "c17f23d8303fddacf5fab6194a2646c61e0bf7ac3386b40099a9a48c383f9ea9"
+  },
+  "ub1_freeze_manifest_sha256": "f257959a10cc166301104673f92b300ca49575a0c71054ecd2a654a7fb3be05c",
+  "scientific_note": "UB1 is exposed development data for the semantic supplement; NEXUS-UB2/1 remains the preregistered blind promotion protocol."
+}
