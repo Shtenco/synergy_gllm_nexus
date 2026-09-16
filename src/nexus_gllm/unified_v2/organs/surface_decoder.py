@@ -11,7 +11,16 @@ class NativeRussianSurfaceDecoderV2:
     continue to pass the semantic consistency guard.
     """
 
-    RELATION_FORMS = {"отвечает_за":"отвечает за","хранит":"хранит","located_in":"находится в","owned_by":"принадлежит","is_a":"является","before":"происходит до","causes":"вызывает","contains":"содержит"}
+    RELATION_FORMS = {
+        "отвечает_за": "отвечает за",
+        "хранит": "хранит",
+        "located_in": "находится в",
+        "owned_by": "принадлежит",
+        "is_a": "является",
+        "before": "происходит до",
+        "causes": "вызывает",
+        "contains": "содержит",
+    }
 
     @classmethod
     def _surface(cls, value) -> str:
@@ -26,10 +35,15 @@ class NativeRussianSurfaceDecoderV2:
             if answer_graph.abstentions:
                 return " ".join(x.rstrip(". ") + "." for x in answer_graph.abstentions)
             return "Недостаточно данных."
-        sentences=[]
+
+        sentences: list[str] = []
         for claim in answer_graph.claims:
-            subject=self._surface(claim.subject); obj=self._surface(claim.object); relation=self._relation(claim.relation); neg="не " if claim.polarity=="negative" else ""
+            subject = self._surface(claim.subject)
+            obj = self._surface(claim.object)
+            relation = self._relation(claim.relation)
+            neg = "не " if claim.polarity == "negative" else ""
             sentences.append(f"{subject} {neg}{relation} {obj}.")
+
         if answer_graph.uncertainty:
             sentences.extend("Уточнение: " + x.rstrip(". ") + "." for x in answer_graph.uncertainty)
         return " ".join(sentences)
