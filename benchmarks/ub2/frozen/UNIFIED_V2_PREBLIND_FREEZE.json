@@ -1,0 +1,112 @@
+{
+  "canonical_preblind_bundle": {
+    "bytes": 94783,
+    "contains_manifest": false,
+    "filename": "NEXUS_UNIFIED_V2_PREBLIND_2026-09-16.zip",
+    "sha256": "8c51ff970ce2cee78fb3c60d9d2b3c27704c83b28a7156052b2c77f9936c0e9c"
+  },
+  "config": {
+    "ablations": [],
+    "organ_ids": [
+      "graph_workspace",
+      "formal_authority",
+      "russian_binder",
+      "morpholex",
+      "semantic_operator",
+      "role_binder",
+      "unseen_operator",
+      "recurrent_reasoner",
+      "evidence_governor",
+      "context_cortex",
+      "research_cortex",
+      "surface_decoder"
+    ],
+    "ub1_mode": "UB1_EXPOSED_DEVELOPMENT",
+    "ub2_status": "UNOPENED_BLIND"
+  },
+  "config_digest_sha256": "019fa77d4781ec29ee55ba57e5576cc7674e8920c6d2f77997ddda545c2b720a",
+  "created_date": "2026-09-16",
+  "dev_shadow": {
+    "ablations_sha256": "7e7e5070ac5a76ad9b2da344ebb8c77a2be15c5263d3c410cab4f6318c05d0e2",
+    "dev_result_sha256": "a41e6caf98a2b5f2e6389a0b8bc3c8e9accc7d7a65def071a9f3be08ec81c1d7",
+    "shadow_result_sha256": "781c2e362a7f07ec56cac515aff447831fb267f650f34e02bd69795fe9c2e5ec"
+  },
+  "donor_identity": {
+    "context_source_status": "REBUILT_FROM_R7.44.3_CONTRACTS",
+    "omega15r2_joint_sha256": "0bf09576104a1ca867d103b7fd2bb536510c0c2e044e1b549126ef44c47f12d6",
+    "omega15r2_semantic_sha256": "aae4b5ddcb8b1d4375e1248d258b9f0a89fbb190621c497b9352b6bd2a9894da",
+    "omega16_source_commit": "2b6d78d9b955bb892356a6cade50634911f7b13c",
+    "r714_model_sha256": "13c66f9faab8b5459687fa1a65b9987f6cfd976ec3d2f969b3beb0ea651144cc",
+    "r714_source_sha256": "b0557657ad21a3eab59ee4388a3003a3391895cfa537dc4d06cf674d8b188d40",
+    "r717_critic_sha256": "75a72c2b43693f1a84921722f632162edecb903441ecb26eedd7176c47a0a81e",
+    "r717_runtime_sha256": "00e5c3866bf8f19e61eff922998afce057a6bd572a2f749527fbd6830dd57691",
+    "r718_sha256": "b0daffbeaba457ee61576ee3eecb42fa245f433382135a4fb20d90e019f7d524",
+    "r72_binder_sha256": "b6ef32052ddd3144dde76a84a81c41b5d7caf7761d5658eed18ebee21bef5eb7",
+    "r72_core_sha256": "a6b949fde908aa801b5c69e702e1710d32e84e1c2627d0fadd9aab71e5cb7c18",
+    "r78_sha256": "0c01a766e7aa49e5f7320149e2c1ee6251b1bd25846a31c08251936783768251",
+    "r7l_checkpoint_sha256": "a6b949fde908aa801b5c69e702e1710d32e84e1c2627d0fadd9aab71e5cb7c18",
+    "ub1_manifest_sha256": "f257959a10cc166301104673f92b300ca49575a0c71054ecd2a654a7fb3be05c",
+    "unified_v1_context_sha256": "85cbccb8ae0a70ec744bc8ca92b2bbf2e1be50c567f4e6b9e3aa858a26c8fef2",
+    "unified_v1_runtime_sha256": "b5c0bae7dc433b8ea63d773a541f9c2272970a72a3f0f17e9633fd018866af83"
+  },
+  "format": "NEXUS-UNIFIED-V2-PREBLIND/1",
+  "preblind_source_commit": null,
+  "scientific_boundary": "UB1 is exposed development data. UB2 blind remains unopened at this freeze candidate. Synthetic dev/shadow scores are not proof of unrestricted Russian understanding or AGI.",
+  "source_sha256": {
+    "benchmarks/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "benchmarks/run_unified_v2_p1_inprocess.py": "cba745b3bc6852826c94d641ccb1df9fe90ec10f4a192da721cf79697a089036",
+    "benchmarks/run_unified_v2_preblind_ub1.py": "e7f34582cb24e9cde34661349d13d7df6eda2c9e9362bae628a35d53409cb3df",
+    "benchmarks/run_unified_v2_ub1.py": "3b5a784fa5c7e396b9e6d6aa168777ce2f99b1f6bd893c605548474c58e0c2d3",
+    "benchmarks/ub2/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "benchmarks/ub2/freeze_ub2.py": "f739a60a957ec8cdc802c0124243b545b5ba909dba18fcf15c7875c7a6d2a313",
+    "benchmarks/ub2/generator/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "benchmarks/ub2/generator/evidence_corpus.py": "9ac31f89772796f4903b08ea5298a6f55e941f5899605987dc3686f994d545a2",
+    "benchmarks/ub2/generator/generate_ub2.py": "0ce03b26cf7fb5aacb5b2a0a3e589ba9f0ee5a813bc0306d89929dc85b71b596",
+    "benchmarks/ub2/run_ablations.py": "6f67556a7f5d4985171f37c0320ce5ad2b662e9a6c93c3621331a6b108c70173",
+    "benchmarks/ub2/run_dev_shadow.py": "1f7c51b8f291b9c2b321e820607d84a02bf6c7444102ebec40c186662ac7035a",
+    "benchmarks/ub2/schema.py": "f1e5b796298410b04c36dfaa6085ae4b66ca1c32fecc88cff204113f14eeae5c",
+    "benchmarks/ub2/scoring/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "benchmarks/ub2/scoring/score_ub2.py": "ae19e45a4d9034f44a37738147f54e9bc23d6ad985917ddf6ec50afe8736e324",
+    "benchmarks/ub2/validators/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "benchmarks/ub2/validators/validate_ub2.py": "26780aee039a6df0a77926b62eadd481d5544717a96dd5689e54084694634697",
+    "src/nexus_gllm/unified_v2/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/nexus_gllm/unified_v2/bus.py": "5d340da1e570c5a0fab335eef09c6c0c5f1516c396ed13eccc98e5547e5e8eee",
+    "src/nexus_gllm/unified_v2/config.py": "6199b6d0f4cc3993ab546afd8f7d1215f9a95cdd8e439d029b84dd151f5485ed",
+    "src/nexus_gllm/unified_v2/contracts.py": "91ab4a8132dc58d60a588b207f992b303e7419418fcf7a11701c505cd12e81fb",
+    "src/nexus_gllm/unified_v2/guard.py": "14f31c9acb2b343115f47bb5f56747ecda5583ec438973ad9a16f6258653a8ef",
+    "src/nexus_gllm/unified_v2/organs/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/nexus_gllm/unified_v2/organs/context_cortex.py": "94a5806f34c978f9e91ed6e8cba2cc988eeaa94dced818292b2cb27acca7dc5b",
+    "src/nexus_gllm/unified_v2/organs/donor_adapters.py": "3c3a908d05a106cbe5ea76d8e701385e29386820c7c0150746704bc97e4dd1ae",
+    "src/nexus_gllm/unified_v2/organs/evidence_governor.py": "946423aa97aa72a49240730543efa8f05e55739ae4efb4f59cd79e8d6935c915",
+    "src/nexus_gllm/unified_v2/organs/morpholex.py": "cc616ab1783659b4fcc5145274956ff4ac6b5aa392995f60555c89868ee5c053",
+    "src/nexus_gllm/unified_v2/organs/r72_operator_adapter.py": "de61afbb7c28074a177e6002c62f5cba8488d3c30dde3080c022530a944a101e",
+    "src/nexus_gllm/unified_v2/organs/recurrent_reasoner.py": "7171e919d2a64751fb80eb8676a66b0490ec032ea5450ee9d0bc28ab5a5f6b83",
+    "src/nexus_gllm/unified_v2/organs/research_cortex.py": "9719eb26d68610da4563f9b9dd83d0b53b4f1345ed25f7409ee68e6ca2261c23",
+    "src/nexus_gllm/unified_v2/organs/semantic_supplement.py": "30de59679e96340005839df0a48e1ac011b9ad4bb3353c73b7df81980d9191b8",
+    "src/nexus_gllm/unified_v2/organs/surface_decoder.py": "8e6d8d6e9422e2a48148e6021a0be848b0d5a7ad0e8966d0ecdefb0eeb671d07",
+    "src/nexus_gllm/unified_v2/organs/unseen_operator.py": "9822ecb85ca0bfa684f42cac89e00f2b14c060c5457ddf36f8ee6c6a7022f289",
+    "src/nexus_gllm/unified_v2/preblind_runtime.py": "285e8e462c1e4705e22b772b7b3f98317219f97d47d9f4157bc4d136b0d11db1",
+    "src/nexus_gllm/unified_v2/runtime.py": "ed4cba05dcc2e752c486a57b25720c375450fafbf1b357210825e0857b376e9a",
+    "src/nexus_gllm/unified_v2/workspace.py": "380a5da939667696d27d8b2ad827d05ebb022e7c713c1dc23c8be2fdd87d6598"
+  },
+  "status": "PREBLIND_FREEZE_CANDIDATE",
+  "ub1_development": {
+    "all_gates_pass": true,
+    "full": 0.931958762886598,
+    "protocol_status": "UB1_EXPOSED_DEVELOPMENT",
+    "result_sha256": "676e2ea39a8fc733c11325e44e792f8aac5babd950cc29611e63dba3e196c2aa",
+    "strict_correct": 904,
+    "total": 970
+  },
+  "ub2_blind_opened": false,
+  "ub2_freeze": {
+    "canonical_bundle_sha256": "a5bcbfb64942120f7d8469bebb3de92a9e0d19fa3701749d8a89beb8ff4872c9",
+    "content_freeze_commit": "62f5ca6e0a322ec08cdaef4a227ae59dadaa2e74",
+    "freeze_record_commit": "df2b3c114c7a4d425c7faee97fb9b6acc8b289e1",
+    "suite_digest_sha256": "d2426ab2f5cd7e2028a180b15b25406368bfe5ea0cb6f3a9330dfcb3ddfc0a32"
+  },
+  "verification": {
+    "compileall": "PASS",
+    "pytest": "60 passed"
+  }
+}
