@@ -1,0 +1,23 @@
+{
+  "blind_opened": false,
+  "checkpoints": {
+    "argument": {"bytes": 6111660, "file": "omega15r_joint_argument.joblib", "sha256": "f7f6d2447fffc2f6a97d36605b253a515bb8b38db0e2f7e37c197f6d4cb02487"},
+    "context": {"bytes": 2954484, "file": "context_revision_binder_r.joblib", "sha256": "85cbccb8ae0a70ec744bc8ca92b2bbf2e1be50c567f4e6b9e3aa858a26c8fef2"},
+    "semantic": {"bytes": 17848481, "file": "omega14r_semantic_operator.joblib", "sha256": "aae4b5ddcb8b1d4375e1248d258b9f0a89fbb190621c497b9352b6bd2a9894da"}
+  },
+  "created_after_protocol_freeze": true,
+  "environment": {"joblib": "1.5.3", "platform": "Linux-6.18.44-x86_64-with-glibc2.41", "python": "3.13.5", "sklearn": "1.8.0"},
+  "format_version": 1,
+  "name": "UNIFIED_NEXUS_REBUILD_V1_PREBLIND_CHECKPOINT_FREEZE",
+  "preblind_metrics": {
+    "argument_dev_gold_relation": {"both_exact": 0.12249183387774149, "n": 8572, "object_exact": 0.31859542697153526, "strict_triple_exact": 0.12249183387774149, "subject_exact": 0.25058329444703686},
+    "argument_dev_pred_relation": {"both_exact": 0.1241250583294447, "n": 8572, "object_exact": 0.3191787214185721, "strict_triple_exact": 0.09391040597293514, "subject_exact": 0.2522165188987401},
+    "argument_shadow_gold_relation": {"both_exact": 0.17402294380711647, "n": 10286, "object_exact": 0.4545012638537818, "strict_triple_exact": 0.17402294380711647, "subject_exact": 0.30594983472681314},
+    "argument_shadow_pred_relation": {"both_exact": 0.17480069998055608, "n": 10286, "object_exact": 0.45615399572234105, "strict_triple_exact": 0.13620454987361463, "subject_exact": 0.3069220299436127},
+    "context_smoke": ["upsert", "retract", "query", "ignore"],
+    "semantic_dev": {"accuracy": 0.5815, "macro_f1": 0.516976906368417, "nota_f1": 0.4983779399837794, "nota_precision": 0.3507420091324201, "nota_recall": 0.8606442577030813},
+    "semantic_shadow": {"accuracy": 0.7188333333333333, "macro_f1": 0.7111666208853153, "nota_f1": 0.5565991102323282, "nota_precision": 0.48284734133790735, "nota_recall": 0.6569428238039673}
+  },
+  "protocol_manifest_sha256": "7ddb26a234d8e211c6104e1371e1e5f2272ac4110435413a50260b047de0f212",
+  "seeds": {"argument": 1702, "context": 1703, "semantic": 1701}
+}

@@ -1,0 +1,59 @@
+{
+  "blind_policy": {
+    "blind_a": "one-shot after checkpoint freeze; never selection/tuning",
+    "blind_b": "one-shot after checkpoint freeze; never selection/tuning"
+  },
+  "counts": {
+    "blind_a": 10000,
+    "blind_b": 2000,
+    "dev": 10000,
+    "shadow": 12000,
+    "train": 100000
+  },
+  "format_version": 1,
+  "generator_sha256": "0138479d6f67d3dba4f362c1ed0351700a00aeda46ebaac0c5c6b96b918ecf90",
+  "name": "UNIFIED_NEXUS_REBUILD_V1_PROTOCOL",
+  "seed": 20260916,
+  "splits": {
+    "blind_a": {
+      "bytes": 529058,
+      "gzip_sha256": "74c11f0fb875ee5ce558b0aa489e26e90b7a6b3ff97eb60cea40176587f59e42",
+      "raw_sha256": "3f2a0e08b75e704527502cd538e9e06afc1d8a2a920f9435a6486f11cbc9f615",
+      "rows": 10000,
+      "template_skeleton_count": 21,
+      "template_skeleton_sha256": "e575fedba4766efd0f540d2c0f5341d13ad55c1267da278937b868bfd7529116"
+    },
+    "blind_b": {
+      "bytes": 111671,
+      "gzip_sha256": "95c13197d2e013123af778d9bcba82fdeb6e73ea273eb5d8c3268ff7a218f839",
+      "raw_sha256": "2119c7d64fdd131bb9c98aef233045a3c1a6ce8282c4dfcd475d14abe8a32b07",
+      "rows": 2000,
+      "template_skeleton_count": 14,
+      "template_skeleton_sha256": "49d2e44b834c92db447094ca973e500497bc880cd1d4e7b6a88ff336a7ba483b"
+    },
+    "dev": {
+      "bytes": 493319,
+      "gzip_sha256": "ca7c53dde891a8ba29f6f43cf39a8e3431cd33b2c3d89b00b093403dfeeaaa51",
+      "raw_sha256": "427e1095fc2656d777c03847dbd538a773fc5b58b9adccda0f61b61579937734",
+      "rows": 10000,
+      "template_skeleton_count": 21,
+      "template_skeleton_sha256": "943a8fd0e7910093190bc0bce578e94ec17ef23a2cdc239e4a520e157445f5c8"
+    },
+    "shadow": {
+      "bytes": 604191,
+      "gzip_sha256": "ce6918916583624e37e83c05abfa4015a53baa2d48398b12eefb6f6f5b743812",
+      "raw_sha256": "d7be43e64f8aacac39b4809997ab9b0b7abc85bb9c468d341df0158f17cba6e2",
+      "rows": 12000,
+      "template_skeleton_count": 21,
+      "template_skeleton_sha256": "a87962f84debf6d33c181594eeaac118d473156bdf7a19683ac306104a66084b"
+    },
+    "train": {
+      "bytes": 5172927,
+      "gzip_sha256": "1eeab304edda3ff4d54d1427c7e81594533e41335144e768d7d5c07315ba85cf",
+      "raw_sha256": "254997f1a7849433eded40a098d5b444c53c3aaeaabe2b691c4ead8ac0969325",
+      "rows": 100000,
+      "template_skeleton_count": 35,
+      "template_skeleton_sha256": "87f3fc1ae79fb551ab32baac923daba9f9a87dffdc26bd56a100f0767d44b182"
+    }
+  }
+}

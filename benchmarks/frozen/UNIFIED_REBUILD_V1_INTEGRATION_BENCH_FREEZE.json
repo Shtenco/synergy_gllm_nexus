@@ -1,0 +1,14 @@
+{
+  "created_after_weight_freeze": true,
+  "format_version": 1,
+  "generator_sha256": "d0a91c4cb06b5307ef7c76b69b9bfeccd37a37d7d54e1760d5478185e8bc9228",
+  "name": "UNIFIED_NEXUS_REBUILD_V1_INTEGRATION_BENCH",
+  "policy": "diagnostic only; no model tuning after observation",
+  "seed": 2026091602,
+  "suites": {
+    "context_revision": {"bytes": 190690, "rows": 400, "sha256": "baa5a9f3257045741bc847c7d13fec0acaf757ef25e1f7411909aa88ea9fb5e8"},
+    "e2e_ru": {"bytes": 157540, "rows": 600, "sha256": "d5ac14696b2f022ba095bdac8b7c9d630ffa990de559f39d7c2eb0588bb7c881"},
+    "evidence_trust": {"bytes": 114890, "rows": 400, "sha256": "52846969039ebbfb4893e59a41890748a0f1f1cfd372cc92c222ce087b2be162"},
+    "far_structured": {"bytes": 236080, "rows": 640, "sha256": "b30166ef8ff5106317d8b9bec64886f1e5371a47413c01ca1f7930ddbbba69fa"}
+  }
+}
