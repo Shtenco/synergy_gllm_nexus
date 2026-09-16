@@ -169,6 +169,7 @@ class UnifiedRebuildAdapter:
             self.checkpoint_dir = checkpoint_dir
             self.runtime_sha256 = runtime_sha
             self.identity = UnifiedArtifactIdentity(*(_sha256(p) for p in required))
+            # Load once now so corrupt/incompatible checkpoints fail closed at adapter construction.
             self._probe = self.runtime_class(self.checkpoint_dir)
         except Exception as exc:
             raise ArtifactUnavailable(f"cannot load Unified Rebuild v1: {exc}") from exc
