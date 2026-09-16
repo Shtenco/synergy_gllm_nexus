@@ -17,7 +17,7 @@
     "unseen_task_induction.jsonl": {"bytes": 157715, "cases": 320, "sha256": "3918fc304c0dd757a02a8e19463be2cde53a18ac8472ec4de9996a7048e98ef0"}
   },
   "format": "NEXUS-UB2/1",
-  "freeze_content_commit": null,
+  "freeze_content_commit": "62f5ca6e0a322ec08cdaef4a227ae59dadaa2e74",
   "preregistration_commit": "e92e6065ee49086cfcb1f6388beb2f7fc778a153",
   "rule": "No Unified v2 implementation code may precede the frozen benchmark content commit.",
   "seed": 260916,
