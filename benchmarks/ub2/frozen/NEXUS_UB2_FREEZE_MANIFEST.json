@@ -1,0 +1,42 @@
+{
+  "artifact_storage": {
+    "canonical_bundle": "NEXUS_UB2_FROZEN_2026-09-16.zip",
+    "canonical_bundle_sha256": "a5bcbfb64942120f7d8469bebb3de92a9e0d19fa3701749d8a89beb8ff4872c9",
+    "repository_generator": "readable mirror; canonical exact generator bytes are inside bundle and source_hashes refer to the bundle copy"
+  },
+  "blind_case_count": 2140,
+  "design_base_commit": "f70a3c316775c763a94fbc55a8fae84c326ab60e",
+  "files": {
+    "complex_causality.jsonl": {"bytes": 148352, "cases": 300, "sha256": "d1432a1791583ca82a369f495b1ec0cff6f519e0e2f7782b6ba795e89f45080c"},
+    "evidence_corpus.jsonl": {"bytes": 19804, "documents": 120, "sha256": "a9a07edd8087141a71cebd152b7a909c780d77f4bdd6e81621d62c835631616e"},
+    "graph_ood_reasoning.jsonl": {"bytes": 160518, "cases": 320, "sha256": "de8b1e4fab535a27004d81abea4587f5c263cd7ae5fb2b906b492eb994f0651e"},
+    "long_memory.jsonl": {"bytes": 1861259, "cases": 300, "sha256": "38fa7d488a089f434c5956bc1c43664d32f8e3f52483246ea83de63f891d0eeb"},
+    "research_evidence.jsonl": {"bytes": 130440, "cases": 300, "sha256": "8fb90b7cd252b700e39007fc1c898c17f597b8740625acb2da078bd8c546929f"},
+    "russian_coreference.jsonl": {"bytes": 140598, "cases": 300, "sha256": "666b3bd7ab7c2ac03a3b40fd3b2d9d02cc0602f20baf98272bdc8ef24d6f5856"},
+    "russian_free_dialogue.jsonl": {"bytes": 139732, "cases": 300, "sha256": "3671cf7730e1dc9c738178fc68bba1ef728f74f88777011bb3a7d47a27831999"},
+    "unseen_task_induction.jsonl": {"bytes": 157715, "cases": 320, "sha256": "3918fc304c0dd757a02a8e19463be2cde53a18ac8472ec4de9996a7048e98ef0"}
+  },
+  "format": "NEXUS-UB2/1",
+  "freeze_content_commit": null,
+  "preregistration_commit": "e92e6065ee49086cfcb1f6388beb2f7fc778a153",
+  "rule": "No Unified v2 implementation code may precede the frozen benchmark content commit.",
+  "seed": 260916,
+  "source_hashes": {
+    "benchmarks/ub2/generator/evidence_corpus.py": {"sha256": "9ac31f89772796f4903b08ea5298a6f55e941f5899605987dc3686f994d545a2"},
+    "benchmarks/ub2/generator/generate_ub2.py": {"sha256": "0ce03b26cf7fb5aacb5b2a0a3e589ba9f0ee5a813bc0306d89929dc85b71b596"},
+    "benchmarks/ub2/schema.py": {"sha256": "f1e5b796298410b04c36dfaa6085ae4b66ca1c32fecc88cff204113f14eeae5c"},
+    "benchmarks/ub2/scoring/score_ub2.py": {"sha256": "ae19e45a4d9034f44a37738147f54e9bc23d6ad985917ddf6ec50afe8736e324"},
+    "benchmarks/ub2/validators/validate_ub2.py": {"sha256": "26780aee039a6df0a77926b62eadd481d5544717a96dd5689e54084694634697"}
+  },
+  "status": "FROZEN_CONTENT",
+  "suite_digest_sha256": "d2426ab2f5cd7e2028a180b15b25406368bfe5ea0cb6f3a9330dfcb3ddfc0a32",
+  "track_counts": {
+    "complex_causality": 300,
+    "graph_ood_reasoning": 320,
+    "long_memory": 300,
+    "research_evidence": 300,
+    "russian_coreference": 300,
+    "russian_free_dialogue": 300,
+    "unseen_task_induction": 320
+  }
+}
