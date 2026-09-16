@@ -1,0 +1,59 @@
+{
+  "blind_policy": {
+    "blind_a_open_once": true,
+    "blind_b_open_once": true,
+    "forbidden_for_selection": true,
+    "tuning_after_open": false
+  },
+  "counts": {
+    "blind_a": 12000,
+    "blind_b": 3000,
+    "dev": 12000,
+    "shadow": 12000,
+    "train": 150000
+  },
+  "format_version": 1,
+  "generator_sha256": "dfe55f14267997040e45452633e2860711140c00cf71a03b8557aba96fe0e5d1",
+  "name": "OMEGA15R2_BLIND4_PROTOCOL_V1",
+  "relations": [
+    "owned_by",
+    "located_in",
+    "is_a",
+    "older_than",
+    "before",
+    "causes"
+  ],
+  "seed": 240416,
+  "splits": {
+    "blind_a": {
+      "count": 12000,
+      "file": "blind_a.jsonl.gz",
+      "sha256": "7c55e98e516a1159eb60d2a6bd010d33b2c4e302026089bc6e734c2bbe00b5c8",
+      "template_skeletons": 6
+    },
+    "blind_b": {
+      "count": 3000,
+      "file": "blind_b.jsonl.gz",
+      "sha256": "694df87745f4b47d6b716dd3a3855a728fd7ff94ef340acfefece15fd33157df",
+      "template_skeletons": 6
+    },
+    "dev": {
+      "count": 12000,
+      "file": "dev.jsonl.gz",
+      "sha256": "2a3248f8a894d78ba03eeb68b11628403bf7a3dc922400293158dfa4b44bdd62",
+      "template_skeletons": 6
+    },
+    "shadow": {
+      "count": 12000,
+      "file": "shadow.jsonl.gz",
+      "sha256": "1f7eb436400a2698fb739b0e4376f4d9a1c84dd1a348475e98cd679dff43a41e",
+      "template_skeletons": 6
+    },
+    "train": {
+      "count": 150000,
+      "file": "train.jsonl.gz",
+      "sha256": "ccc5e3a1f0561c18f14202a6398c38f06464953d64ce847b66dbb0b63daf8be9",
+      "template_skeletons": 12
+    }
+  }
+}

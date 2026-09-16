@@ -1,0 +1,35 @@
+{
+  "name": "OMEGA15R2_BLIND4_ONE_SHOT",
+  "status": "FROZEN_FAILED_PROMOTION_BLIND4A",
+  "checkpoint_sha256": "0bf09576104a1ca867d103b7fd2bb536510c0c2e044e1b549126ef44c47f12d6",
+  "blind4_manifest_sha256": "4b8a9ea4e1fd15c2a3ae8b33fc6e843e02a69c4a1ee8146498bd88ee49167779",
+  "preblind_git_commit": "cc36500118b22ce76e5f01a5ad4556632b88695f",
+  "tuning_after_open": false,
+  "blind_a": {
+    "candidate_both_recall": 1.0,
+    "subject_exact_gold_relation": 0.6666666666666666,
+    "object_exact_gold_relation": 0.6666666666666666,
+    "both_exact_gold_relation": 0.6666666666666666,
+    "semantic_relation_accuracy": 0.6016666666666667,
+    "end_to_end_strict_triple_exact": 0.5036666666666667,
+    "invalid_pair_rate": 0.0
+  },
+  "blind_b": {
+    "candidate_both_recall": 1.0,
+    "subject_exact_gold_relation": 0.8333333333333334,
+    "object_exact_gold_relation": 0.8333333333333334,
+    "both_exact_gold_relation": 0.8333333333333334,
+    "semantic_relation_accuracy": 0.667,
+    "end_to_end_strict_triple_exact": 0.6663333333333333,
+    "invalid_pair_rate": 0.0
+  },
+  "promotion": {
+    "subject_target": 0.8,
+    "object_target": 0.8,
+    "both_target": 0.7,
+    "blind_a_pass": false,
+    "blind_b_pass": true,
+    "overall_pass": false,
+    "reason": "Blind-4A subject/object exact is 0.6667, below the preregistered 0.80 target. No post-Blind tuning is allowed."
+  }
+}
