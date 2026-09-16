@@ -60,6 +60,7 @@ class ContextCortexV2:
 
     def hard_boundary(self,topic: str):
         self.current_topic=topic
+        # Boundary prevents accidental anaphora carryover; stored facts stay topic-scoped.
         self._mentions[topic].clear()
 
     def mention_entity(self,entity_id: str,label: str,*,gender: str|None=None,topic='default'):
@@ -73,6 +74,7 @@ class ContextCortexV2:
             candidates=[m for m in mentions if m.gender in (gender,None)]
         else:
             candidates=mentions
+        # Deduplicate by entity while preserving recency.
         uniq=[]; seen=set()
         for m in reversed(candidates):
             if m.entity_id not in seen: uniq.append(m); seen.add(m.entity_id)
