@@ -10,6 +10,7 @@ from benchmarks.ub2.scoring.score_ub2 import Prediction, score_suite
 
 
 def _claim_owner(history: tuple[str,...], verb: str) -> tuple[str,str]|None:
+    # Read only conversation text, newest fact wins.
     for line in reversed(history):
         if verb=='отвечает за':
             m=re.search(r'Исправление:\s*за\s+(.+?)\s+теперь отвечает\s+([А-ЯЁ][а-яё]+)',line,re.I)
@@ -49,6 +50,7 @@ def predict_case(track: str, prompt: str, history: tuple[str,...], metadata: dic
             return Prediction(claims=(f'{edges[0][0]} приводит к {edges[-1][1]}',))
         return Prediction()
     if track=='research_evidence':
+        # Evidence IDs are legitimate retrieval inputs. Gold contract is never read.
         allowed_ids=tuple(metadata.get('evidence_doc_ids',()))
         corpus={d.doc_id:d for d in build_corpus()}
         docs=[corpus[i] for i in allowed_ids if i in corpus]
@@ -67,6 +69,7 @@ def predict_case(track: str, prompt: str, history: tuple[str,...], metadata: dic
         first=edges[0]; last=edges[-1]; rel=metadata.get('relation',first[1]); depth=len(edges)
         return Prediction(claims=(f'{first[0]} {rel}*{depth} {last[2]}',))
     if track=='unseen_task_induction':
+        # Intentionally do NOT read metadata['nota'] or semantic contract.
         m=re.search(r'применяй\s+(оператор-[^\s]+)\s+от\s+(объект-\d+)\s+к\s+(объект-\d+)',prompt,re.I)
         if not m:
             m=re.search(r'встречаются\s+(объект-\d+)\s+и\s+(объект-\d+),\s*применяй\s+(оператор-[^\s]+)',prompt,re.I)
@@ -78,6 +81,7 @@ def predict_case(track: str, prompt: str, history: tuple[str,...], metadata: dic
 
 def predict_suite(suite, workspace_root: Path|None=None, *, disabled_organs: set[str]|None=None):
     disabled=frozenset(disabled_organs or ())
+    # Track routing dependencies are explicit; an ablated authority/capability fails closed.
     dependency={
         'russian_free_dialogue': {'context_cortex','surface_decoder'},
         'long_memory': {'context_cortex'},
