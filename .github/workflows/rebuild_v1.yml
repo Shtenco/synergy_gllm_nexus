@@ -16,7 +16,53 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: python -m pip install --upgrade pip
-      - run: pip install -e '.[dev]'
-      - run: pytest -q tests/test_rebuild_freeze.py
-      - run: python -m compileall src/nexus_gllm/rebuild_freeze.py
+      - name: Install
+        shell: bash
+        run: |
+          set +e
+          python -m pip install --upgrade pip > rebuild-install.log 2>&1
+          first=$?
+          if [ "$first" -eq 0 ]; then
+            pip install -e '.[dev]' >> rebuild-install.log 2>&1
+            second=$?
+          else
+            second=99
+          fi
+          echo "$first" > rebuild-pip-upgrade.exit
+          echo "$second" > rebuild-install.exit
+          exit 0
+      - name: Rebuild tests
+        shell: bash
+        run: |
+          set +e
+          if [ "$(cat rebuild-install.exit)" -eq 0 ]; then
+            pytest -q tests/test_rebuild_freeze.py > rebuild-pytest.log 2>&1
+            code=$?
+          else
+            echo "skipped: install failed" > rebuild-pytest.log
+            code=98
+          fi
+          echo "$code" > rebuild-pytest.exit
+          exit 0
+      - name: Compile
+        shell: bash
+        run: |
+          set +e
+          python -m compileall src/nexus_gllm/rebuild_freeze.py > rebuild-compile.log 2>&1
+          echo "$?" > rebuild-compile.exit
+          exit 0
+      - name: Upload rebuild diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rebuild-v1-diagnostics
+          path: |
+            rebuild-*.log
+            rebuild-*.exit
+          if-no-files-found: error
+      - name: Assert rebuild unit green
+        shell: bash
+        run: |
+          test "$(cat rebuild-install.exit)" -eq 0
+          test "$(cat rebuild-pytest.exit)" -eq 0
+          test "$(cat rebuild-compile.exit)" -eq 0
