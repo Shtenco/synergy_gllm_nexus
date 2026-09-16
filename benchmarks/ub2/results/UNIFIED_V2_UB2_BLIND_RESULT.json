@@ -1,0 +1,37 @@
+{
+  "strict_correct": 2104,
+  "total": 2140,
+  "full_score": 0.983177570093458,
+  "invalid_citation_count": 0,
+  "guard_mutations": 0,
+  "tracks": {
+    "russian_free_dialogue": {"n": 300, "correct": 300, "strict": 1.0, "invalid_citations": 0, "guard_mutations": 0},
+    "long_memory": {"n": 300, "correct": 300, "strict": 1.0, "invalid_citations": 0, "guard_mutations": 0},
+    "russian_coreference": {"n": 300, "correct": 300, "strict": 1.0, "invalid_citations": 0, "guard_mutations": 0},
+    "complex_causality": {"n": 300, "correct": 300, "strict": 1.0, "invalid_citations": 0, "guard_mutations": 0},
+    "research_evidence": {"n": 300, "correct": 300, "strict": 1.0, "invalid_citations": 0, "guard_mutations": 0},
+    "graph_ood_reasoning": {"n": 320, "correct": 320, "strict": 1.0, "invalid_citations": 0, "guard_mutations": 0},
+    "unseen_task_induction": {"n": 320, "correct": 284, "strict": 0.8875, "invalid_citations": 0, "guard_mutations": 0}
+  },
+  "format": "NEXUS-UNIFIED-V2-UB2-BLIND-RESULT/1",
+  "run_kind": "BYTE_IDENTICAL_REPRODUCIBILITY_REPLAY_AFTER_ONE_SHOT",
+  "original_one_shot_observed_score": 0.983177570093458,
+  "preblind_source_commit": "ba23e94886c08a4b83c66ad850410d50cae8e721",
+  "source_freeze_record_commit": "ffca2a74fa3a90c84a656f03886e7973a487687a",
+  "ub2_suite_digest_sha256": "d2426ab2f5cd7e2028a180b15b25406368bfe5ea0cb6f3a9330dfcb3ddfc0a32",
+  "ub2_bundle_sha256": "a5bcbfb64942120f7d8469bebb3de92a9e0d19fa3701749d8a89beb8ff4872c9",
+  "postblind_source_modified": false,
+  "postblind_tuning": false,
+  "promotion_gates": {
+    "ub2_full_ge_0_70": true,
+    "every_track_ge_0_60": true,
+    "long_memory_ge_0_80": true,
+    "coreference_ge_0_80": true,
+    "research_evidence_ge_0_80": true,
+    "invalid_citation_rate_le_0_01": true,
+    "guard_mutations_eq_0": true,
+    "no_postblind_tuning": true
+  },
+  "all_promotion_gates_pass": true,
+  "scientific_boundary": "Synthetic frozen UB2 measures these seven contracts only; it is not evidence of unrestricted Russian conversation, general intelligence, or live-web research quality. The frozen harness does not route every blind case through all twelve runtime organs end-to-end."
+}
