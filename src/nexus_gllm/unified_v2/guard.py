@@ -25,8 +25,10 @@ class SemanticConsistencyGuard:
         nums=set(re.findall(r'\d+(?:[.,]\d+)?',text))
         violations=[]
         if nums-licensed_nums: violations.append('unlicensed_number')
+        # Negation is factual unless the graph itself licenses negative polarity.
         graph_negative=any(c.polarity=='negative' for c in answer_graph.claims)
         if ('не' in words or 'нет' in words) and not graph_negative: violations.append('negation_flip')
+        # Capitalized unknown named entities are treated as unlicensed entities.
         cap=set(re.findall(r'\b[А-ЯЁA-Z][\w-]+',text,re.UNICODE))
         licensed_caps={t.casefold() for t in licensed}
         unknown=[x for x in cap if x.casefold() not in licensed_caps]
