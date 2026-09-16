@@ -1,0 +1,12 @@
+{
+  "format": "NEXUS-UNIFIED-V2-PREBLIND-SOURCE-COMMIT/1",
+  "preblind_source_commit": "ba23e94886c08a4b83c66ad850410d50cae8e721",
+  "canonical_preblind_bundle_sha256": "8c51ff970ce2cee78fb3c60d9d2b3c27704c83b28a7156052b2c77f9936c0e9c",
+  "ub2_frozen_bundle_sha256": "a5bcbfb64942120f7d8469bebb3de92a9e0d19fa3701749d8a89beb8ff4872c9",
+  "ub2_suite_digest_sha256": "d2426ab2f5cd7e2028a180b15b25406368bfe5ea0cb6f3a9330dfcb3ddfc0a32",
+  "ub1_preblind_result_sha256": "676e2ea39a8fc733c11325e44e792f8aac5babd950cc29611e63dba3e196c2aa",
+  "pytest": "60 passed",
+  "compileall": "PASS",
+  "ub2_blind_status_at_record": "UNOPENED",
+  "note": "This record freezes the final byte-synchronized PREBLIND source head after the earlier manifest was written with preblind_source_commit=null. No UB2 blind content was inspected before this source commit was recorded."
+}
