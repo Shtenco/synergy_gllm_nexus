@@ -1,0 +1,17 @@
+{
+  "format_version": 2,
+  "name": "OMEGA15R2_PREBLIND_FINAL_FREEZE",
+  "checkpoint_sha256": "0bf09576104a1ca867d103b7fd2bb536510c0c2e044e1b549126ef44c47f12d6",
+  "checkpoint_bytes": 7151152,
+  "blind4_manifest_sha256": "4b8a9ea4e1fd15c2a3ae8b33fc6e843e02a69c4a1ee8146498bd88ee49167779",
+  "shadow_holdout_metrics": {
+    "n": 12000,
+    "subject_exact": 1.0,
+    "object_exact": 1.0,
+    "both_exact": 1.0,
+    "strict_triple_exact": 1.0,
+    "invalid_pair_rate": 0.0
+  },
+  "blind_metrics": null,
+  "tuning_after_open": false
+}
