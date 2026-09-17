@@ -1,0 +1,24 @@
+{
+  "archive_sha256": "cd01b1c37cc35ddf970aaffff2a6ae25723e4db1c0421fdccf5c423a35efae56",
+  "archive_size_bytes": 95223,
+  "benchmark": "NEXUS-FTX1",
+  "blind_content_committed_to_github": false,
+  "case_count": 2400,
+  "freeze_date": "2026-09-17",
+  "gold_sha256": "d2d1f023f03e7b0e960f146feed95631f79351b8e0895d0923e1df9061acf11b",
+  "per_track": {
+    "compositional_reasoning": {"count": 300, "gold_sha256": "90b4a9b685817953d230fd3c505c340d5501e00c2b8948d8bc20b2e6f21ba6ff", "runtime_sha256": "d34a635c35dfd91ad5c7c7e712f24e315357fc65e9345538402145fbeb4a2611"},
+    "cross_language_transfer": {"count": 300, "gold_sha256": "c81952789809e627e43bd0758e73eb4d9a122dc2642a25ebba1b7850208a8f4c", "runtime_sha256": "55d9236d84ba9991eb881c7f5602459feb25e79bb39995075b9ad07c123e3972"},
+    "evidence_counterfactual": {"count": 300, "gold_sha256": "498e353ad25c605a98f0bed7e4aa89dd024a6ecbbb1d4251c6e538d80af21785", "runtime_sha256": "f5d4e59bff2376c3edb94fd95b4ef21d513c574144cedf5dc79a1f6a4b8558fc"},
+    "long_horizon_transfer": {"count": 300, "gold_sha256": "bb2b39b75494d1758bd0fe3fd85af0b806fd2f47da8ec9b1ab1e2d1c0d1df069", "runtime_sha256": "9afe1deb492fd1f7a9569a7396b8e65f93ac4d0abee74ddfb58800328f09d660"},
+    "role_voice_coreference": {"count": 300, "gold_sha256": "3c04a8cb05a83e1fd84fa45bd00b8f6769bf6a8cca3f3bc3a7b93ca61bef6dc7", "runtime_sha256": "b80d51c23fc1766ba69fe3b97bf3fc2a481da1ad9d7876cc392d113412e6802f"},
+    "semantic_rule_induction": {"count": 300, "gold_sha256": "3278eb3554effea11a7f9d64ab03d8556773c0b46d24464e84f0fc29a02bb7d6", "runtime_sha256": "bef688aa33a1b75fde90c0464f2c2b0baa47d8ac88276caebcc9101954259b48"},
+    "surface_far_transfer": {"count": 300, "gold_sha256": "d48020abb6f37b955d9a8b86cde17fd493e638fd23c023b23d4aac9874ad55f8", "runtime_sha256": "7b2404950ee0d0a2243545082d2bce6dd0e4c4afadd6cf49b4e8d9975ecd97d5"},
+    "task_schema_induction": {"count": 300, "gold_sha256": "9cc84bb4f366e92deb2f55c917e1eeec3f1107d32f4a6738230216022ae241f3", "runtime_sha256": "2efb35d8f165d2b6e4f05ca0584bb155576e64163f9e1877f2c31501633b1baa"}
+  },
+  "promotion_gate": "v3 branch creation allowed only after this manifest is committed and reverified",
+  "redteam_sha256": "284654b16b2dc56843f3cdf3a30007995fbdc5767c3bcb2a702f5724c1cc43a7",
+  "runtime_sha256": "f19fe25cc839a78966b0b07ce8733f162462d35ab67c8bd73e547ff59a13bebf",
+  "sealed_generator_sha256": "58b3fa6be603ee2f469be2d035b81afdc249b7fda398194df5651c80c2b172b9",
+  "seeds": {"blind": 33017, "dev": 11017, "shadow": 22017}
+}
