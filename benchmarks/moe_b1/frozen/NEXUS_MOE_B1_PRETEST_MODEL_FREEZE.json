@@ -1,0 +1,247 @@
+{
+  "artifact_manifest_sha256": "65a854bdb42bff533353f57e7274fcd2660b1a03ad69d864b4568179cebbda62",
+  "benchmark_seed": 2026091913,
+  "counts": {
+    "dev": 180,
+    "test": 360,
+    "train": 720
+  },
+  "date": "2026-09-19",
+  "dev_metrics": {
+    "best_single": {
+      "accuracy": 0.3333333333333333,
+      "expert": "r718"
+    },
+    "heuristic_topk": {
+      "accuracy": 0.5888888888888889,
+      "negative_transfer_rate": 0.3872832369942196
+    },
+    "learned_moe": {
+      "accuracy": 0.9611111111111111,
+      "negative_transfer_rate": 0.0
+    },
+    "naive_all": {
+      "accuracy": 0.5888888888888889,
+      "negative_transfer_rate": 0.3872832369942196
+    },
+    "oracle": {
+      "accuracy": 0.9611111111111111,
+      "negative_transfer_rate": 0.0
+    },
+    "per_expert": {
+      "r710": 0.16666666666666666,
+      "r714": 0.16666666666666666,
+      "r718": 0.3333333333333333,
+      "r72": 0.12777777777777777,
+      "r76": 0.16666666666666666,
+      "r78": 0.16666666666666666,
+      "r7l": 0.16666666666666666
+    },
+    "per_family": {
+      "evidence_credit": {
+        "best_single": {
+          "accuracy": 1.0,
+          "expert": "r718"
+        },
+        "heuristic_topk": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "learned_moe": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "naive_all": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "oracle": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "per_expert": {
+          "r710": 0.0,
+          "r714": 0.0,
+          "r718": 1.0,
+          "r72": 0.0,
+          "r76": 0.0,
+          "r78": 0.0,
+          "r7l": 0.0
+        }
+      },
+      "fast_ru": {
+        "best_single": {
+          "accuracy": 0.7666666666666667,
+          "expert": "r72"
+        },
+        "heuristic_topk": {
+          "accuracy": 0.0,
+          "negative_transfer_rate": 1.0
+        },
+        "learned_moe": {
+          "accuracy": 0.7666666666666667,
+          "negative_transfer_rate": 0.0
+        },
+        "naive_all": {
+          "accuracy": 0.0,
+          "negative_transfer_rate": 1.0
+        },
+        "oracle": {
+          "accuracy": 0.7666666666666667,
+          "negative_transfer_rate": 0.0
+        },
+        "per_expert": {
+          "r710": 0.0,
+          "r714": 0.0,
+          "r718": 0.0,
+          "r72": 0.7666666666666667,
+          "r76": 0.0,
+          "r78": 0.0,
+          "r7l": 0.0
+        }
+      },
+      "fast_structured": {
+        "best_single": {
+          "accuracy": 1.0,
+          "expert": "r7l"
+        },
+        "heuristic_topk": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "learned_moe": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "naive_all": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "oracle": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "per_expert": {
+          "r710": 0.0,
+          "r714": 0.0,
+          "r718": 0.0,
+          "r72": 0.0,
+          "r76": 0.0,
+          "r78": 0.0,
+          "r7l": 1.0
+        }
+      },
+      "formal_mcq": {
+        "best_single": {
+          "accuracy": 1.0,
+          "expert": "r78"
+        },
+        "heuristic_topk": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "learned_moe": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "naive_all": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "oracle": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "per_expert": {
+          "r710": 1.0,
+          "r714": 0.0,
+          "r718": 1.0,
+          "r72": 0.0,
+          "r76": 0.0,
+          "r78": 1.0,
+          "r7l": 0.0
+        }
+      },
+      "morpholex": {
+        "best_single": {
+          "accuracy": 1.0,
+          "expert": "r714"
+        },
+        "heuristic_topk": {
+          "accuracy": 0.23333333333333334,
+          "negative_transfer_rate": 0.7666666666666667
+        },
+        "learned_moe": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "naive_all": {
+          "accuracy": 0.23333333333333334,
+          "negative_transfer_rate": 0.7666666666666667
+        },
+        "oracle": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "per_expert": {
+          "r710": 0.0,
+          "r714": 1.0,
+          "r718": 0.0,
+          "r72": 0.0,
+          "r76": 0.0,
+          "r78": 0.0,
+          "r7l": 0.0
+        }
+      },
+      "semantic_memory": {
+        "best_single": {
+          "accuracy": 1.0,
+          "expert": "r76"
+        },
+        "heuristic_topk": {
+          "accuracy": 0.3,
+          "negative_transfer_rate": 0.7
+        },
+        "learned_moe": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "naive_all": {
+          "accuracy": 0.3,
+          "negative_transfer_rate": 0.7
+        },
+        "oracle": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "per_expert": {
+          "r710": 0.0,
+          "r714": 0.0,
+          "r718": 0.0,
+          "r72": 0.0,
+          "r76": 1.0,
+          "r78": 0.0,
+          "r7l": 0.0
+        }
+      }
+    }
+  },
+  "experts": [
+    "r7l",
+    "r72",
+    "r76",
+    "r78",
+    "r710",
+    "r714",
+    "r718"
+  ],
+  "name": "NEXUS-MOE-B1 PRETEST MODEL FREEZE",
+  "router_epochs": 45,
+  "router_logical_sha256": "290b175184c00e8e4748ec583ef50b206944d4858e510c3925b548d3fcbf2eb9",
+  "router_seed": 17,
+  "router_serialized_sha256": "3de64c24b4946934878036f8f544ecad9cd9b8f7aba8b14d854cd0973b1e07e4",
+  "test_metrics": null,
+  "test_opened": false,
+  "test_split_sha256": "2b7aba62b5cfdc000074e8bfa90ed7b5c5fb71fc6bbd983f6444b8ee6afd8204",
+  "tuning_after_test_open": false
+}

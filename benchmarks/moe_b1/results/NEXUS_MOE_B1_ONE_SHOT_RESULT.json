@@ -1,0 +1,230 @@
+{
+  "benchmark": "NEXUS-MOE-B1",
+  "protocol": {
+    "ftx1_blind_used": false,
+    "hard_oos_d_reused_as_oos": false,
+    "pretest_model_freeze_sha256": "2c1c4903e5d51693d804ac259e5772f54f2c7686ee90865b95407a0cce5bcc44",
+    "sealed_before_evaluation": true,
+    "test_open_count": 1,
+    "tuning_after_test_open": false
+  },
+  "result": {
+    "best_single": {
+      "accuracy": 0.3333333333333333,
+      "expert": "r718"
+    },
+    "heuristic_topk": {
+      "accuracy": 0.5916666666666667,
+      "negative_transfer_rate": 0.3826086956521739
+    },
+    "learned_moe": {
+      "accuracy": 0.9444444444444444,
+      "negative_transfer_rate": 0.014492753623188406
+    },
+    "naive_all": {
+      "accuracy": 0.5916666666666667,
+      "negative_transfer_rate": 0.3826086956521739
+    },
+    "oracle": {
+      "accuracy": 0.9583333333333334,
+      "negative_transfer_rate": 0.0
+    },
+    "per_expert": {
+      "r710": 0.16666666666666666,
+      "r714": 0.16666666666666666,
+      "r718": 0.3333333333333333,
+      "r72": 0.125,
+      "r76": 0.16666666666666666,
+      "r78": 0.16666666666666666,
+      "r7l": 0.16666666666666666
+    },
+    "per_family": {
+      "evidence_credit": {
+        "best_single": {
+          "accuracy": 1.0,
+          "expert": "r718"
+        },
+        "heuristic_topk": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "learned_moe": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "naive_all": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "oracle": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "per_expert": {
+          "r710": 0.0,
+          "r714": 0.0,
+          "r718": 1.0,
+          "r72": 0.0,
+          "r76": 0.0,
+          "r78": 0.0,
+          "r7l": 0.0
+        }
+      },
+      "fast_ru": {
+        "best_single": {
+          "accuracy": 0.75,
+          "expert": "r72"
+        },
+        "heuristic_topk": {
+          "accuracy": 0.0,
+          "negative_transfer_rate": 1.0
+        },
+        "learned_moe": {
+          "accuracy": 0.75,
+          "negative_transfer_rate": 0.0
+        },
+        "naive_all": {
+          "accuracy": 0.0,
+          "negative_transfer_rate": 1.0
+        },
+        "oracle": {
+          "accuracy": 0.75,
+          "negative_transfer_rate": 0.0
+        },
+        "per_expert": {
+          "r710": 0.0,
+          "r714": 0.0,
+          "r718": 0.0,
+          "r72": 0.75,
+          "r76": 0.0,
+          "r78": 0.0,
+          "r7l": 0.0
+        }
+      },
+      "fast_structured": {
+        "best_single": {
+          "accuracy": 1.0,
+          "expert": "r7l"
+        },
+        "heuristic_topk": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "learned_moe": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "naive_all": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "oracle": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "per_expert": {
+          "r710": 0.0,
+          "r714": 0.0,
+          "r718": 0.0,
+          "r72": 0.0,
+          "r76": 0.0,
+          "r78": 0.0,
+          "r7l": 1.0
+        }
+      },
+      "formal_mcq": {
+        "best_single": {
+          "accuracy": 1.0,
+          "expert": "r78"
+        },
+        "heuristic_topk": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "learned_moe": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "naive_all": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "oracle": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "per_expert": {
+          "r710": 1.0,
+          "r714": 0.0,
+          "r718": 1.0,
+          "r72": 0.0,
+          "r76": 0.0,
+          "r78": 1.0,
+          "r7l": 0.0
+        }
+      },
+      "morpholex": {
+        "best_single": {
+          "accuracy": 1.0,
+          "expert": "r714"
+        },
+        "heuristic_topk": {
+          "accuracy": 0.25,
+          "negative_transfer_rate": 0.75
+        },
+        "learned_moe": {
+          "accuracy": 0.9166666666666666,
+          "negative_transfer_rate": 0.08333333333333333
+        },
+        "naive_all": {
+          "accuracy": 0.25,
+          "negative_transfer_rate": 0.75
+        },
+        "oracle": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "per_expert": {
+          "r710": 0.0,
+          "r714": 1.0,
+          "r718": 0.0,
+          "r72": 0.0,
+          "r76": 0.0,
+          "r78": 0.0,
+          "r7l": 0.0
+        }
+      },
+      "semantic_memory": {
+        "best_single": {
+          "accuracy": 1.0,
+          "expert": "r76"
+        },
+        "heuristic_topk": {
+          "accuracy": 0.3,
+          "negative_transfer_rate": 0.7
+        },
+        "learned_moe": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "naive_all": {
+          "accuracy": 0.3,
+          "negative_transfer_rate": 0.7
+        },
+        "oracle": {
+          "accuracy": 1.0,
+          "negative_transfer_rate": 0.0
+        },
+        "per_expert": {
+          "r710": 0.0,
+          "r714": 0.0,
+          "r718": 0.0,
+          "r72": 0.0,
+          "r76": 1.0,
+          "r78": 0.0,
+          "r7l": 0.0
+        }
+      }
+    }
+  }
+}
