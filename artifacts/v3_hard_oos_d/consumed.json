@@ -1,0 +1,5 @@
+{
+  "consumed": true,
+  "reason": "first frozen zero-shot evaluation completed",
+  "policy": "do not use HARD-OOS D as OOS after any D-informed training or tuning"
+}

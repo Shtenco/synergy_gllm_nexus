@@ -1,0 +1,25 @@
+{
+  "abstention_accuracy": 0.0,
+  "answer_accuracy": 0.2191,
+  "ast_topology_exact": 0.0,
+  "ast_topology_partial": 0.0,
+  "binding_resolution_accuracy": 0.0,
+  "by_stratum": {
+    "binding_ambiguity": {"ranking_accuracy": 0.24666666666666667, "representation_failure_rate": 1.0},
+    "counterfactual_traps": {"ranking_accuracy": 0.19, "representation_failure_rate": 1.0},
+    "mixed_adversarial": {"ranking_accuracy": 0.182, "representation_failure_rate": 1.0},
+    "novel_ast": {"ranking_accuracy": 0.245, "representation_failure_rate": 1.0},
+    "partial_noisy": {"ranking_accuracy": 0.25466666666666665, "representation_failure_rate": 1.0},
+    "temporal_inhibitor": {"ranking_accuracy": 0.2, "representation_failure_rate": 1.0}
+  },
+  "calibration_ece": 0.485960903955996,
+  "counterfactual_accuracy": 0.0,
+  "hypothesis_ranking_accuracy": 0.2191,
+  "hypothesis_stability": 0.0,
+  "inhibitor_accuracy": 0.0,
+  "prediction_accuracy": 0.2191,
+  "rename_invariance": 0.0,
+  "representation_failure_rate": 1.0,
+  "temporal_accuracy": 0.0,
+  "theory_revision_score": 0.0
+}

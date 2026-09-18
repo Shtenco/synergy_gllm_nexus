@@ -1,0 +1,9 @@
+{
+  "consumed": false,
+  "corpus_sha256": "251a18ee0c1f92f40a547794ea6e4be7c698c9bb5ecd6f2f9b0f7b09df19c8f2",
+  "episode_count": 10000,
+  "generator_version": "hard-oos-d-v1",
+  "model_sha256": "95fd54d5036c7dfda0da1b9edbff5b804e6fa7163aab2fec83459075eb3b2c96",
+  "sealed_before_evaluation": true,
+  "seed": 404
+}

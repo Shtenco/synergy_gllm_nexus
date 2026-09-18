@@ -1,0 +1,1 @@
+def compat_features(ep,c): return [float(c.explained),float(c.contradictions),float(c.heldout),float(c.complexity),float(c.symmetry_signal),float(c.chain_signal),float(c.inverse_signal),float(c.blocker_signal)]
