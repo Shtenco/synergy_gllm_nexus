@@ -3,7 +3,7 @@
 > Canonical registry for the NEXUS / SYNERGY intelligence lineage.  
 > Source repository: [Shtenco/synergy_gllm_nexus](https://github.com/Shtenco/synergy_gllm_nexus)  
 > Active research branch: [unified-v3-generalization-first](https://github.com/Shtenco/synergy_gllm_nexus/tree/unified-v3-generalization-first)  
-> Updated: 2026-09-18
+> Updated: 2026-09-19
 
 ## Scientific status
 
@@ -13,12 +13,13 @@ NEXUS has demonstrated several different kinds of transfer. They must not be col
 |---|---:|---|
 | Surface / paraphrase transfer | R7.6 Blind-23: 56/58 = **96.55%** | strong frozen semantic/paraphrase transfer |
 | Unseen operator + support demonstrations | R7-L Blind-18: **3072/3072 = 100%**, 48/48 held-out operators | genuine fast induction / meta-transfer |
-| Russian unseen operator + support | R7.2 Blind-20: **320/320 = 100%** | natural-language bridge to unseen operator induction |
+| Russian unseen operator + support | R7.2 historical Blind-20: **320/320 = 100% harness-assisted**; autonomous exact replay **254/320 = 79.375%** | saved harness used benchmark-side true intent for final output-head selection; deployable path uses predicted intent |
 | Broad post-freeze OOD | R7.18 Blind-31: **156/200 = 78%** | heterogeneous evidence/reasoning transfer |
 | Relation/role/graph transfer | Ω-1.5R2 Blind-4 strict triple: **50.37% / 66.63%** | real end-to-end structural transfer, still incomplete |
 | Synthetic meta-OOS | v3 P0.1 META-OOS C: **99.44%** | strong transfer inside the same high-level generator family |
 | New rule-language / AST basis | HARD-OOS D: **21.91%**, representation failure **100%** | fixed hypothesis representation fails on a new rule grammar |
 | Learned MoE routing | v3-MoE P1 useful-expert Top-K recall **99.62%**, negative transfer **0.48%** | routing result on synthetic mixed capability OOS; not yet end-to-end answer accuracy |
+| Exact historical MoE federation | NEXUS-MOE-B1: learned **94.44%**, best single **33.33%**, naive-all **59.17%**, oracle **95.83%** | one-shot end-to-end benchmark over 7 exact-runnable historical experts; learned negative transfer **1.45%** |
 
 ## Historical benchmark lineage
 
@@ -28,7 +29,7 @@ NEXUS has demonstrated several different kinds of transfer. They must not be col
 | V30 ARC unseen | **85.92%** | procedural transfer; dialogue remained weak |
 | Unified R1.3 compound/open-set | **164/188 = 87.23%**, open-set 30/30 | broad compound result |
 | R7-L D192 Blind-18 | **3072/3072 = 100%** | 48 fully held-out operators; no Authority; no inference weight update; support demonstrations allowed |
-| R7.2 Blind-20 | **320/320 = 100%** | 16 unseen operators through Russian interface |
+| R7.2 Blind-20 | historical **320/320 = 100% harness-assisted**; autonomous exact replay **254/320 = 79.375%** | final historical harness selected effect/action head using benchmark-side true intent; exact deployable path exposes intent-classifier bottleneck |
 | R7.6 Blind-23 | **56/58 = 96.55%** | post-freeze semantic/paraphrase transfer |
 | R7.8 Blind-25 | **77/80 = 96.25%** | frozen architecture-stress transfer |
 | R7.9 Blind-26 | **93.33%**, dual 95% | proof/system OOD |
@@ -49,7 +50,8 @@ NEXUS has demonstrated several different kinds of transfer. They must not be col
 | NEXUS-FTX1 | **frozen, BLIND unopened** | 2,400 cases, 8 tracks; primary future one-shot far-transfer benchmark |
 | v3 P0.1 META-OOS C | **99.44%** | synthetic same-generator-family OOS |
 | HARD-OOS D | **21.91%** | independent new AST grammar; consumed after frozen zero-shot |
-| v3-MoE P1 | useful recall **99.62%**, negative transfer **0.48%**, strict routing **98.80%** | routing curriculum; end-to-end MoE benchmark still required |
+| v3-MoE P1 | useful recall **99.62%**, negative transfer **0.48%**, strict routing **98.80%** | routing curriculum |
+| NEXUS-MOE-B1 | learned **94.44%**; best single **33.33%**; naive/heuristic **59.17%**; oracle **95.83%** | frozen one-shot on real exact historical rollouts; 7/11 requested experts exact-runnable, 4 fail-closed |
 
 ## Canonical result reports
 
@@ -68,8 +70,9 @@ All links below point to the active research branch.
 11. [2026-09-18 — Unified v3 P0.1 training report](https://github.com/Shtenco/synergy_gllm_nexus/blob/unified-v3-generalization-first/docs/results/2026-09-18-nexus-unified-v3-p01-training-report.md)
 12. [2026-09-18 — HARD-OOS D frozen zero-shot report](https://github.com/Shtenco/synergy_gllm_nexus/blob/unified-v3-generalization-first/docs/results/2026-09-18-nexus-v3-hard-oos-d-zero-shot-report.md)
 13. [2026-09-18 — v3-MoE P1 training report](https://github.com/Shtenco/synergy_gllm_nexus/blob/unified-v3-generalization-first/docs/results/2026-09-18-nexus-v3-moe-p1-training-report.md)
-14. [Unified v2 P0 report](https://github.com/Shtenco/synergy_gllm_nexus/blob/unified-v3-generalization-first/docs/results/UNIFIED_V2_P0_REPORT.md)
-15. [Unified v2 P0 / UB1 summary JSON](https://github.com/Shtenco/synergy_gllm_nexus/blob/unified-v3-generalization-first/docs/results/UNIFIED_V2_P0_UB1_SUMMARY.json)
+14. [2026-09-19 — Artifact-Complete audit + NEXUS-MOE-B1 one-shot](https://github.com/Shtenco/synergy_gllm_nexus/blob/unified-v3-generalization-first/docs/results/2026-09-19-nexus-v3-moe-artifact-complete-b1-report.md)
+15. [Unified v2 P0 report](https://github.com/Shtenco/synergy_gllm_nexus/blob/unified-v3-generalization-first/docs/results/UNIFIED_V2_P0_REPORT.md)
+16. [Unified v2 P0 / UB1 summary JSON](https://github.com/Shtenco/synergy_gllm_nexus/blob/unified-v3-generalization-first/docs/results/UNIFIED_V2_P0_UB1_SUMMARY.json)
 
 ## Frozen benchmark manifests and benchmark suites
 
@@ -141,6 +144,16 @@ All links below point to the active research branch.
 - [Novelty checkpoint](https://github.com/Shtenco/synergy_gllm_nexus/blob/unified-v3-generalization-first/artifacts/v3_moe/p1/novelty.pt)
 - [Calibrator checkpoint](https://github.com/Shtenco/synergy_gllm_nexus/blob/unified-v3-generalization-first/artifacts/v3_moe/p1/calibrator.pt)
 
+### NEXUS-MOE-B1 — exact historical federation
+- [Artifact-complete manifest](https://github.com/Shtenco/synergy_gllm_nexus/blob/unified-v3-generalization-first/benchmarks/moe_b1/frozen/ARTIFACT_COMPLETE_MANIFEST.json)
+- [Frozen split manifest](https://github.com/Shtenco/synergy_gllm_nexus/blob/unified-v3-generalization-first/benchmarks/moe_b1/frozen/NEXUS_MOE_B1_FREEZE_MANIFEST.json)
+- [Pretest model freeze](https://github.com/Shtenco/synergy_gllm_nexus/blob/unified-v3-generalization-first/benchmarks/moe_b1/frozen/NEXUS_MOE_B1_PRETEST_MODEL_FREEZE.json)
+- [One-shot result](https://github.com/Shtenco/synergy_gllm_nexus/blob/unified-v3-generalization-first/benchmarks/moe_b1/results/NEXUS_MOE_B1_ONE_SHOT_RESULT.json)
+- [Aborted seed 2026091907 record](https://github.com/Shtenco/synergy_gllm_nexus/blob/unified-v3-generalization-first/benchmarks/moe_b1/results/ABORTED_SEED_2026091907.json)
+- [Router checkpoint](https://github.com/Shtenco/synergy_gllm_nexus/blob/unified-v3-generalization-first/artifacts/v3_moe/b1/router_b1.pt)
+- Status: **7/11 exact-runnable** historical experts. R7.44.3, Ω-1.5R2, V10 and Unified R1.3 remain fail-closed until missing exact bytes/dependencies are mounted.
+- Final one-shot: learned MoE **94.44%**, oracle **95.83%**, best fixed single **33.33%**, naive/heuristic **59.17%**; learned negative transfer **1.45%** vs naive **38.26%**.
+
 ## Current benchmark policy
 
 - Historical scores are retained with their original scope and caveats.
@@ -148,7 +161,8 @@ All links below point to the active research branch.
 - Few-shot unseen-operator induction and zero-shot extrapolation to a new rule language are distinct capabilities.
 - HARD-OOS D is **consumed** and may no longer be used as a clean OOS claim after D-informed training.
 - FTX1 BLIND remains sealed.
-- The next MoE milestone requires a frozen end-to-end executable-expert benchmark, not merely synthetic router utility.
+- NEXUS-MOE-B1 now provides a frozen end-to-end executable-expert benchmark for the 7 exact-runnable historical experts.
+- The next artifact milestone is 11/11 exact-runnable recovery; the next scientific transfer milestone must use a fresh B2/FAR-OOS family not used for B1 router training.
 
 ## Canonical architecture documents
 
