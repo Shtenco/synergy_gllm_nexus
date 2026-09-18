@@ -1,0 +1,12 @@
+{
+  "dev_family": "B",
+  "dev_n": 5000,
+  "epochs": 14,
+  "experts": ["r7l","r72","r718","r744","graph","v3"],
+  "features": ["support","ru","evidence","context","graph","novelty","proof","cost"],
+  "oos_family": "C",
+  "oos_n": 5000,
+  "seed": 17,
+  "train_family": "A",
+  "train_n": 50000
+}

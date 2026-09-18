@@ -1,0 +1,14 @@
+{
+  "best_single_expert_useful_rate": 0.775,
+  "dev_useful_expert_recall": 0.9977,
+  "expert_calibration_brier": 0.15573,
+  "expert_calibration_ece": 0.052251,
+  "heuristic_topk_recall": 0.795,
+  "moe_gain_over_best_single": 0.213,
+  "negative_transfer_rate": 0.0048,
+  "novelty_accuracy": 0.9962,
+  "novelty_auroc": 0.999966,
+  "random_topk_recall": 0.4974,
+  "strict_routing_success": 0.988,
+  "useful_expert_recall": 0.9962
+}
