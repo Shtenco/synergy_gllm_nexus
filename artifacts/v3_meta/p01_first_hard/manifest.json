@@ -1,0 +1,8 @@
+{
+  "dev_episodes": 5000,
+  "epochs": 16,
+  "families": {"dev": "B", "oos": "C", "train": "A"},
+  "oos_episodes": 5000,
+  "seed": 17,
+  "train_episodes": 50000
+}

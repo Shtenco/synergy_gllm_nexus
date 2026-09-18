@@ -1,0 +1,9 @@
+{
+  "dev_accuracy": 0.9952,
+  "dev_initial_accuracy": 0.094,
+  "generalization_gap": 0.0006,
+  "oos_accuracy": 0.9944,
+  "oos_explained_baseline": 0.4274,
+  "oos_simplicity_baseline": 0.2564,
+  "train_accuracy": 0.995
+}
