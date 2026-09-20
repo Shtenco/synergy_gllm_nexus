@@ -110,3 +110,53 @@ class R718ExactExpert:
             chosen=gold if r.random()>noise else r.choice([x for x in self.LABELS if x!=gold]);lp={a:-4.5 for a in self.LABELS};lp[chosen]=-0.05-r.random()*.1;rows[t]={'pred':chosen,'option_logprobs':lp}
         return rows
     def answer(self,item,rows=None):return self.mod.decide(item,rows or {})
+
+
+class Omega15R2ExactExpert:
+    """Exact Ω-1.5R2 role/argument binder recovered from the frozen Blind-4 bundle."""
+    def __init__(self,bundle_root):
+        root=Path(bundle_root)
+        if str(root) not in sys.path: sys.path.insert(0,str(root))
+        import joblib
+        self.joint=joblib.load(root/'artifacts/omega15r2_v1/omega15r2_joint_binder_frozen.joblib')
+        self.semantic=joblib.load(root/'artifacts/base_semantic/omega14r_semantic_operator.joblib')
+    def parse(self,text,relation=None):
+        rel=relation if relation is not None else self.semantic.predict([text])[0]
+        if rel=='abstain': return {'relation':'abstain','subject':'','object':''}
+        out=self.joint.predict_one(text,rel)
+        return {'relation':rel,**out}
+
+class V10ExactExpert:
+    """Exact V10 600K InfoGraph ARC runtime reconstructed from canonical PART1..PART5 bytes."""
+    def __init__(self,release_root):
+        self.root=Path(release_root)
+        if str(self.root) not in sys.path: sys.path.insert(0,str(self.root))
+        from arc_solver_v11 import load_solver
+        torch.set_num_threads(1)
+        self.solver=load_solver(str(self.root/'checkpoints/v11_infograph_policy_600000.pt'),'cpu')
+    def solve(self,task,beam=64,branch=10):
+        import numpy as np
+        pairs=[(np.asarray(p['input']),np.asarray(p['output'])) for p in task['train']]
+        outputs=[]
+        for q in task['test']:
+            cands=self.solver.solve(
+                pairs,np.asarray(q['input']),
+                beam_width=beam,branch=branch,max_ops=4,attempts=2
+            )
+            outputs.append([c.output.tolist() for c in cands])
+        return outputs
+
+class UnifiedRebuildV1ExactExpert:
+    """Exact frozen successor runtime. This is NOT relabelled as historical Unified R1.3."""
+    def __init__(self,release_root):
+        self.root=Path(release_root)
+        if str(self.root) not in sys.path: sys.path.insert(0,str(self.root))
+        mod=_load_file('nexus_unified_rebuild_runtime',self.root/'unified_runtime.py')
+        self.runtime=mod.UnifiedNexusRuntime(self.root/'artifacts/checkpoints_v1')
+    def parse_ru(self,text): return self.runtime.parse_ru(text)
+    def context_action(self,text): return self.runtime.route_context(text)
+    def reset(self):
+        self.runtime.claims.clear(); self.runtime.edges.clear()
+    def upsert(self,*args,**kwargs): return self.runtime.upsert(*args,**kwargs)
+    def retract(self,*args,**kwargs): return self.runtime.retract(*args,**kwargs)
+    def query(self,*args,**kwargs): return self.runtime.query(*args,**kwargs)
