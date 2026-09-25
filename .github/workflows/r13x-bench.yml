@@ -1,0 +1,17 @@
+name: NEXUS R1.3-X regression
+on:
+  push:
+    branches: ["nexus-r13x-recovery-2026-09-26"]
+  workflow_dispatch:
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Test R1.3-X
+        run: PYTHONPATH=. pytest -q tests/test_r13x.py
+      - name: Run deterministic benchmark
+        run: PYTHONPATH=. python recovery/benchmarks/run_r13x.py
