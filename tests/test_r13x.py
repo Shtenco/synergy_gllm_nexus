@@ -28,6 +28,6 @@ def test_router_is_deterministic():
 
 def test_verifier_exact_arithmetic():
     v=Verifier()
-    p=Proposal("calc",2+2,.8,.0,verification="NEURAL_PROPOSAL",verification_op="CALCULATE")
+    p=Proposal("calc",0,.8,.0,verification="NEURAL_PROPOSAL",verification_op="CALCULATE",metadata={"expression":"2+2"})
     q=v.verify(p)
     assert q.verification=="EXACT_VERIFIED"
