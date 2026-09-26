@@ -227,9 +227,9 @@ class RussianSemanticParser:
             return ParsedRU("context_explain", {}, .80, t)
 
         # Evidence / epistemic.
-        if any(x in t for x in ("нет данных", "данных нет", "нет источников", "нет наблюдений", "информация отсутствует")):
+        if any(x in t for x in ("нет данных", "данных нет", "нет источников", "нет наблюдений", "информация отсутствует", "ничего не знаем", "источников нет", "информации мало")):
             return ParsedRU("insufficient_evidence", {}, .99, t)
-        if any(x in t for x in ("какие доказательства", "достаточно ли доказательств", "источники", "проверить источник")):
+        if any(x in t for x in ("какие доказательства", "достаточно ли доказательств", "источники", "проверить источник", "не выдумывать")):
             return ParsedRU("evidence_query", {}, .85, t)
 
         return ParsedRU("unknown", {}, .20, t)
@@ -237,6 +237,10 @@ class RussianSemanticParser:
     @staticmethod
     def _extract_expression(t: str) -> str | None:
         t=t.replace("×","*").replace("÷","/").replace("^","**")
+        t=re.sub(r"(\\d+(?:[.,]\\d+)?)\\s+умножить\\s+на\\s+(\\d+(?:[.,]\\d+)?)", r"\\1*\\2", t)
+        t=re.sub(r"(\\d+(?:[.,]\\d+)?)\\s+разделить\\s+на\\s+(\\d+(?:[.,]\\d+)?)", r"\\1/\\2", t)
+        t=re.sub(r"сумма\\s+(\\d+(?:[.,]\\d+)?)\\s+и\\s+(\\d+(?:[.,]\\d+)?)", r"\\1+\\2", t)
+        t=re.sub(r"разность\\s+(\\d+(?:[.,]\\d+)?)\\s+и\\s+(\\d+(?:[.,]\\d+)?)", r"\\1-\\2", t)
         t=re.sub(r"(сколько|будет|вычисли|посчитай|рассчитай|чему равно|равно)", " ", t)
         m=re.search(r"([0-9\s()+\-*/%.]{3,})", t)
         return re.sub(r"\s+","",m.group(1)) if m else None
@@ -248,7 +252,7 @@ class RussianRenderer:
         if kind=="greeting":
             return "Привет! Я NEXUS R1.3-X. Могу работать с проверяемой памятью, состояниями, простой логикой, причинными связями и точными вычислениями."
         if kind=="capabilities":
-            return ("Сейчас моё когнитивное ядро умеет работать с памятью сессии: сохранять и извлекать факты, отслеживать изменение состояния, "
+            return ("Я NEXUS R1.3-X. Сейчас моё когнитивное ядро умеет работать с памятью сессии: сохранять и извлекать факты, отслеживать изменение состояния, "
                     "выполнять безопасные вычисления; логика и причинные связи обрабатываются отдельно, а при недостатке данных я отказываюсь от ответа, "
                     "если данных недостаточно.")
         if kind=="memory_saved":
@@ -362,6 +366,14 @@ class CognitiveRussianRuntime:
             fact=self.memory.add_fact(session_id,p.slots["src"],"передать",p.slots["obj"])
             self.memory.remember(session_id,"последний факт",p.slots)
             return self._finish(session_id,p,self.renderer.render("relation",p.slots),memory_changed=True,evidence=("semantic_parser",),trace=trace)
+        if p.intent=="relation_query":
+            facts=self.memory.facts(session_id)
+            obj=_norm(p.slots["obj"]); dst=_norm(p.slots["dst"])
+            matches=[f for f in facts if _norm(f["object"])==obj]
+            if matches:
+                f=matches[-1]
+                return self._finish(session_id,p,f"{_cap(f['subject'])} передал(а) {p.slots['dst']} объект «{p.slots['obj']}».",evidence=("session_memory","semantic_parser"),trace=trace)
+            return self._finish(session_id,p,self.renderer.render("evidence_missing"),abstained=True,trace=trace)
         if p.intent=="context_explain":
             item=self.memory.recall(session_id,"последний факт")
             if item:
@@ -373,7 +385,10 @@ class CognitiveRussianRuntime:
         if p.intent=="causal_query":
             effect=_norm(p.slots["effect"])
             edges=self.memory.causal_edges(session_id)
-            matches=[e for e in edges if _norm(e["effect"]) in effect or effect in _norm(e["effect"])]
+            def _tokset(x):
+                return {w[:6] for w in re.findall(r"[а-яa-z0-9]+",_norm(x)) if len(w)>=3}
+            et=_tokset(effect)
+            matches=[e for e in edges if _norm(e["effect"]) in effect or effect in _norm(e["effect"]) or len(et & _tokset(e["effect"]))>=max(1,min(2,len(et)))]
             if matches:
                 e=matches[-1]
                 return self._finish(session_id,p,self.renderer.render("causal",e),evidence=("causal_memory",),trace=trace)
