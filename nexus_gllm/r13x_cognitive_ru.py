@@ -152,7 +152,8 @@ class RussianSemanticParser:
         if not t:
             return ParsedRU("empty", {}, 1.0, t)
 
-        if any(t == g or t.startswith(g + " ") for g in self.GREET):
+        greet_t=t.strip(" .,!?:;")
+        if any(greet_t == g or greet_t.startswith(g + " ") for g in self.GREET):
             return ParsedRU("greeting", {}, .99, t)
         if any(x in t for x in self.CAP):
             return ParsedRU("capabilities", {}, .99, t)
