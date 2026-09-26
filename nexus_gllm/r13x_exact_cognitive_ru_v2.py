@@ -27,10 +27,18 @@ class ExactCognitiveRussianRuntimeV2(CognitiveRussianRuntime):
         x=self.memory.recall(session_id,"__focus_entity__")
         return x["value"] if x else None
 
+    @staticmethod
+    def _causal_stem(word:str):
+        w=_norm(word)
+        for suf in ("иями","ями","ами","ого","ему","ыми","ими","ом","ем","ах","ях","ам","ям","ой","ей","ою","ею","ы","и","а","я","у","ю","е","о"):
+            if len(w)>len(suf)+3 and w.endswith(suf):
+                return w[:-len(suf)]
+        return w
+
     def _causal_path(self,session_id:str,target:str,max_depth:int=6):
         edges=self.memory.causal_edges(session_id)
         target_n=_norm(target)
-        def toks(x): return {_stem_ru(w) for w in re.findall(r"[а-яёa-z0-9]+",_norm(x)) if len(w)>=3}
+        def toks(x): return {self._causal_stem(w) for w in re.findall(r"[а-яёa-z0-9]+",_norm(x)) if len(w)>=3}
         tt=toks(target_n)
         incoming={}
         for e in edges:
