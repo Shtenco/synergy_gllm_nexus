@@ -161,7 +161,7 @@ class RussianSemanticParser:
             return ParsedRU("memory_clear", {}, .99, t)
 
         # Explicit memory commands.
-        m = re.search(r"(?:запомни|сохрани|запиши)(?:\s*[:,-])?\s*(.+)$", raw, re.I)
+        m = re.search(r"(?:запомни|сохрани|запиши|зафиксируй)\b(?:\s*[:,-])?\s*(.+)$", raw, re.I)
         if m:
             payload = m.group(1).strip().rstrip(".")
             km = re.match(r"(?P<key>[^:=—-]{2,80})\s*(?:=|:|—|-)\s*(?P<value>.+)", payload)
@@ -174,6 +174,9 @@ class RussianSemanticParser:
 
         if re.search(r"(?:какое|скажи|назови|напомни).*кодовое\s+слово", t):
             return ParsedRU("memory_recall", {"key": "кодовое слово"}, .99, t)
+        m = re.search(r"какой\s+(?P<key>.+?)\s+я\s+(?:просил|просила)\s+(?:сохранить|запомнить|зафиксировать)", t)
+        if m:
+            return ParsedRU("memory_recall", {"key": m.group("key").strip()}, .94, t)
         m = re.search(r"(?:что|какое значение|что было).*?(?:запомнил|запомнила|сохранил|сохранила|записал|записала).*?(?:про|для)?\s*([^?]+)", t)
         if m:
             return ParsedRU("memory_recall", {"key": m.group(1).strip()}, .90, t)
@@ -181,9 +184,18 @@ class RussianSemanticParser:
             return ParsedRU("history_recall", {}, .95, t)
 
         # World state.
+        m = re.search(r"у\s+(?P<entity>[^:,.?]+?)\s+теперь\s+(?:статус|состояние)\s*[«\"']?(?P<value>[^.»\"'?!]+)", t)
+        if m:
+            return ParsedRU("world_update", {"entity":m.group("entity").strip(), "attr":"статус", "value":m.group("value").strip()}, .98, t)
+        m = re.search(r"теперь\s+(?P<entity>[а-яa-z0-9_-]+)\s+(?P<value>[а-яa-z0-9_-]+),?\s+обнови\s+(?:его|ее|её)\s+(?:статус|состояние)", t)
+        if m:
+            return ParsedRU("world_update", {"entity":m.group("entity").strip(), "attr":"статус", "value":m.group("value").strip()}, .96, t)
         m = re.search(r"(?:статус|состояние)\s+(?P<entity>[^:,.?]+?)\s+(?:теперь|стал|стало|=|:)\s*(?P<value>[^.?!]+)", t)
         if m:
             return ParsedRU("world_update", {"entity":m.group("entity").strip(), "attr":"статус", "value":m.group("value").strip()}, .98, t)
+        m = re.search(r"в\s+каком\s+состоянии\s+(?P<entity>[^?]+?)(?:\s+сейчас)?\??$", t)
+        if m:
+            return ParsedRU("world_query", {"entity":m.group("entity").strip(), "attr":"статус"}, .95, t)
         m = re.search(r"(?:какой|каково|что с)\s+(?:сейчас\s+)?(?:статус|состояние)?\s*(?P<entity>[^?]+)", t)
         if m and ("статус" in t or "состояни" in t):
             return ParsedRU("world_query", {"entity":m.group("entity").strip(), "attr":"статус"}, .94, t)
@@ -194,6 +206,7 @@ class RussianSemanticParser:
             return ParsedRU("causal_store", {"cause":m.group("cause").strip(), "effect":m.group("effect").strip()}, .96, t)
         if any(t.startswith(x) for x in self.WHY):
             q = re.sub(r"^(почему|из-за чего|по какой причине)\s+", "", t).rstrip("?")
+            q = re.sub(r"^(?:произош[её]л|произошла|возникает|возник|случился|случилась)\s+", "", q)
             return ParsedRU("causal_query", {"effect":q}, .90, t)
 
         # Safe arithmetic.
@@ -211,9 +224,12 @@ class RussianSemanticParser:
             return ParsedRU("formal_some", {"a":m.group("a"),"b":m.group("b"),"c":m.group("c")}, .90, t)
 
         # Transfer / receive relation variants.
+        m = re.search(r"кто\s+(?:передал|вручил|дал)\s+(?P<obj>[А-Яа-яЁё-]+)\s+(?P<dst>[А-Яа-яЁё-]+)", raw, re.I)
+        if m:
+            return ParsedRU("relation_query", {"obj":m.group("obj"), "dst":m.group("dst")}, .92, t)
         patterns = [
             r"(?P<dst>[А-Яа-яЁё-]+)\s+получи(?:л|ла|ло|ли)\s+от\s+(?P<src>[А-Яа-яЁё-]+)\s+(?P<obj>[А-Яа-яЁё-]+)",
-            r"(?P<src>[А-Яа-яЁё-]+)\s+переда(?:л|ла|ло|ли)\s+(?P<dst>[А-Яа-яЁё-]+)\s+(?P<obj>[А-Яа-яЁё-]+)",
+            r"(?P<src>[А-Яа-яЁё-]+)\s+(?:переда(?:л|ла|ло|ли)|вручи(?:л|ла|ло|ли))\s+(?P<dst>[А-Яа-яЁё-]+)\s+(?P<obj>[А-Яа-яЁё-]+)",
             r"(?P<obj>[А-Яа-яЁё-]+)\s+(?P<dst>[А-Яа-яЁё-]+)\s+да(?:л|ла)\s+(?P<src>[А-Яа-яЁё-]+)",
             r"от\s+(?P<src>[А-Яа-яЁё-]+)\s+(?P<dst>[А-Яа-яЁё-]+)\s+получи(?:л|ла)\s+(?P<obj>[А-Яа-яЁё-]+)",
             r"(?P<dst>[А-Яа-яЁё-]+)\s+получи(?:л|ла)\s+(?P<obj>[А-Яа-яЁё-]+)\s+от\s+(?P<src>[А-Яа-яЁё-]+)",
