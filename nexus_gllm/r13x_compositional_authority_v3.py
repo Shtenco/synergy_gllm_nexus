@@ -133,7 +133,7 @@ class CompositionalAuthorityGovernorV3:
         # for supported primitive rules.
         if rule in {
             "py_floordiv","arith_mul","arith_add","arith_sub","arith_div",
-            "gcd","logic_modus_ponens","py_len","py_sum"
+            "gcd","logic_modus_ponens","py_len","py_sum","binary_search"
         }:
             return "FULL_SCOPE"
         # Conservative default: exact proof is useful evidence but not final authority.
