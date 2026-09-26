@@ -135,9 +135,9 @@ class ExactCognitiveRussianRuntimeV2(CognitiveRussianRuntime):
                 if morph: trace.append(f"r714_lang={morph.get('language')}")
                 return self._finish(session_id,p,f"Проверенный вывод: {value}.",evidence=("r710_verified_proof",),organ="r710_proof",trace=trace)
 
-        # R7.6 exact semantic-memory retrieval, only inside frozen neighborhood.
-        if parsed.intent=="unknown" and self.exact_v2:
-            sem=self.exact_v2.semantic_answer(original)
+        # R7.6 exact semantic-memory retrieval, only inside a high-similarity frozen neighborhood.
+        if parsed.intent in ("unknown","causal_query","evidence_query") and self.exact_v2:
+            sem=self.exact_v2.semantic_answer(original,min_similarity=.55)
             if sem:
                 p=ParsedRU("exact_semantic",{},float(sem.get("similarity",0.0)),_norm(original))
                 tr=[f"r76_atom={sem['atom_id']}",f"r76_similarity={sem['similarity']:.3f}"]
