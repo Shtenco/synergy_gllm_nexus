@@ -1,0 +1,38 @@
+{
+  "hard5": {
+    "correct": 85,
+    "total": 90,
+    "accuracy": 0.9444444444444444,
+    "per_category": {
+      "exact": {"correct": 10, "total": 10},
+      "formal": {"correct": 10, "total": 10},
+      "memory": {"correct": 10, "total": 10},
+      "causal": {"correct": 10, "total": 10},
+      "evidence": {"correct": 9, "total": 10},
+      "semantic": {"correct": 10, "total": 10},
+      "world": {"correct": 9, "total": 10},
+      "language": {"correct": 10, "total": 10},
+      "abstain": {"correct": 7, "total": 10}
+    },
+    "modes": {
+      "gate:causal": 9,
+      "gate:evidence": 10,
+      "gate:exact": 10,
+      "gate:formal": 10,
+      "gate:language": 7,
+      "gate:memory": 10,
+      "gate:no_evidence": 7,
+      "gate:semantic": 8,
+      "gate:world": 11,
+      "learned": 8
+    },
+    "failures": [
+      {"gold":"evidence","pred":"world","confidence":0.975,"mode":"gate:world","text":"Два независимых протокола подтверждают событие. Как оценить confidence?"},
+      {"gold":"world","pred":"memory","confidence":0.98,"mode":"gate:memory","text":"Сохрани event history и покажи current snapshot."},
+      {"gold":"abstain","pred":"evidence","confidence":0.97,"mode":"gate:evidence","text":"No evidence exists for the secret value. What should the system do?"},
+      {"gold":"abstain","pred":"evidence","confidence":0.97,"mode":"gate:evidence","text":"У объекта нет измерений массы. Можно ли назвать число?"},
+      {"gold":"abstain","pred":"world","confidence":0.975,"mode":"gate:world","text":"Нет фактов о событии, но требуют точную дату."}
+    ]
+  },
+  "sha256":"8d29d8158824f2149a7decff25c6e7e436112f6416cfc937da29691ecd156e01"
+}
