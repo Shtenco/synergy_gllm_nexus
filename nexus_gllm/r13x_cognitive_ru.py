@@ -28,6 +28,13 @@ def _cap(text: str) -> str:
     text = str(text or "").strip()
     return text[:1].upper() + text[1:] if text else text
 
+def _stem_ru(word: str) -> str:
+    w=_norm(word)
+    for suf in ("иями","ями","ами","ого","ему","ыми","ими","ов","ев","ом","ем","ах","ях","ам","ям","ой","ей","ою","ею","ами","ями","ы","и","а","я","у","ю","е","о"):
+        if len(w)>len(suf)+3 and w.endswith(suf):
+            return w[:-len(suf)]
+    return w
+
 
 @dataclass
 class ParsedRU:
@@ -179,7 +186,8 @@ class RussianSemanticParser:
             return ParsedRU("memory_recall", {"key": m.group("key").strip()}, .94, t)
         m = re.search(r"(?:что|какое значение|что было).*?(?:запомнил|запомнила|сохранил|сохранила|записал|записала).*?(?:про|для)?\s*([^?]+)", t)
         if m:
-            return ParsedRU("memory_recall", {"key": m.group(1).strip()}, .90, t)
+            key=re.sub(r"^(?:про|для)\s+","",m.group(1).strip())
+            return ParsedRU("memory_recall", {"key": key}, .90, t)
         if any(x in t for x in ("что я сказал раньше", "что я говорил раньше", "что было раньше", "что я сказал до этого")):
             return ParsedRU("history_recall", {}, .95, t)
 
@@ -210,7 +218,7 @@ class RussianSemanticParser:
             return ParsedRU("causal_query", {"effect":q}, .90, t)
 
         # Safe arithmetic.
-        if any(x in t for x in ("сколько", "вычисли", "посчитай", "рассчитай")):
+        if any(x in t for x in ("сколько", "вычисли", "посчитай", "рассчитай", "чему равна", "чему равно", "сумма", "разность", "произведение", "частное")):
             expr = self._extract_expression(t)
             if expr:
                 return ParsedRU("arithmetic", {"expression":expr}, .99, t)
@@ -219,8 +227,8 @@ class RussianSemanticParser:
         m = re.search(r"если\s+(?P<a>.+?),\s*(?:то\s+)?(?P<b>.+?)\.\s*(?P=a)\.?\s*(?:что|следует|значит)", t)
         if m:
             return ParsedRU("formal_modus_ponens", {"premise":m.group("a"), "conclusion":m.group("b")}, .93, t)
-        m = re.search(r"все\s+(?P<a>\w+)\s+(?:являются|это)\s+(?P<b>\w+).*некоторые\s+(?P<c>\w+)\s+(?:являются|это)\s+(?P=a)", t)
-        if m:
+        m = re.search(r"все\s+(?P<a>\w+)\s+(?:являются|это)\s+(?P<b>\w+).*некоторые\s+(?P<c>\w+)\s+(?:являются|это)\s+(?P<a2>\w+)", t)
+        if m and _stem_ru(m.group("a"))==_stem_ru(m.group("a2")):
             return ParsedRU("formal_some", {"a":m.group("a"),"b":m.group("b"),"c":m.group("c")}, .90, t)
 
         # Transfer / receive relation variants.
@@ -368,7 +376,9 @@ class CognitiveRussianRuntime:
         if p.intent=="history_recall":
             turns=self.memory.turns(session_id)
             users=[x["text"] for x in turns[:-1] if x["role"]=="user"]
-            txt=f"Ранее вы сказали: «{users[-1]}»." if users else ""
+            substantive=[u for u in users if "?" not in u and not _norm(u).startswith(("напомни","какое","какой","что ","кто "))]
+            chosen=(substantive[-1] if substantive else (users[-1] if users else ""))
+            txt=f"Ранее вы сказали: «{chosen}»." if chosen else ""
             return self._finish(session_id,p,self.renderer.render("history",{"text":txt}),evidence=("dialogue_history",) if users else (),abstained=not bool(users),trace=trace)
         if p.intent=="world_update":
             self.memory.set_world(session_id,p.slots["entity"],p.slots["attr"],p.slots["value"])
@@ -402,7 +412,7 @@ class CognitiveRussianRuntime:
             effect=_norm(p.slots["effect"])
             edges=self.memory.causal_edges(session_id)
             def _tokset(x):
-                return {w[:6] for w in re.findall(r"[а-яa-z0-9]+",_norm(x)) if len(w)>=3}
+                return {w[:5] for w in re.findall(r"[а-яa-z0-9]+",_norm(x)) if len(w)>=3}
             et=_tokset(effect)
             matches=[e for e in edges if _norm(e["effect"]) in effect or effect in _norm(e["effect"]) or len(et & _tokset(e["effect"]))>=max(1,min(2,len(et)))]
             if matches:
