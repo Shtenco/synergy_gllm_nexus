@@ -64,7 +64,30 @@ class ExactCognitiveRussianRuntimeV2(CognitiveRussianRuntime):
         c=p["conclusion"]
         return str(c),p
 
+    @staticmethod
+    def _parse_mcq(text:str):
+        matches=list(re.finditer(r"\b([A-DА-Г])\)\s*([^\n]+?)(?=\s+\b[A-DА-Г]\)|$)",text,re.I))
+        if len(matches)<2:return None
+        options={m.group(1).upper():m.group(2).strip(" .;") for m in matches}
+        q=text[:matches[0].start()].strip()
+        q=re.sub(r"^(?:выбери|выберите|укажи|укажите)\s+(?:правильный\s+)?вариант[:.]?\s*","",q,flags=re.I)
+        return q,options
+
     def answer(self,text:str,session_id:str="default")->CognitiveRUResponse:
+        original=text
+        mcq=self._parse_mcq(text)
+        if mcq and self.exact_v2:
+            q,options=mcq
+            votes=self.exact_v2.solve_mcq(q,options)
+            a78=(votes.get("r78") or {}).get("answer")
+            r710=votes.get("r710") or {}
+            a710=r710.get("answer") if r710.get("status")=="VERIFIED" else None
+            agreed=a78 if a78 and a78==a710 else None
+            p=ParsedRU("exact_mcq",{},.999,_norm(q))
+            if agreed:
+                val=options.get(agreed,"")
+                return self._finish(session_id,p,f"Проверенный вариант: {agreed} — {val}.",evidence=("r78_exact_authority","r710_verified_proof"),organ="exact_consensus",trace=(f"r78={a78}",f"r710={a710}"))
+            return self._finish(session_id,p,self.renderer.render("evidence_missing"),abstained=True,evidence=("exact_consensus_failed",),organ="exact_consensus",trace=(f"r78={a78}",f"r710={a710}"))
         original=text
         morph=None
         if self.exact_v2:
