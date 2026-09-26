@@ -35,6 +35,9 @@ def _stem_ru(word: str) -> str:
             return w[:-len(suf)]
     return w
 
+def _entity_key(text: str) -> str:
+    return " ".join(_stem_ru(w) for w in re.findall(r"[а-яa-z0-9_-]+",_norm(text)))
+
 
 @dataclass
 class ParsedRU:
@@ -108,12 +111,12 @@ class PersistentDialogueMemory:
     def set_world(self, session_id: str, entity: str, attr: str, value: str):
         with self._lock:
             s = self._session(session_id)
-            s["world"].setdefault(_norm(entity), {})[_norm(attr)] = value
+            s["world"].setdefault(_entity_key(entity), {})[_norm(attr)] = value
             self._flush()
 
     def get_world(self, session_id: str, entity: str, attr: str):
         with self._lock:
-            return self._session(session_id)["world"].get(_norm(entity), {}).get(_norm(attr))
+            return self._session(session_id)["world"].get(_entity_key(entity), {}).get(_norm(attr))
 
     def add_causal(self, session_id: str, cause: str, effect: str):
         with self._lock:
@@ -184,7 +187,7 @@ class RussianSemanticParser:
         m = re.search(r"какой\s+(?P<key>.+?)\s+я\s+(?:просил|просила)\s+(?:сохранить|запомнить|зафиксировать)", t)
         if m:
             return ParsedRU("memory_recall", {"key": m.group("key").strip()}, .94, t)
-        m = re.search(r"(?:что|какое значение|что было).*?(?:запомнил|запомнила|сохранил|сохранила|записал|записала).*?(?:про|для)?\s*([^?]+)", t)
+        m = re.search(r"(?:что|какое значение|что было).*?(?:запомнил|запомнила|сохранил|сохранила|сохранено|записал|записала|записано).*?(?:про|для)?\s*([^?]+)", t)
         if m:
             key=re.sub(r"^(?:про|для)\s+","",m.group(1).strip())
             return ParsedRU("memory_recall", {"key": key}, .90, t)
