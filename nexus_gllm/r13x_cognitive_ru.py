@@ -159,7 +159,7 @@ class PersistentDialogueMemory:
 class RussianSemanticParser:
     """Deterministic Russian parser covering dialogue, memory, world and simple reasoning."""
 
-    GREET = ("привет", "здравствуй", "здравствуйте", "добрый день", "добрый вечер")
+    GREET = ("привет", "здравствуй", "здравствуйте", "добрый день", "добрый вечер", "доброе утро")
     CAP = ("что ты умеешь", "что умеешь", "твои возможности", "кто ты", "что можешь")
     WHY = ("почему", "из-за чего", "по какой причине")
 
