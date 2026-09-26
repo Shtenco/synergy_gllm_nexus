@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from .r13x_cognitive_ru import (
-    CognitiveRussianRuntime, CognitiveRUResponse, ParsedRU, _norm, _cap
+    CognitiveRussianRuntime, CognitiveRUResponse, ParsedRU, _norm, _cap, _stem_ru
 )
 from .r13x_exact_organs_v2 import ExactOrganV2
 
@@ -30,7 +30,7 @@ class ExactCognitiveRussianRuntimeV2(CognitiveRussianRuntime):
     def _causal_path(self,session_id:str,target:str,max_depth:int=6):
         edges=self.memory.causal_edges(session_id)
         target_n=_norm(target)
-        def toks(x): return {w[:5] for w in re.findall(r"[а-яa-z0-9]+",_norm(x)) if len(w)>=3}
+        def toks(x): return {_stem_ru(w) for w in re.findall(r"[а-яёa-z0-9]+",_norm(x)) if len(w)>=3}
         tt=toks(target_n)
         incoming={}
         for e in edges:
@@ -139,11 +139,14 @@ class ExactCognitiveRussianRuntimeV2(CognitiveRussianRuntime):
         # Multi-hop causal query.
         if parsed.intent=="causal_query":
             path=self._causal_path(session_id,parsed.slots.get("effect",""))
+            p=ParsedRU("causal_query",parsed.slots,parsed.confidence,parsed.normalized)
             if path:
-                p=ParsedRU("causal_query",parsed.slots,parsed.confidence,parsed.normalized)
                 tr=[f"causal_hops={len(path)}"]
                 if morph: tr.append(f"r714_lang={morph.get('language')}")
                 return self._finish(session_id,p,self._render_causal_path(path),evidence=("causal_memory","multi_hop"),organ="causal_graph",trace=tr)
+            tr=["causal_hops=0"]
+            if morph: tr.append(f"r714_lang={morph.get('language')}")
+            return self._finish(session_id,p,self.renderer.render("evidence_missing"),abstained=True,evidence=("causal_memory_miss",),organ="causal_graph",trace=tr)
 
         # Delegate normal Russian runtime.
         out=super().answer(text,session_id)
