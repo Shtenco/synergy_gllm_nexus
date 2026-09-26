@@ -80,7 +80,19 @@ class ExactOrganV2:
         byid={a["id"]:a for a in obj["atoms"]}
         atom=byid.get(best)
         if not atom:return None
-        return {"answer":atom.get("semantic_answer"),"atom_id":best,"votes":pred,"domain":atom.get("domain"),"similarity":max_sim,"nearest_question":questions[idx]}
+        return {
+            "answer": atom.get("semantic_answer"),
+            "atom_id": best,
+            "votes": pred,
+            "domain": atom.get("domain"),
+            "similarity": max_sim,
+            "nearest_question": questions[idx],
+            "governor_correct": atom.get("governor_correct"),
+            "governor_letter": atom.get("governor_letter"),
+            "gold_letter": atom.get("gold_letter"),
+            "trust_top_probability": atom.get("trust_top_probability"),
+            "trust_margin": atom.get("trust_margin"),
+        }
 
     def proof(self,question:str):
         o=self.loaded.get("r710")
