@@ -198,7 +198,7 @@ class RussianSemanticParser:
         m = re.search(r"у\s+(?P<entity>[^:,.?]+?)\s+теперь\s+(?:статус|состояние)\s*[«\"']?(?P<value>[^.»\"'?!]+)", t)
         if m:
             return ParsedRU("world_update", {"entity":m.group("entity").strip(), "attr":"статус", "value":m.group("value").strip()}, .98, t)
-        m = re.search(r"теперь\s+(?P<entity>[а-яa-z0-9_-]+)\s+(?P<value>[а-яa-z0-9_-]+),?\s+обнови\s+(?:его|ее|её)\s+(?:статус|состояние)", t)
+        m = re.search(r"теперь\s+(?P<entity>[а-яёa-z0-9_-]+)\s+(?P<value>[а-яёa-z0-9_-]+),?\s+обнови\s+(?:его|ее|её)\s+(?:статус|состояние)", t)
         if m:
             return ParsedRU("world_update", {"entity":m.group("entity").strip(), "attr":"статус", "value":m.group("value").strip()}, .96, t)
         m = re.search(r"(?:статус|состояние)\s+(?P<entity>[^:,.?]+?)\s+(?:теперь|стал|стало|=|:)\s*(?P<value>[^.?!]+)", t)
