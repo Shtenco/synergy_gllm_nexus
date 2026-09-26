@@ -89,12 +89,12 @@ class PersistentDialogueMemory:
     def remember(self, session_id: str, key: str, value: Any, *, source: str = "user"):
         with self._lock:
             s = self._session(session_id)
-            s["kv"][_norm(key)] = {"value": value, "source": source}
+            s["kv"][_entity_key(key)] = {"value": value, "source": source}
             self._flush()
 
     def recall(self, session_id: str, key: str):
         with self._lock:
-            return self._session(session_id)["kv"].get(_norm(key))
+            return self._session(session_id)["kv"].get(_entity_key(key))
 
     def add_fact(self, session_id: str, subject: str, relation: str, obj: str):
         with self._lock:
@@ -171,7 +171,7 @@ class RussianSemanticParser:
             return ParsedRU("memory_clear", {}, .99, t)
 
         # Explicit memory commands.
-        m = re.search(r"(?:запомни|сохрани|запиши|зафиксируй)\b(?:\s*[:,-])?\s*(.+)$", raw, re.I)
+        m = re.search(r"(?:запомни|сохрани|запиши|зафиксируй)\b(?:\s*[:,-—])?\s*(.+)$", raw, re.I)
         if m:
             payload = m.group(1).strip().rstrip(".")
             km = re.match(r"(?P<key>[^:=—-]{2,80})\s*(?:=|:|—|-)\s*(?P<value>.+)", payload)
