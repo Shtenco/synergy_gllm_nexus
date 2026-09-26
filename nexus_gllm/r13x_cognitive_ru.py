@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import difflib
 import json
 import math
 import operator
@@ -94,7 +95,13 @@ class PersistentDialogueMemory:
 
     def recall(self, session_id: str, key: str):
         with self._lock:
-            return self._session(session_id)["kv"].get(_entity_key(key))
+            kv=self._session(session_id)["kv"]
+            wanted=_entity_key(key)
+            if wanted in kv:return kv[wanted]
+            if not kv:return None
+            scored=sorted(((difflib.SequenceMatcher(None,wanted,k).ratio(),k) for k in kv),reverse=True)
+            score,best=scored[0]
+            return kv[best] if score>=0.84 else None
 
     def add_fact(self, session_id: str, subject: str, relation: str, obj: str):
         with self._lock:
