@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import difflib
 import json
 import math
 import operator
@@ -94,7 +95,13 @@ class PersistentDialogueMemory:
 
     def recall(self, session_id: str, key: str):
         with self._lock:
-            return self._session(session_id)["kv"].get(_entity_key(key))
+            kv=self._session(session_id)["kv"]
+            wanted=_entity_key(key)
+            if wanted in kv:return kv[wanted]
+            if not kv:return None
+            scored=sorted(((difflib.SequenceMatcher(None,wanted,k).ratio(),k) for k in kv),reverse=True)
+            score,best=scored[0]
+            return kv[best] if score>=0.84 else None
 
     def add_fact(self, session_id: str, subject: str, relation: str, obj: str):
         with self._lock:
@@ -152,7 +159,7 @@ class PersistentDialogueMemory:
 class RussianSemanticParser:
     """Deterministic Russian parser covering dialogue, memory, world and simple reasoning."""
 
-    GREET = ("привет", "здравствуй", "здравствуйте", "добрый день", "добрый вечер")
+    GREET = ("привет", "здравствуй", "здравствуйте", "добрый день", "добрый вечер", "доброе утро")
     CAP = ("что ты умеешь", "что умеешь", "твои возможности", "кто ты", "что можешь")
     WHY = ("почему", "из-за чего", "по какой причине")
 
@@ -198,7 +205,7 @@ class RussianSemanticParser:
         m = re.search(r"у\s+(?P<entity>[^:,.?]+?)\s+теперь\s+(?:статус|состояние)\s*[«\"']?(?P<value>[^.»\"'?!]+)", t)
         if m:
             return ParsedRU("world_update", {"entity":m.group("entity").strip(), "attr":"статус", "value":m.group("value").strip()}, .98, t)
-        m = re.search(r"теперь\s+(?P<entity>[а-яa-z0-9_-]+)\s+(?P<value>[а-яa-z0-9_-]+),?\s+обнови\s+(?:его|ее|её)\s+(?:статус|состояние)", t)
+        m = re.search(r"теперь\s+(?P<entity>[а-яёa-z0-9_-]+)\s+(?P<value>[а-яёa-z0-9_-]+),?\s+обнови\s+(?:его|ее|её)\s+(?:статус|состояние)", t)
         if m:
             return ParsedRU("world_update", {"entity":m.group("entity").strip(), "attr":"статус", "value":m.group("value").strip()}, .96, t)
         m = re.search(r"(?:статус|состояние)\s+(?P<entity>[^:,.?]+?)\s+(?:теперь|стал|стало|=|:)\s*(?P<value>[^.?!]+)", t)
@@ -254,7 +261,7 @@ class RussianSemanticParser:
             return ParsedRU("context_explain", {}, .80, t)
 
         # Evidence / epistemic.
-        if any(x in t for x in ("нет данных", "данных нет", "нет источников", "нет наблюдений", "информация отсутствует", "ничего не знаем", "источников нет", "информации мало")):
+        if any(x in t for x in ("нет данных", "данных нет", "нет источников", "нет наблюдений", "информация отсутствует", "ничего не знаем", "источников нет", "информации мало", "нет журналов", "журналов нет", "нет логов", "логов нет", "нет записей", "записей нет")):
             return ParsedRU("insufficient_evidence", {}, .99, t)
         if any(x in t for x in ("какие доказательства", "достаточно ли доказательств", "источники", "проверить источник", "не выдумывать")):
             return ParsedRU("evidence_query", {}, .85, t)

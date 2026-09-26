@@ -90,10 +90,31 @@ class R78ExactExpert:
 
 class R710ExactExpert:
     def __init__(self,root=Path('/mnt/data/nexus_moe_artifacts/r710/NEXUS_R710_PROOF_FIRST_FREEZE_2026-08-21')):
-        src=Path(root)/'source';sys.path.insert(0,str(src)) if str(src) not in sys.path else None;self.mod=__import__('runtime_v2')
+        root=Path(root)
+        candidates=(root/'source', root/'FREEZE'/'source')
+        src=next((p for p in candidates if (p/'runtime_v2.py').is_file()),None)
+        if src is None:
+            raise FileNotFoundError(f'R7.10 runtime_v2.py not found under {root}')
+        if str(src) not in sys.path: sys.path.insert(0,str(src))
+        self.root=root;self.src=src;self.mod=__import__('runtime_v2')
     def answer(self,item):
         try:return self.mod.formal_pass(item)
         except Exception:return {'status':'UNSUPPORTED','answer':None}
+    def prove(self,question):
+        try:
+            item={'q':question,'options':{}}
+            ir=self.mod.compile_item(item)
+            if ir is None:return {'status':'UNSUPPORTED','conclusion':None,'ir':None,'proof':None,'verification':None}
+            proof=self.mod.solve(ir);ver=self.mod.verify(ir,proof)
+            return {
+                'status':ver.status,
+                'conclusion':proof.conclusion if proof else None,
+                'ir':self.mod.dump_obj(ir),
+                'proof':self.mod.dump_obj(proof) if proof else None,
+                'verification':self.mod.dump_obj(ver),
+            }
+        except Exception as e:
+            return {'status':'UNSUPPORTED','conclusion':None,'error':f'{type(e).__name__}: {e}'}
 
 class R714ExactExpert:
     def __init__(self,root=Path('/mnt/data/nexus_moe_artifacts/r714/NEXUS_R714_MULTILINGUAL_MORPHOLEX_FREEZE_2026-08-23')):
