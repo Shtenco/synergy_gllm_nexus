@@ -100,7 +100,10 @@ class ExactCognitiveRussianRuntimeV2(CognitiveRussianRuntime):
         t=_norm(text)
         focus=self._focus(session_id)
         if focus:
-            if re.search(r"\b(?:его|её|ее|этого объекта|этой сущности)\b",t) and ("статус" in t or "состояни" in t):
+            if re.search(r"(?:каков[оа]?|какой)\s+(?:его|её|ее)\s+(?:статус|состояние)",t):
+                attr="состояние" if "состояни" in t else "статус"
+                text=f"Каково {attr} {focus}?"
+            elif re.search(r"\b(?:его|её|ее|этого объекта|этой сущности)\b",t) and ("статус" in t or "состояни" in t):
                 text=re.sub(r"\b(?:его|её|ее|этого объекта|этой сущности)\b",focus,text,flags=re.I)
 
         # Try base parser first.
