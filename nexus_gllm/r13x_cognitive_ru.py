@@ -165,7 +165,7 @@ class RussianSemanticParser:
         greet_t=t.strip(" .,!?:;")
         if any(re.match(r"^"+re.escape(g)+r"(?:$|[\s,.!?:;—-])", t) for g in self.GREET):
             return ParsedRU("greeting", {}, .99, t)
-        if any(x in t for x in self.CAP):
+        if any(x in t for x in self.CAP) or (("уме" in t or "возможност" in t) and ("когнитив" in t or "можешь" in t or "ядро" in t)):
             return ParsedRU("capabilities", {}, .99, t)
         if any(x in t for x in ("забудь эту сессию", "очисти память сессии", "сбрось память")):
             return ParsedRU("memory_clear", {}, .99, t)
