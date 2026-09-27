@@ -1,0 +1,21 @@
+{
+  "benchmark": "NEXUS-RU-COGNITIVE HARD-OOS-E",
+  "status": "SEALED_BEFORE_FIRST_INFERENCE",
+  "items": 1500,
+  "categories": 10,
+  "items_per_category": 150,
+  "dataset_sha256": "93a1e9e3c4c7ebe0302ec6b03a259f866852d50e400fe2d25b790311d7e7eb99",
+  "planner_checkpoint_sha256": "62c7bc58fb4285fbd2580e5eb926c3c540163b0370948e1b495d8188cdc16da3",
+  "planner_parameters": 11040270,
+  "binder": "ArgumentBinderV4",
+  "executor": "CompositionalCognitiveExecutorV4",
+  "stressors": [
+    "parenthetical distractors",
+    "contrastive not-X-but-Y",
+    "reference notes",
+    "reordered clauses",
+    "distractors without explicit noise keyword"
+  ],
+  "generator_seed": 2026092805,
+  "rule": "No parameter, parser, binder, executor, threshold, or routing changes after this seal and before first HARD-OOS-E inference."
+}
