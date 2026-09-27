@@ -1,0 +1,13 @@
+{
+  "benchmark": "NEXUS-RU-COGNITIVE HARD-OOS-C",
+  "status": "SEALED_BEFORE_FIRST_INFERENCE",
+  "items": 1500,
+  "categories": 10,
+  "items_per_category": 150,
+  "dataset_sha256": "39df580da2f77e2167ae5aa18d9a42c01fc23a262fd4ed2a5e7434b57fb98410",
+  "planner_checkpoint_sha256": "cfcf621a1c55f6e413ad166f5f91a749d9eccd78f5a53fd1acc8b41fc8ffcd3a",
+  "planner_parameters": 5817998,
+  "validation_accuracy_before_freeze": 0.952,
+  "generator_seed": 2026092803,
+  "rule": "No parameter, threshold, parser, executor, or routing changes after this seal and before first HARD-OOS-C inference."
+}
