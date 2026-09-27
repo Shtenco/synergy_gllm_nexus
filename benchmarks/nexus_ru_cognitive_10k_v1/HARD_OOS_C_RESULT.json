@@ -1,0 +1,21 @@
+{
+  "benchmark": "NEXUS-RU-COGNITIVE HARD-OOS-C",
+  "status": "ONE_SHOT_COMPLETE_NO_PREOPEN_TUNING",
+  "dataset_sha256": "39df580da2f77e2167ae5aa18d9a42c01fc23a262fd4ed2a5e7434b57fb98410",
+  "checkpoint_sha256": "cfcf621a1c55f6e413ad166f5f91a749d9eccd78f5a53fd1acc8b41fc8ffcd3a",
+  "parameters": 5817998,
+  "overall_plan_accuracy": 0.926,
+  "overall_answer_accuracy": 0.9486666666666667,
+  "categories": {
+    "natural_ru": {"n":150,"plan_accuracy":0.6,"answer_accuracy":1.0},
+    "multi_hop": {"n":150,"plan_accuracy":0.84,"answer_accuracy":0.9866666666666667},
+    "causal": {"n":150,"plan_accuracy":1.0,"answer_accuracy":1.0},
+    "memory_context": {"n":150,"plan_accuracy":0.86,"answer_accuracy":0.86},
+    "conflicting_memory": {"n":150,"plan_accuracy":0.96,"answer_accuracy":1.0},
+    "world_state": {"n":150,"plan_accuracy":1.0,"answer_accuracy":0.8666666666666667},
+    "semantic_graph": {"n":150,"plan_accuracy":1.0,"answer_accuracy":1.0},
+    "formal_executable": {"n":150,"plan_accuracy":1.0,"answer_accuracy":1.0},
+    "evidence_epistemic": {"n":150,"plan_accuracy":1.0,"answer_accuracy":0.7733333333333333},
+    "mixed_cognitive": {"n":150,"plan_accuracy":1.0,"answer_accuracy":1.0}
+  }
+}
