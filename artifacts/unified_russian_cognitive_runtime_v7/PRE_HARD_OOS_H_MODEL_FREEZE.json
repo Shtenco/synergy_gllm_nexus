@@ -1,0 +1,10 @@
+{
+ "name":"NEXUS Unified Russian Cognitive Stack V7",
+ "status":"FROZEN_PRE_HARD_OOS_H",
+ "v7_cortex_parameters":13774043,
+ "legacy_v5_planner_parameters":19214734,
+ "combined_cognitive_parameters":32988777,
+ "checkpoint_sha256":"e1adb104f67cb17ebc78fd3a8afd394584fc63ad885708e47581d656fb2afbb2",
+ "heads":["plan","relevance","semantic_role","temporal_role"],
+ "rule":"No model/parser/decoder/threshold changes after this freeze and before first HARD-OOS-H inference."
+}
