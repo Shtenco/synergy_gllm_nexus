@@ -1,0 +1,31 @@
+{
+  "archive_date":"2026-09-29",
+  "github_branch":"nexus-final-releases-archive-2026-09-29",
+  "drive_root_id":"1jXfDinGof7KSFH0BAUhXWS-iuWxXbYUY",
+  "drive_root_url":"https://drive.google.com/drive/folders/1jXfDinGof7KSFH0BAUhXWS-iuWxXbYUY",
+  "source_only_archive":{
+    "drive_file_id":"18nAa59_ZNv99pIVmTMfR8YlU-cDbVYyx",
+    "sha256":"7d2ab123473b1295238a31ed428f5d4d8b097b719b6f5c25c7f8796f09020e14",
+    "files":324
+  },
+  "physical_originals":[
+    {"version":"R6.10","drive_copy_id":"1kArxuO9pBhv_4fGrCGedG86aJkmDV-Nw","status":"PRESENT"},
+    {"version":"R7-L","drive_copy_id":"1hRX2MHn3tWw-4SF-Ij5onyJ5KWXlZ1Th","status":"PRESENT"},
+    {"version":"R7.2","drive_copy_id":"1D46WzoMRAexQyc0GRwyjKGysNfVJPcTQ","status":"PRESENT"},
+    {"version":"R7.6","drive_copy_id":"1Lj7x0b-UvgRK-m6gwxaNUbhXzurCHl5j","semantic_organ_drive_id":"1KM_Ijp8-pJtgcM3l8cZqZjpf2Vm4SN7j","status":"PRESENT"},
+    {"version":"R7.10","drive_copy_id":"1hBWIwepkztqYIJVoYCyL9RL-lj0xb3nU","status":"PRESENT"},
+    {"version":"R7.14","drive_copy_id":"1UpuIOoMse01aG4JZ4QEfgqAU_nqYxcNR","status":"PRESENT"},
+    {"version":"R7.18","drive_copy_id":"1lKBfAH5zXG4Mo6sen8sd4VEhdZ8PwpQz","confirmatory_drive_id":"1Ki9J2KPVsQpt65LELLIyahR1waacA797","status":"PRESENT"},
+    {"version":"R7.44.1-R7.44.3","drive_copy_id":"1lj7vz3Jv3RTQ-ubwzwbv9h6f2xuvVWjy","status":"PRESENT"},
+    {"version":"R7.45.2","drive_copy_id":"1G4VhbIoskqJmP-x4SPaNAMNKJuyNYkrv","status":"PRESENT"},
+    {"version":"R2.1 Qwen3-14B SOURCE PHASE2","drive_copy_id":"1fM8S18aHf6-u_OEkIvH0QgDzSyv4UrsI","status":"PRESENT"},
+    {"version":"R2.1 Qwen3-14B SOURCE ALPHA","drive_copy_id":"1KKnnx8dWk5YVS1NvmmAKZiEEFa9yD26U","status":"PRESENT"}
+  ],
+  "not_located_original_packages":[
+    "V10 600K multipart",
+    "Omega-1.5R2",
+    "historical Unified R1.3",
+    "standalone historical R1.3-X"
+  ],
+  "qwen3_14b_weights":{"status":"NOT_PRESENT","expected_sha256":"500a8806e85ee9c83f3ae08420295592451379b4f8cf2d0f41c15dffeb6b81f0"}
+}
