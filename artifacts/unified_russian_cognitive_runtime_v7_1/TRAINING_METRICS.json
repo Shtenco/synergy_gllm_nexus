@@ -1,0 +1,10 @@
+{
+ "name":"NEXUS Russian Cognitive Cortex V7.1 H-Curriculum",
+ "parameters":13774043,
+ "old_multitask_examples":4200,
+ "h_curriculum_examples":1500,
+ "h_is_development_only":true,
+ "h_development_plan_accuracy":1.0,
+ "checkpoint_sha256":"4b0c75160ada0a485e5d16db84c16814053b61cd66b35413b3ea9338b906d2b3",
+ "bytes":55129383
+}
