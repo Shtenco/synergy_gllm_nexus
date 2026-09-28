@@ -1,0 +1,14 @@
+{
+  "name":"NEXUS Russian Cognitive Cortex V6",
+  "status":"TRAINED_PRE_HARD_OOS_G",
+  "parameters":7455256,
+  "train_examples":8680,
+  "validation_examples":1260,
+  "best_epoch":3,
+  "plan_accuracy":1.0,
+  "relevance_f1":0.9993445846305096,
+  "role_nonO_accuracy":0.9981940144478845,
+  "architecture":"hashed subword token embeddings + 4-layer Transformer + plan/relevance/role multitask heads",
+  "sha256":"3fac0c7ad40659f5aa7544cc596e5e948bfa7ba183359fc77d42a7501bfe5eab",
+  "bytes":29844053
+}
