@@ -1,0 +1,14 @@
+{
+  "benchmark":"NEXUS-RU-PRETRAINED-CORTEX HARD-OOS-K2",
+  "status":"SEALED_BEFORE_FIRST_QWEN3_PROXY_INFERENCE",
+  "items":1200,
+  "categories":10,
+  "items_per_category":120,
+  "dataset_sha256":"dd91c1295ba92c27536ed91a43a6ac0797e994208888122cb0e15f82ecbecf26",
+  "generator_seed":2026092816,
+  "training_seed":2026092814,
+  "proxy_backbone":"Qwen/Qwen3-0.6B",
+  "backbone_policy":"frozen pretrained weights",
+  "authority_rule":"Qwen3 is proposal/representation only; NEXUS authority remains sovereign.",
+  "rule":"No adapter/parser/executor/threshold changes after this seal and before first HARD-OOS-K2 evaluation."
+}
