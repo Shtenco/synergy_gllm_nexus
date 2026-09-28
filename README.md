@@ -163,3 +163,31 @@ README должен показывать: проблему → архитект�
 Репозиторий не присваивает полномочия соседнего домена: AI ≠ authorization, UI ≠ ledger, blockchain commitment ≠ accounting truth, backtest ≠ realized external P&L.
 
 <!-- SYNERGY-FEDERATION-PASSPORT:END -->
+
+---
+
+# 🧪 Роль `main` и активной research-ветки
+
+Текущий `main` этого репозитория минимален и содержит прежде всего:
+
+```text
+README.md
+NEXUS_REPORTS_BENCHMARKS_REGISTRY.md
+```
+
+При этом значительная исследовательская масса, на которую ссылается README, находится в ветке `unified-v3-generalization-first`.
+
+Это означает важное архитектурное разделение:
+
+```mermaid
+flowchart LR
+    MAIN[📚 main\nregistry + index]
+    RND[🧪 unified-v3-generalization-first\nbenchmarks + artifacts + runners]
+    CAN[🧠 synergy_agi_nexus\ncanonical promoted generations]
+    RND --> MAIN
+    RND -->|evidence-gated promotion| CAN
+```
+
+### Правило
+
+Результат, присутствующий только в исследовательской ветке, не должен описываться как уже материализованный canonical runtime в `main` или `synergy_agi_nexus` без отдельного promotion artifact.
