@@ -130,3 +130,36 @@
 - v3-MoE P1 пока доказывает качество **routing**, а не окончательный end-to-end прирост answer accuracy.
 
 <!-- NEXUS-REPORTS-BENCHMARKS:END -->
+
+
+<!-- SYNERGY-FEDERATION-PASSPORT:START -->
+---
+
+## 🧭 SYNERGY federation passport
+
+**Домен:** 🧠 Active NEXUS research runtime  
+**Архитектурный родитель:** [`synergy_agi_nexus`](https://github.com/Shtenco/synergy_agi_nexus)  
+**Архитектурный корень:** [`synergy_system`](https://github.com/Shtenco/synergy_system)
+
+```mermaid
+flowchart LR
+    SYS[🧭 synergy_system] --> P[synergy_agi_nexus]
+    P --> THIS[synergy_gllm_nexus]
+    THIS --> E[📦 Evidence / outputs]
+```
+
+### Документационный контракт
+
+README должен показывать: проблему → архитектуру → реальные артефакты → проверку → ограничения → связи с федерацией. Сильные claims без evidence остаются R&D/CANDIDATE.
+
+### Навигация
+
+- [📚 Атлас всех 75 репозиториев](https://github.com/Shtenco/synergy_system/blob/main/docs/SYNERGY_REPOSITORY_ATLAS.md)
+- [🧾 Машиночитаемый registry](https://github.com/Shtenco/synergy_system/blob/main/registry/SYNERGY_REPOSITORIES.json)
+- [🧭 SYNERGY SYSTEM](https://github.com/Shtenco/synergy_system)
+
+### Authority rule
+
+Репозиторий не присваивает полномочия соседнего домена: AI ≠ authorization, UI ≠ ledger, blockchain commitment ≠ accounting truth, backtest ≠ realized external P&L.
+
+<!-- SYNERGY-FEDERATION-PASSPORT:END -->
