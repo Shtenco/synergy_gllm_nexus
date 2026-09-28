@@ -1,0 +1,13 @@
+{
+ "benchmark":"NEXUS-RU-COGNITIVE HARD-OOS-I",
+ "status":"SEALED_BEFORE_FIRST_INFERENCE",
+ "items":1500,
+ "categories":10,
+ "items_per_category":150,
+ "dataset_sha256":"b6b09fec608c97c9dfde7ced2f3fc962330f65bdd382fc46c8277a8755038de7",
+ "cortex_checkpoint_sha256":"4b0c75160ada0a485e5d16db84c16814053b61cd66b35413b3ea9338b906d2b3",
+ "cortex_parameters":13774043,
+ "stressors":["new synonyms","reordered clauses","late updates","background references","new temporal paraphrases"],
+ "generator_seed":2026092812,
+ "rule":"No model/parser/decoder/threshold changes after this seal and before first HARD-OOS-I inference."
+}
