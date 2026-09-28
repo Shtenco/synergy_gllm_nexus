@@ -1,0 +1,12 @@
+{
+ "benchmark":"NEXUS-RU-COGNITIVE HARD-OOS-G",
+ "status":"ONE_SHOT_COMPLETE_NO_PREOPEN_TUNING",
+ "dataset_sha256":"c7323029e5b4f50f53addfd0fad5cc9a77e645cc0344d0b4cac4166a419cad17",
+ "cortex_checkpoint_sha256":"3fac0c7ad40659f5aa7544cc596e5e948bfa7ba183359fc77d42a7501bfe5eab",
+ "cortex_parameters":7455256,
+ "combined_cognitive_parameters":26669990,
+ "plan_accuracy":0.9566666666666667,
+ "answer_token_grounding_recall":0.74395329441201,
+ "grounding_items":1199,
+ "category_plan_accuracy":{"natural_ru":1.0,"multi_hop":1.0,"causal":1.0,"memory_context":0.9466666666666667,"conflicting_memory":1.0,"world_state":0.62,"semantic_graph":1.0,"formal_executable":1.0,"evidence_epistemic":1.0,"mixed_cognitive":1.0}
+}
