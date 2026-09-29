@@ -62,3 +62,4 @@ from .dialogue_context import ContextValueStatus, ContextValue, PendingSlot, Ref
 from .task_cortex import TaskProposal, TaskAdmission, TaskParseResult, TaskProposalGate, TaskCortexPort, ControlledTaskBackend
 
 from .program_synthesis import ProgramEvidenceCase, ProgramCandidateScore, ProgramSynthesisResult, ProgramSynthesisCortex
+\nfrom .conversational_reasoner import ConversationalReasoningResult, ConversationalReasonerR1\n
