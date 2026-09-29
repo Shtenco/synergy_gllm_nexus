@@ -8,3 +8,5 @@ from .credit import CreditNode, CreditEdge, CognitiveTraceGraph
 from .self_model import CapabilityEstimate, NexusSelfModel
 from .meta_controller import MetaDecision, MetaController
 from .continual import LearningTier, PromotionEvidence, ContinualLearningPolicy
+
+from .program_compiler import CompileStatus, CompileResult, CognitiveProgramCompiler
