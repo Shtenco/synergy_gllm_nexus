@@ -5,10 +5,8 @@ from nexus_gllm.unified_v3.moe.exact_experts import R7LExactExpert,R72ExactExper
 ART=Path('/mnt/data')
 def test_catalog_verifies_known_exact_hashes_and_blockers():
     c=ArtifactCatalog.default(ART)
-    for e in ('r7l','r72','r76','r78','r710','r714','r718'):assert c.verify(e).status is ArtifactStatus.EXACT_RUNNABLE
+    for e in ('r7l','r72','r76','r78','r710','r714','r718','omega15r2','v10'):assert c.verify(e).status is ArtifactStatus.EXACT_RUNNABLE
     assert c.verify('r7443').status is ArtifactStatus.EXACT_SOURCE_INCOMPLETE_RUNTIME
-    assert c.verify('omega15r2').status is ArtifactStatus.CHECKPOINT_NOT_MOUNTED
-    assert c.verify('v10').status is ArtifactStatus.EXACT_SOURCE_INTEGRATION_CHECKPOINT_NOT_MOUNTED
     assert c.verify('unified_r13').status is ArtifactStatus.HISTORICAL_RELEASE_NOT_MOUNTED
 def test_r7l_exact_checkpoint_infers_missing_mapping():
     e=R7LExactExpert(ART/'r7_seed712.pt');support=[(0,2,1),(1,0,3),(2,3,0)]

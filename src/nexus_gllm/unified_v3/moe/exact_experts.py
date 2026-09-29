@@ -117,6 +117,11 @@ class Omega15R2ExactExpert:
     def __init__(self,bundle_root):
         root=Path(bundle_root)
         if str(root) not in sys.path: sys.path.insert(0,str(root))
+        try:
+            import rebuild_models as _historical_rebuild_models
+        except ModuleNotFoundError:
+            from .compat import rebuild_models as _historical_rebuild_models
+            sys.modules['rebuild_models']=_historical_rebuild_models
         import joblib
         self.joint=joblib.load(root/'artifacts/omega15r2_v1/omega15r2_joint_binder_frozen.joblib')
         self.semantic=joblib.load(root/'artifacts/base_semantic/omega14r_semantic_operator.joblib')

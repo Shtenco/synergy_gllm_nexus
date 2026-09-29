@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from .contracts import CapabilityTag,RoutingDecision
 @dataclass(frozen=True)
 class RouterFeatures:
-    support_count:int=0; language:str=''; evidence_conflict:bool=False; context_depth:int=0; graph_signal:float=0.0; proof_signal:float=0.0; novelty:float=0.0
+    support_count:int=0; language:str=''; evidence_conflict:bool=False; context_depth:int=0; graph_signal:float=0.0; proof_signal:float=0.0; novelty:float=0.0; cost_signal:float=0.0
 class HeuristicCapabilityRouter:
     def route(self,f,registry,k_min=2,k_max=4):
         score={s.expert_id:0.05 for s in registry.active()}
