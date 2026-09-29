@@ -19,3 +19,5 @@ from .world_model import TransitionPrediction, EmpiricalWorldModel
 from .learned_planner import PlannedAction, LearnedFuturePlanner
 
 from .credit_learning import CreditStat, RecursiveCreditLearner
+
+from .promotion import ReplayMetrics, PromotionCandidate, PromotionDecision, GuardedPromotionGate

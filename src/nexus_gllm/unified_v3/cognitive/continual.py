@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+from .promotion import GuardedPromotionGate,PromotionCandidate
 class LearningTier(str,Enum): FAST="FAST";MEDIUM="MEDIUM";SLOW="SLOW"
 @dataclass(frozen=True)
 class PromotionEvidence:
@@ -14,3 +15,6 @@ class ContinualLearningPolicy:
         if tier is not LearningTier.SLOW:return True
         if evidence is None:return False
         return bool(evidence.provenance_complete and evidence.frozen_candidate and evidence.replay_passed and evidence.regression_delta>=0 and evidence.calibration_delta<=.02)
+    def allow_candidate(self,change_kind,candidate:PromotionCandidate,gate=None):
+        if self.tier_for(change_kind) is not LearningTier.SLOW:return True
+        return (gate or GuardedPromotionGate()).decide(candidate).promoted
