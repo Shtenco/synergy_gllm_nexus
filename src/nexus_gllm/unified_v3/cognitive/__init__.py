@@ -47,3 +47,5 @@ from .belief_bridge import ingest_semantic_commit
 from .causal_model import CausalEvidenceKind, CausalEvidence, CausalEdge, CausalGraph, InterventionRecord, InterventionLedger
 
 from .information_gain import HypothesisMass, QueryOutcome, InformationQuery, QueryScore, ActiveInformationSelector, entropy
+
+from .memory_consolidation import ConsolidationProposal, ConsolidationResult, EvidencePreservingConsolidator
