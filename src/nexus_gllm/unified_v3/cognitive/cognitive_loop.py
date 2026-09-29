@@ -29,6 +29,7 @@ class CognitiveRequest:
     temporal_ledger:TemporalLedger|None=None
     planning_state:str|None=None
     predicted_outcome_reward:float=0.0
+    capability_hints:tuple[str,...]=()
 
 
 @dataclass(frozen=True)
@@ -62,6 +63,7 @@ class CognitiveLoopR1:
             uncertainty=req.uncertainty,
             budget=state.budget,
             self_model=self.core.self_model,
+            capability_hints=req.capability_hints,
         )
         state=state.transition(
             'meta_control',
@@ -71,6 +73,8 @@ class CognitiveLoopR1:
                 'experts':meta.expert_top_k,
                 'memory_limit':meta.memory_limit,
                 'abstain':meta.abstain,
+                'verification_level':meta.verification_level,
+                'weak_capabilities':meta.weak_capabilities,
             },
         )
 
