@@ -21,3 +21,5 @@ from .learned_planner import PlannedAction, LearnedFuturePlanner
 from .credit_learning import CreditStat, RecursiveCreditLearner
 
 from .promotion import ReplayMetrics, PromotionCandidate, PromotionDecision, GuardedPromotionGate
+
+from .pre_ftx1 import PreFTX1Decision, PreFTX1FreezeGate
