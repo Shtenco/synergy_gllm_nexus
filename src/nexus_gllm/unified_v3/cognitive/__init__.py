@@ -29,3 +29,6 @@ from .generative_port import CRCGenerativePort, contract_from_epistemic
 
 from .generative_admission import GenerativeArtifactKind, GenerativeArtifactSpec, GenerativeEvalMetrics, GenerativeAdmissionDecision, GenerativeCortexAdmissionGate
 from .generative_registry import RegisteredGenerativeCortex, GenerativeCortexRegistry
+
+from .ollama_surface import OllamaModelRef, OllamaTransport, OllamaSurfaceBackend
+from .generative_selector import GenerativeBackendSelector
