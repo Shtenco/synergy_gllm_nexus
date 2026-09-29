@@ -51,3 +51,6 @@ from .information_gain import HypothesisMass, QueryOutcome, InformationQuery, Qu
 from .memory_consolidation import ConsolidationProposal, ConsolidationResult, EvidencePreservingConsolidator
 
 from .calibration import CalibrationObservation, CalibrationMetrics, CalibrationLedger
+
+from .replay_bank import ReplayCase, ReplayOutcome, ReplayReport, FrozenReplayBank, AntiForgettingEvaluator
+from .replay_promotion import promotion_candidate_from_replay
