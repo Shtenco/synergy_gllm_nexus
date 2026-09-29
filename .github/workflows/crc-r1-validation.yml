@@ -44,9 +44,14 @@ jobs:
       - name: Run CRC M8 ablation
         run: |
           python -m benchmarks.crc_m8.run --out artifacts/crc_r1_validation/m8_ablation.json
-      - name: Evidence checksums
+      - name: Build pre-FTX1 evidence manifest
         run: |
           cp artifacts/v3_moe/p1/integrity.sha256.json artifacts/crc_r1_validation/p1_integrity.sha256.json
+          python -m benchmarks.crc_m8.evidence_manifest \
+            --root artifacts/crc_r1_validation \
+            --out artifacts/crc_r1_validation/PRE_FTX1_EVIDENCE_MANIFEST.json
+      - name: Evidence checksums
+        run: |
           find artifacts/crc_r1_validation -type f -print0 | sort -z | xargs -0 sha256sum > artifacts/crc_r1_validation/EVIDENCE_SHA256.txt
           cat artifacts/crc_r1_validation/EVIDENCE_SHA256.txt
       - uses: actions/upload-artifact@v4
