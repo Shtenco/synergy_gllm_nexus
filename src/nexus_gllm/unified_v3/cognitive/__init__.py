@@ -23,3 +23,6 @@ from .credit_learning import CreditStat, RecursiveCreditLearner
 from .promotion import ReplayMetrics, PromotionCandidate, PromotionDecision, GuardedPromotionGate
 
 from .pre_ftx1 import PreFTX1Decision, PreFTX1FreezeGate
+
+from .generative import SurfaceContract, SurfaceCandidate, SurfaceGuardResult, SafeSurfaceResult, DeterministicRussianSurface, SurfaceSemanticGuard, AuthoritySafeGenerativeCortex
+from .generative_port import CRCGenerativePort, contract_from_epistemic
