@@ -15,48 +15,100 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: python -m pip install --upgrade pip
-      - run: pip install -e '.[dev]'
+      - name: Prepare evidence directory
+        run: mkdir -p artifacts/crc_r1_validation
+      - name: Install
+        shell: bash
+        run: |
+          set +e
+          python -m pip install --upgrade pip 2>&1 | tee artifacts/crc_r1_validation/pip_upgrade.log
+          a=${PIPESTATUS[0]}
+          pip install -e '.[dev]' 2>&1 | tee artifacts/crc_r1_validation/pip_install.log
+          b=${PIPESTATUS[0]}
+          echo $(( a || b )) > artifacts/crc_r1_validation/install.exit
+          exit 0
       - name: Focused CRC regression suite
+        shell: bash
         run: |
-          pytest -q tests/crc_r1 tests/moe_b2 tests/hard_oos_f tests/unified_v3_moe
-          python -m compileall src benchmarks
+          set +e
+          pytest -q tests/crc_r1 tests/moe_b2 tests/hard_oos_f tests/unified_v3_moe 2>&1 | tee artifacts/crc_r1_validation/pytest.log
+          echo ${PIPESTATUS[0]} > artifacts/crc_r1_validation/pytest.exit
+          python -m compileall src benchmarks 2>&1 | tee artifacts/crc_r1_validation/compileall.log
+          echo ${PIPESTATUS[0]} > artifacts/crc_r1_validation/compileall.exit
+          exit 0
       - name: Generate exact P1 integrity manifest
+        shell: bash
         run: |
-          python - <<'PY'
+          set +e
+          python - <<'PY' 2>&1 | tee artifacts/crc_r1_validation/integrity.log
           import os
           from nexus_gllm.unified_v3.moe.integrity import generate_integrity_manifest
           p=generate_integrity_manifest('artifacts/v3_moe/p1',source_commit=os.environ.get('GITHUB_SHA'))
           print(p)
           PY
+          echo ${PIPESTATUS[0]} > artifacts/crc_r1_validation/integrity.exit
+          if [ -f artifacts/v3_moe/p1/integrity.sha256.json ]; then
+            cp artifacts/v3_moe/p1/integrity.sha256.json artifacts/crc_r1_validation/p1_integrity.sha256.json
+          fi
+          exit 0
       - name: Run sealed B2 one-shot
+        shell: bash
         run: |
+          set +e
           mkdir -p artifacts/crc_r1_validation/b2
-          python -m benchmarks.moe_b2.run_p1             --out artifacts/crc_r1_validation/b2             --artifact-dir artifacts/v3_moe/p1             --seed 2026093001             --n-per-stratum 400
+          python -m benchmarks.moe_b2.run_p1             --out artifacts/crc_r1_validation/b2             --artifact-dir artifacts/v3_moe/p1             --seed 2026093001             --n-per-stratum 400 2>&1 | tee artifacts/crc_r1_validation/b2.log
+          echo ${PIPESTATUS[0]} > artifacts/crc_r1_validation/b2.exit
+          exit 0
       - name: Run HARD-OOS F one-shot
+        shell: bash
         run: |
+          set +e
           mkdir -p artifacts/crc_r1_validation/hard_oos_f
-          python - <<'PY'
+          python - <<'PY' 2>&1 | tee artifacts/crc_r1_validation/hard_oos_f.log
           import os
           from benchmarks.hard_oos_f.protocol import run
           print(run('artifacts/crc_r1_validation/hard_oos_f',seed=2026093007,n_per_stratum=200,source_sha256=os.environ.get('GITHUB_SHA','UNKNOWN')))
           PY
+          echo ${PIPESTATUS[0]} > artifacts/crc_r1_validation/hard_oos_f.exit
+          exit 0
       - name: Run CRC M8 ablation
+        shell: bash
         run: |
-          python -m benchmarks.crc_m8.run --out artifacts/crc_r1_validation/m8_ablation.json
+          set +e
+          python -m benchmarks.crc_m8.run --out artifacts/crc_r1_validation/m8_ablation.json 2>&1 | tee artifacts/crc_r1_validation/m8.log
+          echo ${PIPESTATUS[0]} > artifacts/crc_r1_validation/m8.exit
+          exit 0
       - name: Build pre-FTX1 evidence manifest
+        shell: bash
         run: |
-          cp artifacts/v3_moe/p1/integrity.sha256.json artifacts/crc_r1_validation/p1_integrity.sha256.json
-          python -m benchmarks.crc_m8.evidence_manifest \
-            --root artifacts/crc_r1_validation \
-            --out artifacts/crc_r1_validation/PRE_FTX1_EVIDENCE_MANIFEST.json
+          set +e
+          python -m benchmarks.crc_m8.evidence_manifest             --root artifacts/crc_r1_validation             --out artifacts/crc_r1_validation/PRE_FTX1_EVIDENCE_MANIFEST.json 2>&1 | tee artifacts/crc_r1_validation/evidence_manifest.log
+          echo ${PIPESTATUS[0]} > artifacts/crc_r1_validation/evidence_manifest.exit
+          exit 0
       - name: Evidence checksums
+        shell: bash
         run: |
           find artifacts/crc_r1_validation -type f -print0 | sort -z | xargs -0 sha256sum > artifacts/crc_r1_validation/EVIDENCE_SHA256.txt
           cat artifacts/crc_r1_validation/EVIDENCE_SHA256.txt
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: crc-r1-validation-evidence
           path: artifacts/crc_r1_validation
           if-no-files-found: error
           retention-days: 90
+      - name: Enforce validation exits
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          root=Path('artifacts/crc_r1_validation')
+          names=['install','pytest','compileall','integrity','b2','hard_oos_f','m8','evidence_manifest']
+          bad={}
+          for name in names:
+              p=root/f'{name}.exit'
+              code=int(p.read_text().strip()) if p.exists() else 999
+              if code!=0: bad[name]=code
+          print({'validation_failures':bad})
+          raise SystemExit(1 if bad else 0)
+          PY
