@@ -32,3 +32,5 @@ from .generative_registry import RegisteredGenerativeCortex, GenerativeCortexReg
 
 from .ollama_surface import OllamaModelRef, OllamaTransport, OllamaSurfaceBackend
 from .generative_selector import GenerativeBackendSelector
+
+from .cognitive_loop import CognitiveRequest, CognitiveDecision, CognitiveLoopR1
