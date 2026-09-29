@@ -58,3 +58,4 @@ from .replay_promotion import promotion_candidate_from_replay
 from .scientific_query import QueryActionSpec, ScientificQueryPlan, ScientificQueryPlanner
 
 from .dialogue_context import ContextValueStatus, ContextValue, PendingSlot, Referent, DialogueContextState, DialogueContextR1
+\nfrom .conversation_shell import ConversationIngressResult, ConversationTurn, ConversationShellR1\n
