@@ -10,3 +10,5 @@ from .meta_controller import MetaDecision, MetaController
 from .continual import LearningTier, PromotionEvidence, ContinualLearningPolicy
 
 from .program_compiler import CompileStatus, CompileResult, CognitiveProgramCompiler
+
+from .higher_order import HigherOrderStatus, HigherOrderContext, HigherOrderResult, HigherOrderExecutor
