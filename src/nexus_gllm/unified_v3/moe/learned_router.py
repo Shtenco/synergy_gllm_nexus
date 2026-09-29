@@ -119,10 +119,12 @@ class LoadableCapabilityRouter:
 
     @staticmethod
     def feature_vector(f: RouterFeatures):
+        ru = (1.0 if f.language == "ru" else 0.0) if f.ru_signal is None else _clamp01(f.ru_signal)
+        evidence = (1.0 if f.evidence_conflict else 0.0) if f.evidence_signal is None else _clamp01(f.evidence_signal)
         return (
             _clamp01(f.support_count / 4.0),
-            1.0 if f.language == "ru" else 0.0,
-            1.0 if f.evidence_conflict else 0.0,
+            ru,
+            evidence,
             _clamp01(f.context_depth / 4.0),
             _clamp01(f.graph_signal),
             _clamp01(f.novelty),
