@@ -69,7 +69,13 @@ class TaskCortexPort:
     @staticmethod
     def input_sha(text):return hashlib.sha256(text.encode('utf-8')).hexdigest()
     def parse(self,text):
-        h=self.input_sha(text);p=self.backend.propose_task(text);a=self.gate.check(p,text,h)
+        h=self.input_sha(text)
+        try:
+            p=self.backend.propose_task(text)
+        except Exception as exc:
+            backend_id=getattr(self.backend,'backend_id',type(self.backend).__name__)
+            return TaskParseResult(None,backend_id,h,None,TaskAdmission(False,(f'backend_exception:{type(exc).__name__}',)),True)
+        a=self.gate.check(p,text,h)
         task=None if not a.accepted else TaskProgram(p.opcode,p.operator_id,tuple(x.casefold() for x in p.arguments))
         return TaskParseResult(task,p.backend_id,h,p.source_span if a.accepted else None,a,True)
 

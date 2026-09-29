@@ -92,7 +92,13 @@ class LanguageCortexPort:
     def text_sha256(text:str)->str:return hashlib.sha256(text.encode('utf-8')).hexdigest()
 
     def parse(self,text:str)->LanguageParseResult:
-        digest=self.text_sha256(text);proposal=self.backend.propose(text);admission=self.gate.check(proposal,text,digest)
+        digest=self.text_sha256(text)
+        try:
+            proposal=self.backend.propose(text)
+        except Exception as exc:
+            backend_id=getattr(self.backend,'backend_id',type(self.backend).__name__)
+            return LanguageParseResult(SemanticObservation(()),backend_id,digest,(),LanguageAdmission(False,(f'backend_exception:{type(exc).__name__}',)),True)
+        admission=self.gate.check(proposal,text,digest)
         spans=tuple(a.source_span for a in proposal.atoms) if admission.accepted else ()
         if not admission.accepted:
             return LanguageParseResult(SemanticObservation(()),proposal.backend_id,digest,(),admission,True)
