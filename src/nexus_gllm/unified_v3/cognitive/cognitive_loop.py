@@ -64,6 +64,7 @@ class CognitiveLoopR1:
             budget=state.budget,
             self_model=self.core.self_model,
             capability_hints=req.capability_hints,
+            calibration_ledger=self.core.calibration,
         )
         state=state.transition(
             'meta_control',

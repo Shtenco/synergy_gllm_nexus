@@ -49,3 +49,5 @@ from .causal_model import CausalEvidenceKind, CausalEvidence, CausalEdge, Causal
 from .information_gain import HypothesisMass, QueryOutcome, InformationQuery, QueryScore, ActiveInformationSelector, entropy
 
 from .memory_consolidation import ConsolidationProposal, ConsolidationResult, EvidencePreservingConsolidator
+
+from .calibration import CalibrationObservation, CalibrationMetrics, CalibrationLedger
