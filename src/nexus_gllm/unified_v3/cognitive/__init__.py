@@ -54,3 +54,5 @@ from .calibration import CalibrationObservation, CalibrationMetrics, Calibration
 
 from .replay_bank import ReplayCase, ReplayOutcome, ReplayReport, FrozenReplayBank, AntiForgettingEvaluator
 from .replay_promotion import promotion_candidate_from_replay
+
+from .scientific_query import QueryActionSpec, ScientificQueryPlan, ScientificQueryPlanner
