@@ -60,3 +60,5 @@ from .scientific_query import QueryActionSpec, ScientificQueryPlan, ScientificQu
 from .dialogue_context import ContextValueStatus, ContextValue, PendingSlot, Referent, DialogueContextState, DialogueContextR1
 \nfrom .conversation_shell import ConversationIngressResult, ConversationTurn, ConversationShellR1\n
 from .task_cortex import TaskProposal, TaskAdmission, TaskParseResult, TaskProposalGate, TaskCortexPort, ControlledTaskBackend
+
+from .program_synthesis import ProgramEvidenceCase, ProgramCandidateScore, ProgramSynthesisResult, ProgramSynthesisCortex
