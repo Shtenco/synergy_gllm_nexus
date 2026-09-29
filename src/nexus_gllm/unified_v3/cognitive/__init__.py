@@ -38,3 +38,5 @@ from .cognitive_loop import CognitiveRequest, CognitiveDecision, CognitiveLoopR1
 from .language_cortex import SourceSpanRef, ProposedAtom, LanguageParseProposal, LanguageAdmission, LanguageParseResult, LanguageProposalGate, LanguageCortexPort, ControlledLanguageBackend
 
 from .semantic_authority import SemanticFactStatus, AttestationKind, SemanticAttestation, SemanticCommitDecision, SemanticCommitResult, SemanticCommitGate, atom_fingerprint
+
+from .action_boundary import ActionRisk, ActionProposal, ExecutionPermit, ActionAuthorization, AuthorizedAction, ActionBoundary
