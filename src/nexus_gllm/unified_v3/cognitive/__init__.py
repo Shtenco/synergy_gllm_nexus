@@ -34,3 +34,5 @@ from .ollama_surface import OllamaModelRef, OllamaTransport, OllamaSurfaceBacken
 from .generative_selector import GenerativeBackendSelector
 
 from .cognitive_loop import CognitiveRequest, CognitiveDecision, CognitiveLoopR1
+
+from .language_cortex import ProposedAtom, LanguageParseProposal, LanguageAdmission, LanguageParseResult, LanguageProposalGate, LanguageCortexPort, ControlledLanguageBackend
