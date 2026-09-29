@@ -14,3 +14,6 @@ from .program_compiler import CompileStatus, CompileResult, CognitiveProgramComp
 from .higher_order import HigherOrderStatus, HigherOrderContext, HigherOrderResult, HigherOrderExecutor
 
 from .persistent_memory import MemoryVersion, PersistentMemoryIndex
+
+from .world_model import TransitionPrediction, EmpiricalWorldModel
+from .learned_planner import PlannedAction, LearnedFuturePlanner
