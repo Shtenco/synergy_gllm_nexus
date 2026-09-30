@@ -3,8 +3,10 @@
 ## M0 — exact federation audit
 - [x] Ω-1.5R2 recovered and behaviorally verified
 - [x] V10 recovered and hash/runtime checked
-- [x] 9/11 exact-runnable status frozen
-- [x] R7.44.3 and Unified R1.3 fail-closed
+- [x] R7.44.3 recovered as byte-identical EXACT_DEPLOYED_RUNTIME (PR #4, SHA d248bb75...07703)
+- [x] historical byte-identical recovery = 10/11; only original Unified R1.3 tree remains historically unrecovered
+- [x] R1.3-X V2/V3 verified operational authority runtime recovered from PR #6/#7 provenance
+- [x] operational verified federation = 11/11 READY
 
 ## M1 — production learned router
 - [x] frozen P1 router/calibrator/novelty loader
