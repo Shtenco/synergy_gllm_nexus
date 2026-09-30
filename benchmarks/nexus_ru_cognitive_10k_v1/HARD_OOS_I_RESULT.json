@@ -1,0 +1,9 @@
+{
+ "benchmark":"NEXUS-RU-COGNITIVE HARD-OOS-I",
+ "status":"ONE_SHOT_COMPLETE_NO_PREOPEN_TUNING",
+ "dataset_sha256":"b6b09fec608c97c9dfde7ced2f3fc962330f65bdd382fc46c8277a8755038de7",
+ "checkpoint_sha256":"4b0c75160ada0a485e5d16db84c16814053b61cd66b35413b3ea9338b906d2b3",
+ "plan_accuracy":0.7506666666666667,
+ "answer_token_grounding_recall":0.7954924874791319,
+ "current_answer_temporal_recall":0.5532319391634981
+}

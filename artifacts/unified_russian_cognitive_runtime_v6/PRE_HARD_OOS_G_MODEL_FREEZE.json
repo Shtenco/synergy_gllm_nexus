@@ -1,0 +1,10 @@
+{
+  "name":"NEXUS Unified Russian Cognitive Stack V6",
+  "status":"FROZEN_PRE_HARD_OOS_G",
+  "cortex_parameters":7455256,
+  "legacy_frozen_planner_v5_parameters":19214734,
+  "combined_cognitive_parameters":26669990,
+  "cortex_checkpoint_sha256":"3fac0c7ad40659f5aa7544cc596e5e948bfa7ba183359fc77d42a7501bfe5eab",
+  "validation":{"plan_accuracy":1.0,"relevance_f1":0.9993445846305096,"role_nonO_accuracy":0.9981940144478845},
+  "rule":"No cortex/parser/executor/threshold changes after this freeze and before first HARD-OOS-G inference."
+}

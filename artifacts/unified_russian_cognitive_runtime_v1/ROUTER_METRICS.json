@@ -1,0 +1,15 @@
+{
+  "name": "NEXUS Unified RU Cognitive Router V5",
+  "seed": 7,
+  "train_examples": 4500,
+  "val_examples": 900,
+  "oos_examples": 1080,
+  "best_epoch": 25,
+  "val_accuracy": 1.0,
+  "oos_accuracy": 0.8305555582046509,
+  "labels": ["exact","formal","memory","causal","evidence","semantic","world","language","abstain"],
+  "protocol": "template-family OOS; frozen reasoning organs untouched",
+  "hybrid_oos_accuracy": 0.9,
+  "hybrid_policy": "high-precision deterministic gate + learned fallback",
+  "status": "BASELINE_TRAINED_NOT_FINAL"
+}

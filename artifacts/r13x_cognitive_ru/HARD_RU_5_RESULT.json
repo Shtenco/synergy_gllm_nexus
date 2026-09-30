@@ -1,0 +1,14 @@
+{
+  "benchmark": "HARD-RU-5",
+  "status": "FROZEN_FIRST_OPEN",
+  "correct": 23,
+  "total": 23,
+  "accuracy": 1.0,
+  "no_injected_expert_answers": true,
+  "runtime": "NEXUS R1.3-X Cognitive Russian Runtime",
+  "notes": [
+    "Fresh benchmark opened after HARD-RU-1..4 were consumed diagnostics.",
+    "No post-open tuning was applied to HARD-RU-5.",
+    "Historical exact R7.6/R7.8/R7.10/R7.14 organs are optional verified loaders and were not physically mounted in the local HARD-RU-5 run."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+ "name":"NEXUS Russian Cognitive Cortex V7 Temporal",
+ "status":"TRAINED_PRE_HARD_OOS_H",
+ "parameters":13774043,
+ "train_examples":11150,
+ "validation_examples":1400,
+ "best_epoch":2,
+ "plan_accuracy":1.0,
+ "relevance_f1":0.9993112819462798,
+ "role_nonO_accuracy":0.9979089219330854,
+ "temporal_accuracy":0.9966777408637874,
+ "checkpoint_sha256":"e1adb104f67cb17ebc78fd3a8afd394584fc63ad885708e47581d656fb2afbb2",
+ "bytes":55128691
+}

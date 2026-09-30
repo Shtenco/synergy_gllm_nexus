@@ -1,0 +1,16 @@
+name: NEXUS R1.3-X Cognitive RU smoke
+on:
+  push:
+    branches: ["nexus-r13x-cognitive-ru-runtime-2026-09-26"]
+  workflow_dispatch:
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python
+        run: python3 --version
+      - name: Cognitive RU benchmark
+        run: |
+          PYTHONPATH=. python3 recovery/benchmarks/run_r13x_cognitive_ru_dialogue.py

@@ -1,0 +1,13 @@
+{
+  "benchmark": "NEXUS-RU-COGNITIVE-10K V1",
+  "phase": "HARD-OOS-B PRE-INFERENCE FREEZE",
+  "status": "SEALED_BEFORE_FIRST_INFERENCE",
+  "hard_oos_b_items": 1500,
+  "hard_oos_b_sha256": "918635e4d27b2e49058e3003606d87eeef64637c100b32c25670a655ae2b2394",
+  "trained_router_sha256": "883250c0b76a11723d6dcd2008c901cb1879c3e9f3772d841f262d5415bf7514",
+  "training_policy": "model frozen before HARD-OOS-B inference; no post-open tuning may retain clean status",
+  "category_count": 10,
+  "items_per_category": 150,
+  "generator_seed": 2026092802,
+  "note": "HARD-OOS-B replaces the development diagnostic HARD-OOS-A as the decisive one-shot routing generalization test."
+}

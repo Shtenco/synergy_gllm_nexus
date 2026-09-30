@@ -1,0 +1,11 @@
+{
+  "name": "NEXUS RU Cognitive Planner V3 Large",
+  "status": "FROZEN_PRE_HARD_OOS_D",
+  "parameters": 11040270,
+  "training_examples": 41700,
+  "validation_accuracy": 1,
+  "checkpoint_sha256": "62c7bc58fb4285fbd2580e5eb926c3c540163b0370948e1b495d8188cdc16da3",
+  "checkpoint_bytes": 44174477,
+  "executor": "CompositionalCognitiveExecutorV3",
+  "note": "HARD-OOS-C is development-only after its one-shot report. No tuning allowed after this freeze and before first HARD-OOS-D inference."
+}

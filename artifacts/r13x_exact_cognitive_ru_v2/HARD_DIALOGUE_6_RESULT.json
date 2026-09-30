@@ -1,0 +1,50 @@
+{
+  "benchmark": "HARD-DIALOGUE-6",
+  "status": "FROZEN_FIRST_OPEN_NO_POST_TUNING",
+  "correct_raw": 27,
+  "total": 30,
+  "accuracy_raw": 0.9,
+  "full_local_result_sha256": "68b4df82cdb8f44706654200cb88b021cbf0e9be9ae57b6442796de2615bbaf9",
+  "exact_status": {
+    "loaded": ["r710", "r714", "r76", "r78"],
+    "errors": {}
+  },
+  "organ_counts": {
+    "core": 19,
+    "causal_graph": 2,
+    "r710_proof": 3,
+    "r76_semantic_memory": 2,
+    "exact_consensus": 1,
+    "epistemic": 1,
+    "exact": 1,
+    "formal": 1
+  },
+  "r714_provenance_turns": 25,
+  "failure_analysis": [
+    {
+      "turn": 11,
+      "type": "evaluator_morphology_mismatch",
+      "expected_surface": "сбой",
+      "actual": "Зафиксировал причинную связь: ошибка чтения → сбою базы.",
+      "runtime_semantics": "correct"
+    },
+    {
+      "turn": 14,
+      "type": "evaluator_morphology_mismatch",
+      "expected_surface": "сбой",
+      "actual": "Причинная цепочка: повреждение диска → ошибку чтения → сбою базы → недоступности api → отказу клиента.",
+      "runtime_semantics": "correct",
+      "causal_hops": 4
+    },
+    {
+      "turn": 18,
+      "type": "authority_integration_defect",
+      "defect_id": "R710_NESTED_LEN_RANGE_AUTHORITY",
+      "query": "В Python чему равно len(list(range(2, 10, 2)))?",
+      "actual": "Проверенный вывод: [2, 4, 6, 8].",
+      "expected": "5",
+      "details": "R7.10 compiled the inner range expression as py_range and verified the list, while the frozen R7.6 semantic atom P01 covers the full nested len(list(range(...))) question with answer 5."
+    }
+  ],
+  "scientific_note": "Raw first-open score is preserved. No runtime tuning was performed after opening HARD-DIALOGUE-6."
+}

@@ -1,0 +1,9 @@
+{
+  "schema_version":"1.0",
+  "status":"frozen_definition",
+  "dataset_policy":"train/dev/blind separation",
+  "blind_rule":"blind cases must never be used to fit router thresholds or weights",
+  "metrics":["correct","incorrect","abstained","contradiction_detected","evidence_requested","verification_pass","verification_fail","routing_determinism","latency_ms","rss_mb"],
+  "adversarial_variants":["paraphrase","irrelevant_evidence","contradictory_evidence","misleading_evidence","temporal_swap","entity_swap","relation_reversal","false_premise","unknown_operator","missing_premise","conflicting_memory","counterfactual_intervention"],
+  "suites":["authority","exact","contradiction","ood","provenance","counterfactual","replay","routing","adversarial"]
+}

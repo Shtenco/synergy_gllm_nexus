@@ -1,0 +1,8 @@
+{
+ "name":"NEXUS Unified Russian Cognitive Stack V7.2",
+ "status":"FROZEN_PRE_HARD_OOS_J",
+ "cortex_parameters":13774043,
+ "checkpoint_sha256":"5a2c0c74cc25a9d4a17dc3575e299c8fbd2ed6b7a3115ebba439ba93484cfdfa",
+ "training_note":"H and I were used only after their one-shot disclosures and are development-only.",
+ "rule":"No model/parser/decoder/threshold changes after this freeze and before first HARD-OOS-J inference."
+}

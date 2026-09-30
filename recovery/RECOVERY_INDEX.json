@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "generated": "2026-09-26",
+  "policy": "originals are immutable and must be byte-for-byte preserved before augmentation",
+  "artifacts": [
+    {"id":"V4.2-O","version":"V4.2","status":"historical_lead","source":"project records","sha256":"aee02f...","immutable":true,"notes":"5,385,285-param Russian Graph Transformer; exact checkpoint payload not currently mounted."},
+    {"id":"V7.2-O","version":"V7.2","status":"historical_lead","source":"project records","sha256":null,"immutable":true,"notes":"Exact operator/memory/contradiction core; historical benchmark evidence exists, original release bytes not currently mounted."},
+    {"id":"R1.3-O","version":"Unified R1.3","status":"historical_lead","source":"project records","sha256":"716820378f3d27a97eb81ab7adf047e5583b6547965e5adba2e976c5355b7b82","immutable":true,"notes":"Historical sealed release; exact release bytes not currently mounted."},
+    {"id":"V5.7","version":"V5.7","status":"historical_lead","source":"project records","sha256":null,"immutable":true,"notes":"Sparse causal MoE; exact checkpoint not currently verified."},
+    {"id":"V5.8","version":"V5.8","status":"historical_lead","source":"project records","sha256":null,"immutable":true,"notes":"Grounded-decoder direction; checkpoint recorded as not saved."},
+    {"id":"V7.3","version":"V7.3","status":"partial","source":"current repository lineage","sha256":null,"immutable":false,"notes":"Formal logic/cybernetic concepts are represented in current unified architecture."},
+    {"id":"V7.4","version":"V7.4","status":"partial","source":"current repository lineage","sha256":null,"immutable":false,"notes":"Provenance/causal concepts are represented in current unified architecture."},
+    {"id":"V7.5","version":"V7.5","status":"partial","source":"current repository lineage","sha256":null,"immutable":false,"notes":"Object/event world-state concepts are represented in current unified architecture."},
+    {"id":"UNIFIED-V3","version":"Unified V3","status":"verified_in_repository","source":"src/nexus_gllm/unified_v3","sha256":null,"immutable":false,"notes":"Current repository contains contracts, surface, world, rules, executor, epistemic, generalization, counterfactual and MoE modules."},
+    {"id":"R13X","version":"R1.3-X","status":"new_implementation","source":"recovery branch","sha256":null,"immutable":false,"notes":"Authority-first evidence/verification layer; does not replace originals."}
+  ],
+  "archive_leads": [
+    "NEXUS_UNIFIED_R1_3_TOP_SYSTEM_FULL_RELEASE.zip",
+    "NEXUS_UNIFIED_R1_3_TOP_SYSTEM_COMPACT.zip",
+    "NEXUS_ALL_VERSIONS_AUDIT_AND_EVIDENCE_2026-08-05.zip",
+    "NEXUS — ВСЕ ВЕРСИИ — ИСХОДНИКИ — 2026-08-05"
+  ]
+}

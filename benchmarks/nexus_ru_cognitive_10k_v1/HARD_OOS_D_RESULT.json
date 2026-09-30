@@ -1,0 +1,21 @@
+{
+  "benchmark":"NEXUS-RU-COGNITIVE HARD-OOS-D",
+  "status":"ONE_SHOT_COMPLETE_NO_PREOPEN_TUNING",
+  "dataset_sha256":"e79cb9270b31224fffb327000a0e9ff95815e802e245a01d0e1cd23dc8a07179",
+  "planner_checkpoint_sha256":"62c7bc58fb4285fbd2580e5eb926c3c540163b0370948e1b495d8188cdc16da3",
+  "parameters":11040270,
+  "overall_plan_accuracy":0.994,
+  "overall_answer_accuracy":0.778,
+  "categories":{
+    "natural_ru":{"plan":1.0,"answer":1.0},
+    "multi_hop":{"plan":1.0,"answer":0.4866666666666667},
+    "causal":{"plan":1.0,"answer":0.98},
+    "memory_context":{"plan":1.0,"answer":0.46},
+    "conflicting_memory":{"plan":1.0,"answer":1.0},
+    "world_state":{"plan":1.0,"answer":1.0},
+    "semantic_graph":{"plan":1.0,"answer":0.0},
+    "formal_executable":{"plan":0.94,"answer":0.94},
+    "evidence_epistemic":{"plan":1.0,"answer":1.0},
+    "mixed_cognitive":{"plan":1.0,"answer":0.9133333333333333}
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "NEXUS RU Planner V5 Streaming",
+  "status": "FROZEN_PRE_HARD_OOS_F",
+  "parameters": 19214734,
+  "train_examples": 8960,
+  "generated_validation_examples": 512,
+  "generated_validation_accuracy": 1,
+  "checkpoint_sha256": "bcda5ce85e4bb165748d8c06edf09d061fe1b2f77c6035f2d71cb94299ef37c7",
+  "checkpoint_bytes": 76874837,
+  "binder": "ArgumentBinderV4 unchanged after HARD-OOS-E",
+  "executor": "CompositionalCognitiveExecutorV4 unchanged after HARD-OOS-E",
+  "purpose": "isolate effect of larger planner + contrastive streaming curriculum",
+  "rule": "No planner/binder/executor changes after this freeze and before first HARD-OOS-F inference."
+}

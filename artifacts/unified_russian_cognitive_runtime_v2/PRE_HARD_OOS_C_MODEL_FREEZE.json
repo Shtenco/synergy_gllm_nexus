@@ -1,0 +1,12 @@
+{
+  "name": "NEXUS RU Cognitive Planner V2",
+  "status": "FROZEN_PRE_HARD_OOS_C",
+  "parameters": 5817998,
+  "architecture": "combined Russian morphology/char hash + ordered word ngrams + cognitive slots + 2 residual blocks",
+  "curriculum_examples": 31200,
+  "validation_examples": 3500,
+  "validation_accuracy": 0.952,
+  "checkpoint_sha256": "cfcf621a1c55f6e413ad166f5f91a749d9eccd78f5a53fd1acc8b41fc8ffcd3a",
+  "checkpoint_bytes": 23282677,
+  "rule": "No parameter update after this freeze and before first HARD-OOS-C inference."
+}

@@ -1,0 +1,61 @@
+name: NEXUS V8 pretrained Qwen3 proxy
+on:
+  push:
+    branches: ["nexus-unified-russian-cognitive-runtime-v1-2026-09-27"]
+    paths:
+      - "recovery/training/train_v8_qwen3_pretrained_proxy.py"
+      - ".github/workflows/nexus-v8-qwen3-proxy.yml"
+      - "benchmarks/nexus_ru_cognitive_10k_v1/HARD_OOS_K2_PREINFERENCE_FREEZE.json"
+  workflow_dispatch:
+
+jobs:
+  train-v8-proxy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      HF_HUB_DISABLE_XET: "1"
+      TOKENIZERS_PARALLELISM: "false"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: nexus-unified-russian-cognitive-runtime-v1-2026-09-27
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "torch>=2.4" "transformers>=4.51,<5" accelerate safetensors sentencepiece
+      - name: Verify sealed K2 before model load
+        run: |
+          python recovery/training/train_v8_qwen3_pretrained_proxy.py --seal-only | tee K2_SEAL_CHECK.json
+          grep -q "dd91c1295ba92c27536ed91a43a6ac0797e994208888122cb0e15f82ecbecf26" K2_SEAL_CHECK.json
+      - name: Train pretrained V8 proxy and open K2 once
+        run: |
+          mkdir -p artifacts/unified_russian_cognitive_runtime_v8_proxy
+          python recovery/training/train_v8_qwen3_pretrained_proxy.py \
+            --model Qwen/Qwen3-0.6B \
+            --train-per-cat 120 \
+            --val-per-cat 30 \
+            --k-per-cat 120 \
+            --batch 4 \
+            --epochs 2 \
+            --threads 4 \
+            --expected-k-sha dd91c1295ba92c27536ed91a43a6ac0797e994208888122cb0e15f82ecbecf26 \
+            --out artifacts/unified_russian_cognitive_runtime_v8_proxy \
+            | tee artifacts/unified_russian_cognitive_runtime_v8_proxy/TRAINING_STDOUT.txt
+      - name: Hash results
+        if: always()
+        run: |
+          sha256sum artifacts/unified_russian_cognitive_runtime_v8_proxy/* > artifacts/unified_russian_cognitive_runtime_v8_proxy/SHA256SUMS.txt || true
+          cat artifacts/unified_russian_cognitive_runtime_v8_proxy/METRICS.json || true
+      - name: Upload V8 proxy artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-v8-qwen3-pretrained-proxy-${{ github.run_number }}
+          path: |
+            artifacts/unified_russian_cognitive_runtime_v8_proxy
+            K2_SEAL_CHECK.json
+          if-no-files-found: warn
+          retention-days: 30

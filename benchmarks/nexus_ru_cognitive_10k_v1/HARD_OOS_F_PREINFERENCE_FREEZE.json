@@ -1,0 +1,21 @@
+{
+  "benchmark": "NEXUS-RU-COGNITIVE HARD-OOS-F",
+  "status": "SEALED_BEFORE_FIRST_INFERENCE",
+  "items": 1500,
+  "categories": 10,
+  "items_per_category": 150,
+  "dataset_sha256": "4705c5dedb1e012c413943aa7c7e57c89ef41b050dc725c6bf0bd85e788c28c1",
+  "planner_checkpoint_sha256": "bcda5ce85e4bb165748d8c06edf09d061fe1b2f77c6035f2d71cb94299ef37c7",
+  "planner_parameters": 19214734,
+  "planner_training_examples": 8960,
+  "binder": "ArgumentBinderV4 unchanged",
+  "executor": "CompositionalCognitiveExecutorV4 unchanged",
+  "stressors": [
+    "separate reference sentences",
+    "anaphoric question forms",
+    "distractors after relevant facts",
+    "reordered explanatory clauses"
+  ],
+  "generator_seed": 2026092806,
+  "rule": "No model/binder/executor changes after this seal and before first HARD-OOS-F inference."
+}

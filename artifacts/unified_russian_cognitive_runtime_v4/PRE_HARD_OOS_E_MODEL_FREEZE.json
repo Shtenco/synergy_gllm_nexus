@@ -1,0 +1,14 @@
+{
+  "name": "NEXUS Unified Russian Cognitive Runtime V4",
+  "planner_parameters": 11040270,
+  "planner_checkpoint_sha256": "62c7bc58fb4285fbd2580e5eb926c3c540163b0370948e1b495d8188cdc16da3",
+  "new_layers": [
+    "CognitiveIR",
+    "ArgumentBinderV4",
+    "CompositionalCognitiveExecutorV4"
+  ],
+  "development_source": "HARD-OOS-D after one-shot disclosure",
+  "development_end_to_end_accuracy_on_D": 0.994,
+  "status": "FROZEN_PRE_HARD_OOS_E",
+  "rule": "HARD-OOS-D is development-only. No changes after this freeze and before first HARD-OOS-E inference."
+}

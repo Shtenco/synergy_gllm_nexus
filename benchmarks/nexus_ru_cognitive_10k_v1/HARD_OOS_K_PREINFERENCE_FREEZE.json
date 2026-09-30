@@ -1,0 +1,16 @@
+{
+  "benchmark":"NEXUS-RU-PRETRAINED-CORTEX HARD-OOS-K",
+  "status":"SEALED_BEFORE_FIRST_QWEN3_PROXY_INFERENCE",
+  "items":1200,
+  "categories":10,
+  "items_per_category":120,
+  "dataset_sha256":"e9edf7a3947783056a8e596764120f8140159a1f8468a350668b7c52de3bcec7",
+  "generator_seed":2026092815,
+  "training_seed":2026092814,
+  "proxy_backbone":"Qwen/Qwen3-0.6B",
+  "backbone_policy":"frozen pretrained weights",
+  "trainable_layer":"context adapter + plan/relevance/role/temporal/answer-pointer heads",
+  "production_target":"Qwen3-14B Q4_K_M through R2.1 llama.cpp/OpenAI-compatible backend",
+  "authority_rule":"Qwen3 remains proposal-only; exact/formal/memory/verified graph authority remains sovereign.",
+  "rule":"No adapter/parser/executor/threshold changes after this seal and before first HARD-OOS-K evaluation."
+}
