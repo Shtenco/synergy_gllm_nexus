@@ -95,6 +95,22 @@ class HigherOrderExecutor:
         except ValueError:
             return HigherOrderResult(HigherOrderStatus.MALFORMED, trace=("primitive:partial_query_override",), world_id=ctx.world.world_id)
         out = self.executor.execute(ctx.world, compiled.rule_program, task)
+        if out.truth is None and task.operator_id and len(task.arguments) == 2:
+            src_id, dst_id = task.arguments
+            negative = next((
+                f for f in ctx.world.facts
+                if f.operator.operator_id == task.operator_id
+                and len(f.arguments) == 2
+                and f.arguments[0].entity_id == src_id
+                and f.arguments[1].entity_id == dst_id
+                and f.polarity is False
+            ), None)
+            if negative is not None:
+                from nexus_gllm.unified_v3.contracts import DerivedFact
+                out = ExecutionResult(
+                    False,
+                    DerivedFact(negative, (), "explicit_negative", 1, world_id=ctx.world.world_id),
+                )
         return HigherOrderResult(HigherOrderStatus.EXECUTED, out, (f"ATOM:{node.symbol}:{out.truth}",), ctx.world.world_id)
 
     @staticmethod

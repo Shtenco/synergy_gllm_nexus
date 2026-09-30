@@ -48,3 +48,18 @@ def test_never_seen_nested_topology_executes_compositionally():
     out=HigherOrderExecutor().execute(node,HigherOrderContext(w,task('r','a','c'),ledger))
     assert out.status is HigherOrderStatus.UNRESOLVED
     # unresolved blocker is intentionally fail-closed; it must not silently open the inhibited branch
+
+
+def test_explicit_negative_fact_makes_if_condition_false():
+    neg=WorldFact(OperatorSymbol('guard',2),(Entity('x'),Entity('y')),False)
+    w=WorldHypothesis('w',(neg,WorldFact(OperatorSymbol('r',2),(Entity('a'),Entity('b')),True),WorldFact(OperatorSymbol('r',2),(Entity('b'),Entity('c')),True)))
+    cond=atom('rule:transitive:guard',('guard','x','y'));body=atom('rule:transitive:r')
+    out=HigherOrderExecutor().execute(ProgramNode(ProgramKind.IF,children=(cond,body)),HigherOrderContext(w,task('r','a','c')))
+    assert out.status is HigherOrderStatus.CONDITION_FALSE and out.execution.truth is False
+
+def test_explicit_negative_blocker_opens_inhibit_body():
+    neg=WorldFact(OperatorSymbol('block',2),(Entity('x'),Entity('y')),False)
+    w=WorldHypothesis('w',(neg,WorldFact(OperatorSymbol('r',2),(Entity('a'),Entity('b')),True),WorldFact(OperatorSymbol('r',2),(Entity('b'),Entity('c')),True)))
+    blocker=atom('rule:transitive:block',('block','x','y'));body=atom('rule:transitive:r')
+    out=HigherOrderExecutor().execute(ProgramNode(ProgramKind.INHIBIT,children=(blocker,body)),HigherOrderContext(w,task('r','a','c')))
+    assert out.status is HigherOrderStatus.EXECUTED and out.execution.truth is True and 'INHIBIT:open' in out.trace
