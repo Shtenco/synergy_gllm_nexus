@@ -8,6 +8,7 @@ def build(root,*,commit=None):
     root=Path(root)
     b2=_load(root/'b2'/'one_shot_result.json')
     hf=_load(root/'hard_oos_f'/'one_shot_result.json')
+    hf2=_load(root/'hard_oos_f2'/'one_shot_result.json')
     meta=_load(root/'meta_g'/'one_shot_result.json')
     m8=_load(root/'m8_ablation.json')
     causal=_load(root/'causal_m15.json')
@@ -23,6 +24,9 @@ def build(root,*,commit=None):
 
     gates['hard_f_strict_ge_095']=hf['crc_r1']['strict_accuracy']>=.95
     gates['hard_f_representation_lt_fixed']=hf['crc_r1']['representation_failure_rate']<hf['fixed_basis']['representation_failure_rate']
+    gates['hard_f2_strict_ge_095']=hf2['crc_r1']['strict_accuracy']>=.95
+    gates['hard_f2_representation_lt_fixed']=hf2['crc_r1']['representation_failure_rate']<hf2['fixed_basis']['representation_failure_rate']
+    gates['hard_f2_all_strata_ge_095']=all(x['strict_accuracy']>=.95 for x in hf2['crc_r1']['by_stratum'].values())
 
     mg=meta['result']
     gates['meta_g_strict_ge_090']=mg['strict_integrated_accuracy']>=.90
@@ -44,7 +48,7 @@ def build(root,*,commit=None):
     gates['program_synthesis_selects_candidate']=program.get('selected') is not None and float(program.get('top_score',-1e9))>0
 
     payload={
-      'schema':'nexus.crc_r1.validation.v2',
+      'schema':'nexus.crc_r1.validation.v3',
       'commit':commit or os.getenv('GITHUB_SHA'),
       'p1_integrity':integrity,
       'gates':gates,
@@ -54,6 +58,7 @@ def build(root,*,commit=None):
       'sources':{
         'b2':'b2/one_shot_result.json',
         'hard_oos_f':'hard_oos_f/one_shot_result.json',
+        'hard_oos_f2':'hard_oos_f2/one_shot_result.json',
         'meta_g':'meta_g/one_shot_result.json',
         'm8':'m8_ablation.json',
         'causal':'causal_m15.json',

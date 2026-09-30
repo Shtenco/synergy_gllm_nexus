@@ -11,10 +11,11 @@ class PreFTX1Decision:
 
 class PreFTX1FreezeGate:
     """Hard gate: evidence readiness may freeze CRC-R1 but never opens FTX1."""
-    REQUIRED_SCHEMA='nexus.crc_r1.validation.v2'
+    REQUIRED_SCHEMA='nexus.crc_r1.validation.v3'
     REQUIRED_GATES=(
       'b2_beats_random_recall','b2_harmful_not_worse','b2_strict_not_worse',
       'hard_f_strict_ge_095','hard_f_representation_lt_fixed',
+      'hard_f2_strict_ge_095','hard_f2_representation_lt_fixed','hard_f2_all_strata_ge_095',
       'meta_g_strict_ge_090','meta_g_execution_ge_095','meta_g_planning_ge_095',
       'meta_g_memory_ge_095','meta_g_trace_complete',
       'memory_provenance_positive','future_gain_nonnegative',
@@ -40,5 +41,5 @@ class PreFTX1FreezeGate:
     def freeze(self,evidence_path,out_path,*,commit):
         d=self.decide(evidence_path)
         if not d.allowed:raise RuntimeError('pre-FTX1 freeze denied: '+','.join(d.reasons))
-        payload={'schema':'nexus.crc_r1.pre_ftx1_freeze.v2','commit':commit,'evidence_sha256':d.evidence_sha256,'ftx1_opened':False,'status':'FROZEN_PRE_FTX1'}
+        payload={'schema':'nexus.crc_r1.pre_ftx1_freeze.v3','commit':commit,'evidence_sha256':d.evidence_sha256,'ftx1_opened':False,'status':'FROZEN_PRE_FTX1'}
         Path(out_path).write_text(json.dumps(payload,indent=2,sort_keys=True),encoding='utf-8');return payload
