@@ -8,6 +8,7 @@ class PreFTX1Decision:
     allowed:bool
     reasons:tuple[str,...]
     evidence_sha256:str|None=None
+    evidence_commit:str|None=None
 
 class PreFTX1FreezeGate:
     """Hard gate: evidence readiness may freeze CRC-R1 but never opens FTX1."""
@@ -25,10 +26,10 @@ class PreFTX1FreezeGate:
     )
     def decide(self,evidence_path):
         p=Path(evidence_path)
-        if not p.is_file():return PreFTX1Decision(False,('evidence_missing',),None)
+        if not p.is_file():return PreFTX1Decision(False,('evidence_missing',),None,None)
         raw=p.read_bytes();sha=hashlib.sha256(raw).hexdigest()
         try:m=json.loads(raw)
-        except Exception:return PreFTX1Decision(False,('evidence_invalid_json',),sha)
+        except Exception:return PreFTX1Decision(False,('evidence_invalid_json',),sha,None)
         reasons=[]
         if m.get('schema')!=self.REQUIRED_SCHEMA:reasons.append('validation_schema_mismatch')
         if m.get('ftx1_used') is not False:reasons.append('ftx1_boundary_violated')
@@ -37,9 +38,11 @@ class PreFTX1FreezeGate:
         for g in self.REQUIRED_GATES:
             if gates.get(g) is not True:reasons.append('gate_failed:'+g)
         if m.get('ready_for_pre_ftx1_freeze') is not True:reasons.append('manifest_not_ready')
-        return PreFTX1Decision(not reasons,tuple(reasons),sha)
+        return PreFTX1Decision(not reasons,tuple(reasons),sha,m.get('commit'))
     def freeze(self,evidence_path,out_path,*,commit):
         d=self.decide(evidence_path)
-        if not d.allowed:raise RuntimeError('pre-FTX1 freeze denied: '+','.join(d.reasons))
-        payload={'schema':'nexus.crc_r1.pre_ftx1_freeze.v3','commit':commit,'evidence_sha256':d.evidence_sha256,'ftx1_opened':False,'status':'FROZEN_PRE_FTX1'}
+        reasons=list(d.reasons)
+        if d.evidence_commit!=commit: reasons.append('evidence_commit_mismatch')
+        if reasons:raise RuntimeError('pre-FTX1 freeze denied: '+','.join(reasons))
+        payload={'schema':'nexus.crc_r1.pre_ftx1_freeze.v3','commit':commit,'evidence_commit':d.evidence_commit,'evidence_sha256':d.evidence_sha256,'ftx1_opened':False,'status':'FROZEN_PRE_FTX1'}
         Path(out_path).write_text(json.dumps(payload,indent=2,sort_keys=True),encoding='utf-8');return payload
