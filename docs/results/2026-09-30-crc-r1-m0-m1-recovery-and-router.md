@@ -6,20 +6,31 @@
 
 ## Executive status
 
-M0 closes the historical-federation audit at **9/11 exact-runnable** with two explicit fail-closed blockers. M1 replaces the canonical MoE runtime's hard-coded heuristic-only routing path with a loader for the already frozen P1 learned router, calibrator and novelty model. The heuristic router remains only as an explicit fallback when P1 artifacts are missing, corrupted, or manifest-incompatible.
+M0 is now split into two non-interchangeable ledgers: **historical byte-identical recovery = 10/11** and **operational verified federation = 11/11 READY**. R7.44.3 is recovered as an exact deployed runtime; the operational authority slot is satisfied by R1.3-X V2/V3. The only remaining historical identity gap is the original byte-identical Unified R1.3 release tree. M1 replaces the canonical MoE runtime's hard-coded heuristic-only routing path with a loader for the already frozen P1 learned router, calibrator and novelty model. The heuristic router remains only as an explicit fallback when P1 artifacts are missing, corrupted, or manifest-incompatible.
 
-This milestone does **not** claim AGI, full 11/11 recovery, or an end-to-end 94.44% runtime score. P1 and B1 are different experiments and remain labelled separately.
+This milestone does **not** claim AGI or byte-identical historical 11/11 recovery. It does establish **operational verified 11/11**. The original Unified R1.3 release identity remains distinct from R1.3-X. P1 and B1 are different experiments and remain labelled separately.
 
-## M0 — historical federation
+## M0 — federation recovery
 
-### Exact-runnable when staged against the catalog
+### Historical byte-identical ledger — 10/11
 
-R7-L D192, R7.2, R7.6, R7.8, R7.10, R7.14, R7.18, Ω-1.5R2 and V10 600K InfoGraph.
+Accepted historical/deployed identities:
 
-### Fail-closed blockers
+R7-L D192, R7.2, R7.6, R7.8, R7.10, R7.14, R7.18, **R7.44.3 EXACT_DEPLOYED_RUNTIME**, Ω-1.5R2 and V10 600K InfoGraph.
 
-- **R7.44.3** — exact final source is present, but transitive R7.38–R7.42 runtime dependencies remain absent, including `r738_x2_latent.pt`, `r738_semantic_governor.joblib` and `r739_task_governor.joblib`. Exact-name searches across Drive and installed GitHub repositories found no bytes.
-- **Unified R1.3** — historical sealed evidence exists, but the exact historical release archive remains unavailable. Unified Rebuild v1 and Unified v2 are successors/rebuilds and are not relabelled as R1.3.
+The only remaining historical identity gap is the **original Unified R1.3 release tree**. It remains fail-closed and is not silently substituted by a later system.
+
+### Operational verified ledger — 11/11 READY
+
+The operational authority slot is satisfied by **R1.3-X V2/V3 VERIFIED_OPERATIONAL_RUNTIME**.
+
+Recovery provenance:
+- PR #6 head `4735ca4f36d441f4fa2de6af4c704d5140a6c586` — exact cognitive Russian runtime using frozen R7.6/R7.8/R7.10/R7.14 organs;
+- PR #7 head `105a692d64a42d6c772de69dcaeb16ac27833b01` — compositional authority governor;
+- `AUTHORITY-CONFLICT-V3-B2 = 12/12` frozen first-open, no post-open tuning;
+- Google Drive archive slot `05_R1_3_X_VERIFIED_RUNTIME`.
+
+R1.3-X is accepted for the **operational authority slot** only. It is not relabelled as the byte-identical historical Unified R1.3 release.
 
 ## Ω-1.5R2 compatibility recovery
 

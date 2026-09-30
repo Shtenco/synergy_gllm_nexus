@@ -4,6 +4,36 @@
 
 NEXUS GLLM is not an ordinary LLM. The canonical runtime does **not** require Qwen, Llama, Mistral, GPT, Transformers, RAG, or an external LLM API.
 
+
+## CRC-R1 canonical federation status
+
+As of **2026-09-30**, federation recovery is **not a blocker for continued NEXUS development**.
+
+```text
+M0 operational federation     ✅ 11 / 11 READY
+
+R7.44.3                       ✅ EXACT_DEPLOYED_RUNTIME
+R1.3-X V2/V3                  ✅ VERIFIED_OPERATIONAL_RUNTIME
+
+Historical byte-identical     10 / 11
+Original Unified R1.3         ⚠ only remaining historical identity gap
+```
+
+The distinction is intentional:
+
+- **operational verified = 11/11 READY** means every required operational federation slot has a verified runtime;
+- **historical byte-identical = 10/11** means the original byte-identical Unified R1.3 release tree has not been recovered and is not silently replaced by a successor;
+- R7.44.3 is **not** a blocker: its deployed MOBILE PORT was recovered byte-for-byte from the deployed APK with SHA-256 `d248bb75c45694bbde6914615243080b711d2efea80b22c2652e692cc8307703` and targeted contract replay **8/8**;
+- the authority slot is operationally satisfied by **R1.3-X V2/V3**, backed by the exact cognitive-runtime and compositional-authority recovery lines (PR #6 / PR #7), including frozen `AUTHORITY-CONFLICT-V3-B2 = 12/12`.
+
+Canonical machine-readable logic lives in:
+
+- `src/nexus_gllm/unified_v3/moe/federation_readiness.py`
+- `src/nexus_gllm/unified_v3/moe/exact_artifacts.py`
+- `artifacts/recovered/r13x_v3/R13X_OPERATIONAL_PROVENANCE.json`
+
+Do not report the obsolete state `9/11 + R7.44.3 blocker`.
+
 Its primary cognitive state is a **dynamic typed hypergraph**. Russian text becomes validated graph structure, recurrent graph cognition operates on an active workspace, temporal/causal relations update a living world model, sleep consolidates memory, and the semantic result is represented as an `AnswerGraph` before Russian text is generated.
 
 ## Current architecture

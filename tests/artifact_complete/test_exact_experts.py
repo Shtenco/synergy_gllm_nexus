@@ -3,10 +3,11 @@ from pathlib import Path
 from nexus_gllm.unified_v3.moe.exact_artifacts import ArtifactCatalog, ArtifactStatus
 from nexus_gllm.unified_v3.moe.exact_experts import R7LExactExpert,R72ExactExpert,R76ExactExpert,R78ExactExpert,R710ExactExpert,R714ExactExpert,R718ExactExpert
 ART=Path('/mnt/data')
-def test_catalog_verifies_known_exact_hashes_and_blockers():
+def test_catalog_verifies_known_exact_hashes_and_recovered_status():
     c=ArtifactCatalog.default(ART)
     for e in ('r7l','r72','r76','r78','r710','r714','r718','omega15r2','v10'):assert c.verify(e).status is ArtifactStatus.EXACT_RUNNABLE
-    assert c.verify('r7443').status is ArtifactStatus.EXACT_SOURCE_INCOMPLETE_RUNTIME
+    assert c.verify('r7443').status is ArtifactStatus.EXACT_DEPLOYED_RUNTIME
+    assert c.verify('r13x_v3').status is ArtifactStatus.VERIFIED_OPERATIONAL_RUNTIME
     assert c.verify('unified_r13').status is ArtifactStatus.HISTORICAL_RELEASE_NOT_MOUNTED
 def test_r7l_exact_checkpoint_infers_missing_mapping():
     e=R7LExactExpert(ART/'r7_seed712.pt');support=[(0,2,1),(1,0,3),(2,3,0)]
