@@ -1,0 +1,54 @@
+name: ftx1-clean-preopen-windows
+
+on:
+  push:
+    branches: [ftx1-clean-eval-2026-10-01]
+  workflow_dispatch:
+
+jobs:
+  preopen-windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout eval branch with frozen parent history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install frozen project
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          python -m pip install pytest
+      - name: Synthetic pre-open runner test
+        shell: pwsh
+        run: python -m pytest -q ftx1_eval/test_runner_synthetic.py
+      - name: Verify runner and frozen runtime
+        shell: pwsh
+        run: |
+          $actual=(Get-FileHash ftx1_eval/runner.py -Algorithm SHA256).Hash.ToLower()
+          if($actual -ne 'd3ebfa45a45cbc6c866bfa2ae4a11c5901c0e9c3448985a881b684708a8754b5'){throw 'runner hash mismatch'}
+          $tree=(git show -s --format=%T fded8bd46777b2e868620b4c85d60c5c375b5ec1).Trim()
+          if($tree -ne 'fb6e5ebdfaf09636d603f31d189f6fa735f42670'){throw 'runtime tree mismatch'}
+          $actual | Out-File -Encoding ascii RUNNER_SHA256.txt
+      - name: Package exact frozen runtime snapshot
+        shell: pwsh
+        run: |
+          git archive --format=zip --output=runtime-fded8bd.zip fded8bd46777b2e868620b4c85d60c5c375b5ec1
+          (Get-FileHash runtime-fded8bd.zip -Algorithm SHA256).Hash.ToLower() | Out-File -Encoding ascii RUNTIME_SNAPSHOT_SHA256.txt
+          $data=[ordered]@{schema='nexus.ftx1.preopen.workflow.v1';runtime_commit='fded8bd46777b2e868620b4c85d60c5c375b5ec1';runtime_tree='fb6e5ebdfaf09636d603f31d189f6fa735f42670';runner_sha256='d3ebfa45a45cbc6c866bfa2ae4a11c5901c0e9c3448985a881b684708a8754b5';ftx1_archive_sha256='cd01b1c37cc35ddf970aaffff2a6ae25723e4db1c0421fdccf5c423a35efae56';synthetic_preopen='PASS';open_count=0;post_open_tuning=$false}
+          $data | ConvertTo-Json | Out-File -Encoding utf8 PREOPEN_WORKFLOW_EVIDENCE.json
+      - name: Upload exact runtime snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: ftx1-preopen-runtime-fded8bd-windows
+          path: |
+            runtime-fded8bd.zip
+            RUNTIME_SNAPSHOT_SHA256.txt
+            RUNNER_SHA256.txt
+            PREOPEN_WORKFLOW_EVIDENCE.json
+          if-no-files-found: error
