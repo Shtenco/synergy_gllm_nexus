@@ -12,12 +12,11 @@ def _sha(path):
         for chunk in iter(lambda:f.read(1<<20),b''):h.update(chunk)
     return h.hexdigest()
 
-def _state_hash(state):
+def logical_state_hash(state):
+    """Canonical P1 logical checkpoint hash; byte-for-byte identical to training.v3_moe.train_router.logical_state_hash."""
     h=hashlib.sha256()
-    for k in sorted(state):
-        h.update(k.encode())
-        v=state[k].detach().cpu().contiguous()
-        h.update(str(v.dtype).encode());h.update(str(tuple(v.shape)).encode());h.update(v.numpy().tobytes())
+    for k,v in sorted(state.items()):
+        h.update(k.encode());h.update(v.detach().cpu().numpy().tobytes())
     return h.hexdigest()
 
 def validate_torch_payloads(artifact_dir):
@@ -26,7 +25,7 @@ def validate_torch_payloads(artifact_dir):
         try:
             state=torch.load(root/name,map_location='cpu',weights_only=True)
             if not isinstance(state,dict):raise TypeError('checkpoint state must be a dict')
-            logical[name]=_state_hash(state);loadability[name]=True
+            logical[name]=logical_state_hash(state);loadability[name]=True
         except Exception as exc:
             raise RuntimeError(f'{name} is not a loadable frozen checkpoint: {type(exc).__name__}: {exc}') from exc
     recovery=root/P1_RECOVERY_FILE
@@ -42,7 +41,6 @@ def generate_integrity_manifest(artifact_dir,*,source_commit=None):
         sha[name]=_sha(root/name)
     verified=validate_torch_payloads(root)
     payload={'format_version':2,'source_commit':source_commit,'sha256':sha,**verified}
-    if (root/P1_RECOVERY_FILE).is_file():
-        payload['recovery_sha256']=_sha(root/P1_RECOVERY_FILE)
+    if (root/P1_RECOVERY_FILE).is_file():payload['recovery_sha256']=_sha(root/P1_RECOVERY_FILE)
     (root/P1_INTEGRITY_FILE).write_text(json.dumps(payload,indent=2,sort_keys=True),encoding='utf-8')
     return payload
