@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 7bee634d82996e3b34075327be660eb170e0b662
+          ref: 0ef170b88f29abf4d24aa52685b35a4bd9b6f32d
           fetch-depth: 2
       - uses: actions/setup-python@v5
         with:
@@ -24,7 +24,7 @@ jobs:
           pip install -e . --no-deps
       - name: Verify pinned implementation commit
         run: |
-          test "$(git rev-parse HEAD)" = "7bee634d82996e3b34075327be660eb170e0b662"
+          test "$(git rev-parse HEAD)" = "0ef170b88f29abf4d24aa52685b35a4bd9b6f32d"
       - name: M32 DEV metrics
         run: |
           mkdir -p artifacts/m32_evidence
@@ -36,12 +36,7 @@ jobs:
           from benchmarks.m32_meta.generator import META_SEED, generate, generator_fingerprint
           from benchmarks.m32_meta.freeze import build_manifest
           cases=generate()
-          m=build_manifest(
-              generator_sha256=generator_fingerprint(),
-              seed=META_SEED,
-              case_count=len(cases),
-              implementation_commit='7bee634d82996e3b34075327be660eb170e0b662',
-          )
+          m=build_manifest(generator_sha256=generator_fingerprint(),seed=META_SEED,case_count=len(cases),implementation_commit='0ef170b88f29abf4d24aa52685b35a4bd9b6f32d')
           print(json.dumps(m,indent=2,sort_keys=True))
           PY
       - name: Verify frozen R1 source is unchanged
@@ -55,5 +50,5 @@ jobs:
           pytest tests/crc_r1 tests/hard_oos_f tests/hard_oos_f2 tests/crc_meta_g -q | tee artifacts/m32_evidence/FROZEN_REGRESSION_TESTS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: m32-evidence-7bee634d
+          name: m32-evidence-0ef170b8
           path: artifacts/m32_evidence
