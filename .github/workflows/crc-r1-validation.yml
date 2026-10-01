@@ -9,13 +9,20 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      NEXUS_VALIDATED_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Prepare evidence
-        run: mkdir -p artifacts/crc_r1_validation
+        run: |
+          mkdir -p artifacts/crc_r1_validation
+          echo "$NEXUS_VALIDATED_COMMIT" > artifacts/crc_r1_validation/VALIDATED_COMMIT.txt
+          test "$(git rev-parse HEAD)" = "$NEXUS_VALIDATED_COMMIT"
       - name: Install
         shell: bash
         run: |
@@ -42,7 +49,7 @@ jobs:
           python - <<'PY' 2>&1 | tee artifacts/crc_r1_validation/integrity.log
           import os
           from nexus_gllm.unified_v3.moe.integrity import generate_integrity_manifest
-          print(generate_integrity_manifest('artifacts/v3_moe/p1',source_commit=os.environ.get('GITHUB_SHA')))
+          print(generate_integrity_manifest('artifacts/v3_moe/p1',source_commit=os.environ['NEXUS_VALIDATED_COMMIT']))
           PY
           echo ${PIPESTATUS[0]} > artifacts/crc_r1_validation/integrity.exit
           if [ -f artifacts/v3_moe/p1/integrity.sha256.json ]; then cp artifacts/v3_moe/p1/integrity.sha256.json artifacts/crc_r1_validation/p1_integrity.sha256.json; fi
@@ -63,7 +70,7 @@ jobs:
           python - <<'PY' 2>&1 | tee artifacts/crc_r1_validation/hard_oos_f.log
           import os
           from benchmarks.hard_oos_f.protocol import run
-          print(run('artifacts/crc_r1_validation/hard_oos_f',seed=2026093007,n_per_stratum=200,source_sha256=os.environ.get('GITHUB_SHA','UNKNOWN')))
+          print(run('artifacts/crc_r1_validation/hard_oos_f',seed=2026093007,n_per_stratum=200,source_sha256=os.environ['NEXUS_VALIDATED_COMMIT']))
           PY
           echo ${PIPESTATUS[0]} > artifacts/crc_r1_validation/hard_oos_f.exit
           exit 0
@@ -75,7 +82,7 @@ jobs:
           python - <<'PY' 2>&1 | tee artifacts/crc_r1_validation/hard_oos_f2.log
           import os
           from benchmarks.hard_oos_f2.protocol import run
-          print(run('artifacts/crc_r1_validation/hard_oos_f2',seed=2026093031,n_per_stratum=200,source_sha256=os.environ.get('GITHUB_SHA','UNKNOWN')))
+          print(run('artifacts/crc_r1_validation/hard_oos_f2',seed=2026093031,n_per_stratum=200,source_sha256=os.environ['NEXUS_VALIDATED_COMMIT']))
           PY
           echo ${PIPESTATUS[0]} > artifacts/crc_r1_validation/hard_oos_f2.exit
           exit 0
@@ -87,7 +94,7 @@ jobs:
           python - <<'PY' 2>&1 | tee artifacts/crc_r1_validation/meta_g.log
           import os
           from benchmarks.crc_meta_g.protocol import run
-          print(run('artifacts/crc_r1_validation/meta_g',seed=2026093017,n_per_stratum=100,source_sha256=os.environ.get('GITHUB_SHA','UNKNOWN')))
+          print(run('artifacts/crc_r1_validation/meta_g',seed=2026093017,n_per_stratum=100,source_sha256=os.environ['NEXUS_VALIDATED_COMMIT']))
           PY
           echo ${PIPESTATUS[0]} > artifacts/crc_r1_validation/meta_g.exit
           exit 0
@@ -117,7 +124,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          python -m benchmarks.crc_m8.evidence_manifest --root artifacts/crc_r1_validation --out artifacts/crc_r1_validation/PRE_FTX1_EVIDENCE_MANIFEST.json 2>&1 | tee artifacts/crc_r1_validation/evidence_manifest.log
+          python -m benchmarks.crc_m8.evidence_manifest --root artifacts/crc_r1_validation --out artifacts/crc_r1_validation/PRE_FTX1_EVIDENCE_MANIFEST.json --commit "$NEXUS_VALIDATED_COMMIT" 2>&1 | tee artifacts/crc_r1_validation/evidence_manifest.log
           echo ${PIPESTATUS[0]} > artifacts/crc_r1_validation/evidence_manifest.exit
           find artifacts/crc_r1_validation -type f -print0 | sort -z | xargs -0 sha256sum > artifacts/crc_r1_validation/EVIDENCE_SHA256.txt
           exit 0
