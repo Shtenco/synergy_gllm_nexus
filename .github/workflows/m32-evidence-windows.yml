@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 7bee634d82996e3b34075327be660eb170e0b662
+          ref: 0ef170b88f29abf4d24aa52685b35a4bd9b6f32d
           fetch-depth: 2
       - uses: actions/setup-python@v5
         with:
@@ -26,7 +26,7 @@ jobs:
       - name: Verify pinned implementation commit
         shell: pwsh
         run: |
-          if ((git rev-parse HEAD).Trim() -ne '7bee634d82996e3b34075327be660eb170e0b662') { throw 'wrong implementation commit' }
+          if ((git rev-parse HEAD).Trim() -ne '0ef170b88f29abf4d24aa52685b35a4bd9b6f32d') { throw 'wrong implementation commit' }
       - name: M32 DEV metrics
         shell: pwsh
         run: |
@@ -35,7 +35,7 @@ jobs:
       - name: Build sealed META manifest
         shell: pwsh
         run: |
-          python -c "import json; from benchmarks.m32_meta.generator import META_SEED,generate,generator_fingerprint; from benchmarks.m32_meta.freeze import build_manifest; cases=generate(); print(json.dumps(build_manifest(generator_sha256=generator_fingerprint(),seed=META_SEED,case_count=len(cases),implementation_commit='7bee634d82996e3b34075327be660eb170e0b662'),indent=2,sort_keys=True))" | Tee-Object -FilePath artifacts/m32_evidence/M32_META_FREEZE.json
+          python -c "import json; from benchmarks.m32_meta.generator import META_SEED,generate,generator_fingerprint; from benchmarks.m32_meta.freeze import build_manifest; cases=generate(); print(json.dumps(build_manifest(generator_sha256=generator_fingerprint(),seed=META_SEED,case_count=len(cases),implementation_commit='0ef170b88f29abf4d24aa52685b35a4bd9b6f32d'),indent=2,sort_keys=True))" | Tee-Object -FilePath artifacts/m32_evidence/M32_META_FREEZE.json
       - name: Verify frozen R1 source is unchanged
         shell: pwsh
         run: |
@@ -52,5 +52,5 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@v4
         with:
-          name: m32-evidence-windows-7bee634d
+          name: m32-evidence-windows-0ef170b8
           path: artifacts/m32_evidence
