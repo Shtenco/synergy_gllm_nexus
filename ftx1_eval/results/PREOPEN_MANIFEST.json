@@ -1,0 +1,15 @@
+{
+  "eval_branch": "ftx1-clean-eval-2026-10-01",
+  "ftx1_archive_sha256": "cd01b1c37cc35ddf970aaffff2a6ae25723e4db1c0421fdccf5c423a35efae56",
+  "open_count": 0,
+  "post_open_tuning": false,
+  "retry_policy": "NO_RETRY",
+  "runner_commit": "a6c27e00c0e5b652a0ecc777d47a8576ddb8039b",
+  "runner_sha256": "d3ebfa45a45cbc6c866bfa2ae4a11c5901c0e9c3448985a881b684708a8754b5",
+  "runtime_commit": "fded8bd46777b2e868620b4c85d60c5c375b5ec1",
+  "runtime_tree": "fb6e5ebdfaf09636d603f31d189f6fa735f42670",
+  "schema": "nexus.ftx1.preopen.v1",
+  "synthetic_basis": "frozen task-cortex early-exit equivalence; full runtime already validation.v3 GREEN",
+  "synthetic_preopen": "PASS",
+  "synthetic_test_commit": "fc1a25b4d91ead3e2e1fe558887dbeb845d408c9"
+}
