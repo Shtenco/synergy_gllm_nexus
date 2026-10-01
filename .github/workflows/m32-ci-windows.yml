@@ -1,0 +1,31 @@
+name: m32-ci-windows
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: m32-ci-windows-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  m32-windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install CPU test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --index-url https://download.pytorch.org/whl/cpu torch
+          pip install pytest httpx numpy
+          pip install -e . --no-deps
+      - name: M32 tests
+        run: pytest tests/m32 -q
+      - name: Frozen regression subset
+        run: pytest tests/crc_r1 tests/hard_oos_f tests/hard_oos_f2 tests/crc_meta_g -q
+      - name: Compile
+        run: python -m compileall src benchmarks
