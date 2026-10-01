@@ -167,3 +167,28 @@ def test_backend_exception_fails_closed_without_partial_outputs():
     assert result.semantic_atoms == ()
     assert result.task is None
     assert result.program is None
+
+
+def test_non_enum_task_opcode_fails_closed():
+    request = make_request()
+    proposal = valid_proposal(request)
+    invalid_task = GeneralizedTaskProposal(
+        opcode="query_relation",  # type: ignore[arg-type]
+        operator_id=proposal.task.operator_id,
+        arguments=proposal.task.arguments,
+        confidence=proposal.task.confidence,
+        supporting_spans=proposal.task.supporting_spans,
+    )
+    result = GeneralizedIngressR1(
+        StaticBackend(
+            GeneralizedIngressProposal(
+                backend_id=proposal.backend_id,
+                semantic_atoms=proposal.semantic_atoms,
+                task=invalid_task,
+                program=None,
+            )
+        )
+    ).parse(request)
+    assert result.admission.accepted is False
+    assert "task:invalid_opcode" in result.admission.reasons
+    assert result.task is None
