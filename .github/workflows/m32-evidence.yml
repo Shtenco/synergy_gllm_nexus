@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 6dd69420c4ea20ec64da38f7056c39d543216b77
+          ref: 4192b81482ed852dd8bca8f6911f98dc6eecd633
           fetch-depth: 2
       - uses: actions/setup-python@v5
         with:
@@ -24,7 +24,7 @@ jobs:
           pip install -e . --no-deps
       - name: Verify pinned implementation commit
         run: |
-          test "$(git rev-parse HEAD)" = "6dd69420c4ea20ec64da38f7056c39d543216b77"
+          test "$(git rev-parse HEAD)" = "4192b81482ed852dd8bca8f6911f98dc6eecd633"
       - name: M32 DEV metrics
         run: |
           mkdir -p artifacts/m32_evidence
@@ -40,7 +40,7 @@ jobs:
               generator_sha256=generator_fingerprint(),
               seed=META_SEED,
               case_count=len(cases),
-              implementation_commit='6dd69420c4ea20ec64da38f7056c39d543216b77',
+              implementation_commit='4192b81482ed852dd8bca8f6911f98dc6eecd633',
           )
           print(json.dumps(m,indent=2,sort_keys=True))
           PY
@@ -55,5 +55,5 @@ jobs:
           pytest tests/crc_r1 tests/hard_oos_f tests/hard_oos_f2 tests/crc_meta_g -q | tee artifacts/m32_evidence/FROZEN_REGRESSION_TESTS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: m32-evidence-6dd69420
+          name: m32-evidence-4192b814
           path: artifacts/m32_evidence
