@@ -109,6 +109,20 @@ def test_operator_smuggling_fails_closed():
     assert not result.accepted and "ungrounded_operator:secret_operator" in result.reasons
 
 
+def test_query_operator_override_smuggling_fails_closed():
+    request = req()
+    task = TaskProgram(TaskOpcode.QUERY_RELATION, "parent", ("alice", "bob"))
+    atom = ProgramNode(ProgramKind.ATOM, "rule:transitive:parent")
+    node = ProgramNode(
+        ProgramKind.IF,
+        children=(atom, atom),
+        params=(("query_operator", "secret_operator"), ("query_src", "alice"), ("query_dst", "bob")),
+    )
+    result = ProgramProposalGate().check(proposal(node, request), request, task, context_with("parent"))
+    assert not result.accepted
+    assert "ungrounded_operator:secret_operator" in result.reasons
+
+
 def test_low_confidence_fails_closed():
     request = req()
     task = TaskProgram(TaskOpcode.QUERY_RELATION, "parent", ("alice", "bob"))
