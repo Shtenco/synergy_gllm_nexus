@@ -58,8 +58,10 @@ from .replay_promotion import promotion_candidate_from_replay
 from .scientific_query import QueryActionSpec, ScientificQueryPlan, ScientificQueryPlanner
 
 from .dialogue_context import ContextValueStatus, ContextValue, PendingSlot, Referent, DialogueContextState, DialogueContextR1
-\nfrom .conversation_shell import ConversationIngressResult, ConversationTurn, ConversationShellR1\n
+from .conversation_shell import ConversationIngressResult, ConversationTurn, ConversationShellR1
+
 from .task_cortex import TaskProposal, TaskAdmission, TaskParseResult, TaskProposalGate, TaskCortexPort, ControlledTaskBackend
 
 from .program_synthesis import ProgramEvidenceCase, ProgramCandidateScore, ProgramSynthesisResult, ProgramSynthesisCortex
-\nfrom .conversational_reasoner import ConversationalReasoningResult, ConversationalReasonerR1\n\nfrom .ollama_ingress import OllamaLanguageCortexBackend, OllamaTaskCortexBackend\n
+from .conversational_reasoner import ConversationalReasoningResult, ConversationalReasonerR1
+from .ollama_ingress import OllamaLanguageCortexBackend, OllamaTaskCortexBackend
