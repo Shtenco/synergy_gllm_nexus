@@ -1,0 +1,65 @@
+{
+  "commit": "fded8bd46777b2e868620b4c85d60c5c375b5ec1",
+  "ftx1_used": false,
+  "gates": {
+    "b2_beats_random_recall": true,
+    "b2_harmful_not_worse": true,
+    "b2_strict_not_worse": true,
+    "causal_accuracy_ge_095": true,
+    "causal_beats_observation_only": true,
+    "causal_false_positive_zero": true,
+    "credit_causal_gt_spurious": true,
+    "future_gain_nonnegative": true,
+    "hard_f2_all_strata_ge_095": true,
+    "hard_f2_representation_lt_fixed": true,
+    "hard_f2_strict_ge_095": true,
+    "hard_f_representation_lt_fixed": true,
+    "hard_f_strict_ge_095": true,
+    "info_gain_selects_diagnostic": true,
+    "memory_provenance_positive": true,
+    "meta_compute_monotonic": true,
+    "meta_g_execution_ge_095": true,
+    "meta_g_memory_ge_095": true,
+    "meta_g_planning_ge_095": true,
+    "meta_g_strict_ge_090": true,
+    "meta_g_trace_complete": true,
+    "program_synthesis_selects_candidate": true
+  },
+  "hard_oos_d_reused_as_clean_oos": false,
+  "manifest_sha256": "9119106ea7a86317d7f35351aa23e9cd517fe06ac5bed08b52f7cde8e9c6b8d5",
+  "p1_integrity": {
+    "format_version": 2,
+    "loadability": {
+      "calibrator.pt": true,
+      "novelty.pt": true,
+      "router.pt": true
+    },
+    "logical_state_sha256": {
+      "calibrator.pt": "3c7ea7dbb91f95a515abd18580d7d4af1c2b3aaf37245d81660d96160576716e",
+      "novelty.pt": "790532da5913d78a88da08d7f173131953567d12551cf6474ad4f623abb964c8",
+      "router.pt": "78f0f7bc6fddb26114c25f5a1370c617b382595ff6cc4ce9bd4346a1d881bd83"
+    },
+    "recovery_sha256": "bd4da86fd1ff8eb1a50c6d80b15dedaa2095fe27389140e5e3602984364c6bd6",
+    "sha256": {
+      "calibrator.pt": "004dff3c791084c547e7f2c359c8e88a6427eccd22da58d10b12cdd1db92dc6d",
+      "manifest.json": "2b257df5e3101fd117dba4f549eb58b0a45ed10353bfa078fe389e555d8d8cd1",
+      "metrics.json": "d9af0d23d80d70daa679f633a5f26cb87a52a4a7aaffa576e40c2b5c69dc5b92",
+      "novelty.pt": "bb2fd3cbfdc8491cc242d29fbe6b5c667900cfb034f3f89c1e833968a9418a4d",
+      "router.pt": "c6c00def6ed8fb948915802e2f87e95ad9408b63020251c8a4264818c1785125"
+    },
+    "source_commit": "fded8bd46777b2e868620b4c85d60c5c375b5ec1"
+  },
+  "ready_for_pre_ftx1_freeze": true,
+  "schema": "nexus.crc_r1.validation.v3",
+  "sources": {
+    "b2": "b2/one_shot_result.json",
+    "causal": "causal_m15.json",
+    "hard_oos_f": "hard_oos_f/one_shot_result.json",
+    "hard_oos_f2": "hard_oos_f2/one_shot_result.json",
+    "info_gain": "info_gain_m16.json",
+    "integrity": "p1_integrity.sha256.json",
+    "m8": "m8_ablation.json",
+    "meta_g": "meta_g/one_shot_result.json",
+    "program": "program_m25.json"
+  }
+}

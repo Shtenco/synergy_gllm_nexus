@@ -1,0 +1,8 @@
+{
+  "commit": "fded8bd46777b2e868620b4c85d60c5c375b5ec1",
+  "evidence_commit": "fded8bd46777b2e868620b4c85d60c5c375b5ec1",
+  "evidence_sha256": "ef1626b44215c149c8dacf4ddc2fa83709c050f7bf76f5711f6df43a6caa197d",
+  "ftx1_opened": false,
+  "schema": "nexus.crc_r1.pre_ftx1_freeze.v3",
+  "status": "FROZEN_PRE_FTX1"
+}
