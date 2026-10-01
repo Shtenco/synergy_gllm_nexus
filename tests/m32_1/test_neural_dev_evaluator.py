@@ -20,6 +20,17 @@ class CountingBackend:
         return GeneralizedIngressProposal(self.backend_id)
 
 
+class DeterministicFailingBackend:
+    backend_id = "deterministic-failing-neural-stub"
+
+    def __init__(self):
+        self.calls = []
+
+    def propose(self, request):
+        self.calls.append(tuple((s.source_id, s.sha256) for s in request.sources))
+        raise ValueError("deterministic_bad_proposal")
+
+
 def test_neural_dev_evaluator_caches_identical_inputs_and_never_exposes_gold():
     backend = CountingBackend()
     report = run_with_backend(
@@ -27,6 +38,7 @@ def test_neural_dev_evaluator_caches_identical_inputs_and_never_exposes_gold():
         model_sha256="a" * 64,
         seed=32001,
         n_per_family=2,
+        generation_max_tokens=192,
     )
     assert report["schema"] == "nexus.m32_1.neural_dev.v1"
     assert report["benchmark"] == "M32-DEV-NEURAL"
@@ -34,6 +46,7 @@ def test_neural_dev_evaluator_caches_identical_inputs_and_never_exposes_gold():
     assert report["unique_neural_calls"] == 9
     assert len(backend.calls) == 9
     assert report["model_sha256"] == "a" * 64
+    assert report["generation"] == {"temperature": 0.0, "seed": 42, "max_tokens": 192}
     assert report["neural_quality_claim"] is True
     assert report["clean_oos"] is False
     assert report["ftx1_used_as_clean_oos"] is False
@@ -46,3 +59,22 @@ def test_neural_dev_evaluator_caches_identical_inputs_and_never_exposes_gold():
         "ru", "en", "mixed", "history", "documents", "composition",
         "counterfactual", "conflict", "adversarial",
     }
+
+
+def test_deterministic_backend_failures_are_memoized_by_exact_input():
+    backend = DeterministicFailingBackend()
+    report = run_with_backend(
+        backend,
+        model_sha256="b" * 64,
+        seed=32001,
+        n_per_family=2,
+        generation_max_tokens=192,
+    )
+    # Nine linguistic/source tuples exist. A deterministic failure must be
+    # replayed from cache for duplicate DEV cases, not re-run on the model.
+    assert report["cases"] == 18
+    assert report["unique_neural_calls"] == 9
+    assert len(backend.calls) == 9
+    assert report["ingress_acceptance"] == 0.0
+    assert report["task_admission"] == 0.0
+    assert report["generation"]["max_tokens"] == 192
