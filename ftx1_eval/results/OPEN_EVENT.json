@@ -1,0 +1,11 @@
+{
+  "schema": "nexus.ftx1.open_event.v1",
+  "open_count": 1,
+  "runtime_commit": "fded8bd46777b2e868620b4c85d60c5c375b5ec1",
+  "runtime_tree": "fb6e5ebdfaf09636d603f31d189f6fa735f42670",
+  "runner_sha256": "d3ebfa45a45cbc6c866bfa2ae4a11c5901c0e9c3448985a881b684708a8754b5",
+  "preopen_manifest_sha256": "6d72008837114bb5b118a772d0c6aceac12486c66dba03440b245a0bb67f0aa8",
+  "archive_sha256": "cd01b1c37cc35ddf970aaffff2a6ae25723e4db1c0421fdccf5c423a35efae56",
+  "post_open_tuning": false,
+  "retry_policy": "NO_RETRY"
+}

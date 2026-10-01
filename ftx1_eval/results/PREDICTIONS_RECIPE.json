@@ -1,0 +1,17 @@
+{
+  "schema": "nexus.ftx1.predictions_recipe.v1",
+  "runtime_jsonl_sha256": "f19fe25cc839a78966b0b07ce8733f162462d35ab67c8bd73e547ff59a13bebf",
+  "case_id_source": "FTX1_RUNTIME.jsonl:case_id in file order",
+  "constant_prediction": {
+    "answer": null,
+    "structured": [],
+    "epistemic": "UNRESOLVED",
+    "abstain": true,
+    "citations": [],
+    "runner_status": "OK"
+  },
+  "count": 2400,
+  "controlled_task_accept_count": 0,
+  "predictions_sha256": "7f025d1a9ee7cd50f9bbbd4201a60c0faa2648ad28c8e96316053fe9eaec181c",
+  "reason": "Every blind prompt was rejected by the frozen ControlledTaskBackend. ConversationalReasonerR1 therefore exits as UNRESOLVED before program synthesis; no retry or alternate model was permitted."
+}
