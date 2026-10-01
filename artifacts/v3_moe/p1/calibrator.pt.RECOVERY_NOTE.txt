@@ -1,0 +1,11 @@
+M31 P1 calibrator recovery note
+
+The previously committed calibrator.pt had byte SHA-256 d3ad93337c6d45f5dbb698686697689b67cc475ea7547025d3fe5a0f209f374a but logical state SHA-256 404ad8df4be3aa8b58c89cc156e3babb614b8d712b04ffc42aaae13868ef3f33, which did not match recovery.json.
+
+Deterministic rebuild from frozen training provenance (seed=17, train=50000, dev=5000, oos=5000, epochs=14) reproduced frozen metrics exactly and produced calibrator logical state SHA-256 3c7ea7dbb91f95a515abd18580d7d4af1c2b3aaf37245d81660d96160576716e.
+
+Recovered calibrator binary byte SHA-256: 004dff3c791084c547e7f2c359c8e88a6427eccd22da58d10b12cdd1db92dc6d.
+
+Evidence workflow: m31-p1-recovery run 36882045812, artifact 11172945109.
+
+Scientific boundary: provenance-rebuilt frozen calibrator; do not describe as recovered byte-identical historical calibrator bytes.

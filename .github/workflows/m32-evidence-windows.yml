@@ -1,0 +1,56 @@
+name: m32-evidence-windows
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  evidence-windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 0ef170b88f29abf4d24aa52685b35a4bd9b6f32d
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install CPU dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install --index-url https://download.pytorch.org/whl/cpu torch
+          pip install pytest httpx numpy
+          pip install -e . --no-deps
+      - name: Verify pinned implementation commit
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne '0ef170b88f29abf4d24aa52685b35a4bd9b6f32d') { throw 'wrong implementation commit' }
+      - name: M32 DEV metrics
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts/m32_evidence | Out-Null
+          python -m benchmarks.m32_dev.evaluate | Tee-Object -FilePath artifacts/m32_evidence/M32_DEV_RESULT.json
+      - name: Build sealed META manifest
+        shell: pwsh
+        run: |
+          python -c "import json; from benchmarks.m32_meta.generator import META_SEED,generate,generator_fingerprint; from benchmarks.m32_meta.freeze import build_manifest; cases=generate(); print(json.dumps(build_manifest(generator_sha256=generator_fingerprint(),seed=META_SEED,case_count=len(cases),implementation_commit='0ef170b88f29abf4d24aa52685b35a4bd9b6f32d'),indent=2,sort_keys=True))" | Tee-Object -FilePath artifacts/m32_evidence/M32_META_FREEZE.json
+      - name: Verify frozen R1 source is unchanged
+        shell: pwsh
+        run: |
+          git fetch --depth=1 origin fded8bd46777b2e868620b4c85d60c5c375b5ec1
+          git diff --exit-code fded8bd46777b2e868620b4c85d60c5c375b5ec1 -- src/nexus_gllm/unified_v3/cognitive/conversational_reasoner.py
+          $hash=(Get-FileHash src/nexus_gllm/unified_v3/cognitive/conversational_reasoner.py -Algorithm SHA256).Hash.ToLower()
+          "$hash  src/nexus_gllm/unified_v3/cognitive/conversational_reasoner.py" | Tee-Object -FilePath artifacts/m32_evidence/R1_SOURCE_SHA256.txt
+      - name: Re-run M32 and frozen regressions
+        shell: pwsh
+        run: |
+          pytest tests/m32 -q | Tee-Object -FilePath artifacts/m32_evidence/M32_TESTS.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pytest tests/crc_r1 tests/hard_oos_f tests/hard_oos_f2 tests/crc_meta_g -q | Tee-Object -FilePath artifacts/m32_evidence/FROZEN_REGRESSION_TESTS.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m32-evidence-windows-0ef170b8
+          path: artifacts/m32_evidence

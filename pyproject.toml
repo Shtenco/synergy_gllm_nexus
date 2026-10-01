@@ -7,7 +7,7 @@ name = "nexus-gllm"
 version = "0.1.0"
 description = "NEXUS GLLM Omega-1 graph-native language and cognition research runtime"
 requires-python = ">=3.11"
-dependencies = ["torch>=2.2"]
+dependencies = ["torch>=2.2", "httpx>=0.27", "numpy>=1.26"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]

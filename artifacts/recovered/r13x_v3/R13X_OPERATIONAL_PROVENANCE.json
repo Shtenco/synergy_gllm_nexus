@@ -1,0 +1,30 @@
+{
+  "date": "2026-09-30",
+  "drive": {
+    "folder_id": "1tFfxfIxNon9RdxFTPg7Hq0b67l4bKOaO",
+    "folder_name": "05_R1_3_X_VERIFIED_RUNTIME"
+  },
+  "evidence": {
+    "authority_conflict_v3_b2": "12/12",
+    "hard_dialogue_v2": "preserved in artifacts/r13x_exact_cognitive_ru_v2/HARD_DIALOGUE_6_RESULT.json"
+  },
+  "exact_organs": {
+    "r710_release_sha256": "7d700397e809dc68dfe3eada90883946d008a3d17fd7dfc0993ded62b6821544",
+    "r714_release_sha256": "ca8746639187950bd6051c812b9118cca5f8814c00b5fe46497aab194f3f3127",
+    "r76_semantic_organ_sha256": "bf0c95f208e398f866b0108709c05fb7e4ef4dee5b48c3b3c4d4f5c87bc9130f",
+    "r78_release_sha256": "61a7038f68375c586bee4fdb636e5a0fe9c6ff036da55d35b5fb2ab2bee5f195"
+  },
+  "github": {
+    "repository": "Shtenco/synergy_gllm_nexus",
+    "v2_branch": "nexus-r13x-exact-cognitive-ru-v2-2026-09-26",
+    "v2_head": "4735ca4f36d441f4fa2de6af4c704d5140a6c586",
+    "v2_pr": 6,
+    "v3_branch": "nexus-r13x-compositional-authority-v3-2026-09-26",
+    "v3_head": "105a692d64a42d6c772de69dcaeb16ac27833b01",
+    "v3_pr": 7
+  },
+  "historical_identity": "NOT_ORIGINAL_UNIFIED_R1_3_RELEASE",
+  "operational_identity": "R1.3-X V3 compositional authority runtime",
+  "schema": "nexus.r13x.operational_provenance.v1",
+  "scientific_boundary": "Operational replacement for the authority slot; never relabel as the byte-identical historical Unified R1.3 release tree."
+}

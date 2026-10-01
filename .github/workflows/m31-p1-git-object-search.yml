@@ -1,0 +1,48 @@
+name: m31-p1-git-object-search
+
+on:
+  pull_request:
+    branches: [unified-v3-generalization-first]
+  workflow_dispatch:
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch all remote refs
+        run: |
+          git fetch --all --tags --prune
+      - name: Search all reachable router blobs by exact SHA-256
+        shell: bash
+        run: |
+          set -euo pipefail
+          target=64ed453c3360c863ec7411d7c2d76afd85db93b4353fbb0f716f663fc789190b
+          : > p1-git-object-search.txt
+          git rev-list --all --objects | grep 'artifacts/v3_moe/p1/router.pt$' | sort -u | while read -r obj path; do
+            git cat-file blob "$obj" > candidate-router.pt
+            sha=$(sha256sum candidate-router.pt | awk '{print $1}')
+            bytes=$(wc -c < candidate-router.pt)
+            printf '%s %s %s %s\n' "$obj" "$sha" "$bytes" "$path" | tee -a p1-git-object-search.txt
+            if [ "$sha" = "$target" ]; then
+              cp candidate-router.pt EXACT_P1_ROUTER.pt
+              echo "FOUND_EXACT_P1_ROUTER=$obj" | tee -a p1-git-object-search.txt
+            fi
+          done
+          if [ -f EXACT_P1_ROUTER.pt ]; then
+            echo 'EXACT_FOUND=1' | tee -a p1-git-object-search.txt
+          else
+            echo 'EXACT_FOUND=0' | tee -a p1-git-object-search.txt
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m31-p1-git-object-search
+          path: |
+            p1-git-object-search.txt
+            EXACT_P1_ROUTER.pt
+          if-no-files-found: warn
+          retention-days: 30

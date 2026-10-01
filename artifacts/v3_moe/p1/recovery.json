@@ -1,0 +1,33 @@
+{
+  "schema": "nexus.p1.checkpoint_recovery.v1",
+  "date": "2026-10-01",
+  "recovery_source_commit": "6342d75870645c7909f3f2d22fc4591a30a66c4f",
+  "workflow_run_id": 36878807840,
+  "workflow_artifact_id": 11171315034,
+  "old_router": {
+    "sha256": "8c033689bacf2b70539359ecb0c2489e5154d618db0a47ec283a195f5e883947",
+    "bytes": 4176,
+    "zipfile_is_zip": false,
+    "torch_load": "FAIL",
+    "error": "PytorchStreamReader failed reading zip archive: invalid header or archive is corrupted"
+  },
+  "recovered_router": {
+    "sha256": "c6c00def6ed8fb948915802e2f87e95ad9408b63020251c8a4264818c1785125",
+    "bytes": 4179,
+    "logical_state_sha256": "78f0f7bc6fddb26114c25f5a1370c617b382595ff6cc4ce9bd4346a1d881bd83"
+  },
+  "logical_state_sha256": {
+    "router.pt": "78f0f7bc6fddb26114c25f5a1370c617b382595ff6cc4ce9bd4346a1d881bd83",
+    "novelty.pt": "790532da5913d78a88da08d7f173131953567d12551cf6474ad4f623abb964c8",
+    "calibrator.pt": "3c7ea7dbb91f95a515abd18580d7d4af1c2b3aaf37245d81660d96160576716e"
+  },
+  "frozen_training": {
+    "seed": 17,
+    "train": 50000,
+    "dev": 5000,
+    "oos": 5000,
+    "epochs": 14
+  },
+  "frozen_metrics_exact_match": true,
+  "scientific_boundary": "Recovered from the frozen training provenance. This is checkpoint-byte repair, not a new router training claim. Frozen metrics were reproduced exactly before replacement."
+}

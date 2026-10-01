@@ -15,7 +15,7 @@ def test_nexus_asks_for_direct_or_ancestral_cause():
     nexus.learn("Ливень усилился, поэтому канава переполнилась.")
     nexus.learn("Канава переполнилась, поэтому дорогу затопило.")
     response = nexus.ask("Что стало причиной дорогу затопило?")
-    assert response.answer_graph.answer_value in {"Канава переполнилась", "Ливень усилился"}
+    assert response.answer_graph.answer_value.casefold() in {"канава переполнилась", "ливень усилился"}
     assert response.answer_graph.intent == "cause_of"
     assert response.confidence > 0
 

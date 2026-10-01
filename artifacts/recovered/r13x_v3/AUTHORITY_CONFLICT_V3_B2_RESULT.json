@@ -1,0 +1,24 @@
+{
+  "benchmark": "AUTHORITY-CONFLICT-V3-B2",
+  "status": "FROZEN_FIRST_OPEN_NO_POST_TUNING",
+  "correct": 12,
+  "total": 12,
+  "accuracy": 1.0,
+  "critical_cases": {
+    "P01": {
+      "question": "В Python чему равно len(list(range(2, 10, 2)))?",
+      "r710_verified_subproof": [2,4,6,8],
+      "r710_proof_scope": "PARTIAL_SCOPE",
+      "safe_outer_composition": "len(list(range(2,10,2)))",
+      "final_answer": 4,
+      "authority": "COMPOSED_VERIFIED_EXECUTION",
+      "r76_status": "QUARANTINED_KNOWN_WRONG"
+    },
+    "P04": {
+      "question": "В Python чему равно 7 // 2?",
+      "r710_verified_full_scope": 3,
+      "final_answer": 3,
+      "authority": "R710_VERIFIED_FULL_SCOPE"
+    }
+  }
+}
