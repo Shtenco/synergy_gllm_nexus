@@ -19,6 +19,7 @@ jobs:
       MODEL_SHA256: fb044e93939a70469c905781334f5de1e6c8b608ced6cbc8c9249bd4127d9526
       LLAMACPP_COMMIT: 4e7481175cbd4759df8bee2f1c1a0073effbebd7
       DEV_MAX_TOKENS: '192'
+      DEV_REASONING_MODE: 'off'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -59,10 +60,11 @@ jobs:
           sha256sum "$SERVER" | tee artifacts/m32_1_neural/LLAMA_SERVER_SHA256.txt
           printf '%s\n' "$LLAMACPP_COMMIT" > artifacts/m32_1_neural/LLAMACPP_SOURCE_COMMIT.txt
 
-      - name: Start pinned llama-server
+      - name: Start pinned llama-server with reasoning disabled
         run: |
           SERVER="$RUNNER_TEMP/llama.cpp/build/bin/llama-server"
           "$SERVER" -m "$RUNNER_TEMP/$MODEL_FILE" --host 127.0.0.1 --port 8080 -c 4096 -ngl 0 \
+            --reasoning "$DEV_REASONING_MODE" \
             > artifacts/m32_1_neural/llama-server.log 2>&1 &
           echo $! > artifacts/m32_1_neural/llama-server.pid
           for i in $(seq 1 120); do
@@ -106,7 +108,7 @@ jobs:
           evaluator=Path('benchmarks/m32_1_neural/evaluate_dev.py')
           diagnostic=Path('benchmarks/m32_1_neural/diagnose_dev.py')
           payload={
-            'schema':'nexus.m32_1.neural_dev.execution.v3',
+            'schema':'nexus.m32_1.neural_dev.execution.v4',
             'workflow_commit':os.environ['GITHUB_SHA'],
             'model_sha256':os.environ['MODEL_SHA256'],
             'llamacpp_source_commit':os.environ['LLAMACPP_COMMIT'],
@@ -114,6 +116,7 @@ jobs:
             'evaluator_sha256':hashlib.sha256(evaluator.read_bytes()).hexdigest(),
             'diagnostic_sha256':hashlib.sha256(diagnostic.read_bytes()).hexdigest(),
             'generation':{'temperature':0.0,'seed':42,'max_tokens':int(os.environ['DEV_MAX_TOKENS'])},
+            'reasoning_mode':os.environ['DEV_REASONING_MODE'],
             'deterministic_failure_memoization':True,
             'raw_dev_diagnostics':True,
             'm32_meta_open_count':0,
