@@ -1,0 +1,17 @@
+name: m31-runner-probe
+
+on:
+  pull_request:
+    branches: [unified-v3-generalization-first]
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Runner allocation probe
+        run: |
+          echo "runner_ok=1"
+          echo "os=$RUNNER_OS"
+          uname -a
