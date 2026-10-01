@@ -50,5 +50,10 @@ def generate(seed=META_SEED,n_per_family=40):
     return tuple(cases)
 
 
+def source_fingerprint(path:Path|str)->str:
+    text=Path(path).read_text(encoding='utf-8')
+    return hashlib.sha256(text.encode('utf-8')).hexdigest()
+
+
 def generator_fingerprint():
-    return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    return source_fingerprint(Path(__file__))
