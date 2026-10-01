@@ -1,0 +1,82 @@
+name: ftx1-clean-preopen
+
+on:
+  push:
+    branches: [ftx1-clean-eval-2026-10-01]
+  workflow_dispatch:
+
+jobs:
+  preopen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout eval branch with frozen parent history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install frozen project
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          python -m pip install pytest
+
+      - name: Synthetic pre-open runner test
+        run: python -m pytest -q ftx1_eval/test_runner_synthetic.py
+
+      - name: Verify frozen runner SHA-256
+        shell: bash
+        run: |
+          ACTUAL=$(sha256sum ftx1_eval/runner.py | awk '{print $1}')
+          EXPECTED=d3ebfa45a45cbc6c866bfa2ae4a11c5901c0e9c3448985a881b684708a8754b5
+          echo "runner_sha256=$ACTUAL"
+          test "$ACTUAL" = "$EXPECTED"
+          printf '%s\n' "$ACTUAL" > RUNNER_SHA256.txt
+
+      - name: Verify frozen runtime commit exists
+        run: |
+          git cat-file -e fded8bd46777b2e868620b4c85d60c5c375b5ec1^{commit}
+          test "$(git show -s --format=%T fded8bd46777b2e868620b4c85d60c5c375b5ec1)" = "fb6e5ebdfaf09636d603f31d189f6fa735f42670"
+
+      - name: Package exact frozen runtime snapshot
+        shell: bash
+        run: |
+          mkdir runtime_snapshot
+          git archive --format=tar fded8bd46777b2e868620b4c85d60c5c375b5ec1 | tar -x -C runtime_snapshot
+          tar -czf runtime-fded8bd.tar.gz -C runtime_snapshot .
+          sha256sum runtime-fded8bd.tar.gz > RUNTIME_SNAPSHOT_SHA256.txt
+
+      - name: Write pre-open workflow evidence
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, hashlib
+          from pathlib import Path
+          data={
+            'schema':'nexus.ftx1.preopen.workflow.v1',
+            'runtime_commit':'fded8bd46777b2e868620b4c85d60c5c375b5ec1',
+            'runtime_tree':'fb6e5ebdfaf09636d603f31d189f6fa735f42670',
+            'runner_sha256':'d3ebfa45a45cbc6c866bfa2ae4a11c5901c0e9c3448985a881b684708a8754b5',
+            'ftx1_archive_sha256':'cd01b1c37cc35ddf970aaffff2a6ae25723e4db1c0421fdccf5c423a35efae56',
+            'synthetic_preopen':'PASS',
+            'open_count':0,
+            'post_open_tuning':False,
+          }
+          Path('PREOPEN_WORKFLOW_EVIDENCE.json').write_text(json.dumps(data,indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Upload exact runtime snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: ftx1-preopen-runtime-fded8bd
+          path: |
+            runtime-fded8bd.tar.gz
+            RUNTIME_SNAPSHOT_SHA256.txt
+            RUNNER_SHA256.txt
+            PREOPEN_WORKFLOW_EVIDENCE.json
+          if-no-files-found: error
