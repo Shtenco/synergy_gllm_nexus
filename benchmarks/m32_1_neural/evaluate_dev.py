@@ -20,11 +20,15 @@ from nexus_gllm.unified_v3.cognitive.generalized_ingress_llamacpp import (
 
 
 class CachingBackend:
-    """Cache deterministic neural proposals by the exact source identities.
+    """Cache deterministic neural outcomes by the exact source identities.
 
     M32-DEV intentionally repeats each of its nine source tuples 20 times. With
-    temperature=0 and seed=42, evaluating one proposal per unique tuple is
+    temperature=0 and seed=42, evaluating one neural outcome per unique tuple is
     semantically equivalent while reducing real model calls from 180 to 9.
+
+    Both successful proposals and deterministic backend exceptions are cached.
+    Without failure memoization, a malformed deterministic response would cause
+    the same model input to be re-run for every duplicate DEV case.
     """
 
     def __init__(self, backend):
@@ -43,12 +47,30 @@ class CachingBackend:
     def propose(self, request):
         key = self._key(request)
         if key not in self.cache:
-            self.cache[key] = self.backend.propose(request)
             self.unique_calls += 1
-        return self.cache[key]
+            try:
+                proposal = self.backend.propose(request)
+            except Exception as exc:
+                self.cache[key] = (False, exc)
+                raise
+            else:
+                self.cache[key] = (True, proposal)
+                return proposal
+
+        ok, value = self.cache[key]
+        if ok:
+            return value
+        raise value
 
 
-def run_with_backend(backend, *, model_sha256: str, seed: int = 32001, n_per_family: int = 20):
+def run_with_backend(
+    backend,
+    *,
+    model_sha256: str,
+    seed: int = 32001,
+    n_per_family: int = 20,
+    generation_max_tokens: int = 192,
+):
     cases = generate(seed, n_per_family)
     cached = CachingBackend(backend)
 
@@ -143,6 +165,11 @@ def run_with_backend(backend, *, model_sha256: str, seed: int = 32001, n_per_fam
         "ftx1_used_as_clean_oos": False,
         "model_sha256": model_sha256,
         "backend_id": cached.backend_id,
+        "generation": {
+            "temperature": 0.0,
+            "seed": 42,
+            "max_tokens": int(generation_max_tokens),
+        },
         "unique_neural_calls": cached.unique_calls,
         "ingress_acceptance": ingress_accepted / max(1, len(cases)),
         "task_admission": admitted_ok / max(1, admitted_expected),
@@ -156,15 +183,23 @@ def run_with_backend(backend, *, model_sha256: str, seed: int = 32001, n_per_fam
     }
 
 
-def run(*, model_path: str, endpoint: str, expected_sha256: str, seed: int = 32001, n_per_family: int = 20):
+def run(
+    *,
+    model_path: str,
+    endpoint: str,
+    expected_sha256: str,
+    seed: int = 32001,
+    n_per_family: int = 20,
+    max_tokens: int = 192,
+):
     backend = LlamaCppGeneralizedIngressBackend(
         LlamaCppModelRef(
             model_path=model_path,
             expected_sha256=expected_sha256,
             endpoint=endpoint,
-            timeout_s=180.0,
+            timeout_s=60.0,
             seed=42,
-            max_tokens=768,
+            max_tokens=int(max_tokens),
         )
     )
     return run_with_backend(
@@ -172,6 +207,7 @@ def run(*, model_path: str, endpoint: str, expected_sha256: str, seed: int = 320
         model_sha256=backend.verified_model_sha256,
         seed=seed,
         n_per_family=n_per_family,
+        generation_max_tokens=max_tokens,
     )
 
 
@@ -182,6 +218,7 @@ def main():
     ap.add_argument("--endpoint", default="http://127.0.0.1:8080")
     ap.add_argument("--seed", type=int, default=32001)
     ap.add_argument("--n-per-family", type=int, default=20)
+    ap.add_argument("--max-tokens", type=int, default=192)
     ap.add_argument("--output")
     args = ap.parse_args()
     report = run(
@@ -190,6 +227,7 @@ def main():
         expected_sha256=args.sha256,
         seed=args.seed,
         n_per_family=args.n_per_family,
+        max_tokens=args.max_tokens,
     )
     text = json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False)
     if args.output:
