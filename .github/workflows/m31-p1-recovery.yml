@@ -1,0 +1,88 @@
+name: m31-p1-recovery
+
+on:
+  pull_request:
+    branches: [unified-v3-generalization-first]
+    paths:
+      - '.github/workflows/m31-p1-recovery.yml'
+      - 'artifacts/v3_moe/p1/**'
+      - 'training/v3_moe/**'
+  workflow_dispatch:
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXUS_RECOVERY_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install recovery dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+      - name: Diagnose committed checkpoint and rebuild from frozen provenance
+        run: |
+          python - <<'PY' | tee m31-p1-recovery.log
+          import base64, hashlib, json, tempfile, zipfile
+          from pathlib import Path
+          import torch
+          from training.v3_moe.train_router import run_training
+
+          src=Path('artifacts/v3_moe/p1/router.pt')
+          print('COMMITTED_ROUTER_BYTES',src.stat().st_size)
+          print('COMMITTED_ROUTER_SHA256',hashlib.sha256(src.read_bytes()).hexdigest())
+          print('COMMITTED_IS_ZIP',zipfile.is_zipfile(src))
+          try:
+              print('COMMITTED_ZIP_TEST',zipfile.ZipFile(src).testzip())
+          except Exception as exc:
+              print('COMMITTED_ZIP_ERROR',type(exc).__name__,str(exc))
+          try:
+              torch.load(src,map_location='cpu',weights_only=True)
+              print('COMMITTED_TORCH_LOAD','PASS')
+          except Exception as exc:
+              print('COMMITTED_TORCH_LOAD','FAIL',type(exc).__name__,str(exc))
+
+          frozen=json.loads(Path('artifacts/v3_moe/p1/metrics.json').read_text())
+          with tempfile.TemporaryDirectory() as td:
+              out=run_training(td,train_n=50000,dev_n=5000,oos_n=5000,seed=17,epochs=14)
+              rebuilt=json.loads((Path(td)/'metrics.json').read_text())
+              print('FROZEN_METRICS',json.dumps(frozen,sort_keys=True))
+              print('REBUILT_METRICS',json.dumps(rebuilt,sort_keys=True))
+              print('METRICS_EXACT_MATCH',rebuilt==frozen)
+              print('LOGICAL_ROUTER_SHA256',out['checkpoint_sha256'])
+              print('LOGICAL_NOVELTY_SHA256',out['novelty_sha256'])
+              print('LOGICAL_CALIBRATOR_SHA256',out['calibrator_sha256'])
+              p=Path(td)/'router.pt'
+              print('REBUILT_ROUTER_SHA256',hashlib.sha256(p.read_bytes()).hexdigest())
+              print('ROUTER_BASE64_BEGIN')
+              print(base64.b64encode(p.read_bytes()).decode('ascii'))
+              print('ROUTER_BASE64_END')
+              Path('recovered-p1').mkdir()
+              for name in ('router.pt','metrics.json','manifest.json'):
+                  Path('recovered-p1',name).write_bytes(Path(td,name).read_bytes())
+              Path('recovered-p1/recovery.json').write_text(json.dumps({
+                  'source_commit':__import__('os').environ['NEXUS_RECOVERY_COMMIT'],
+                  'metrics_exact_match':rebuilt==frozen,
+                  'logical_router_sha256':out['checkpoint_sha256'],
+                  'logical_novelty_sha256':out['novelty_sha256'],
+                  'logical_calibrator_sha256':out['calibrator_sha256'],
+                  'rebuilt_router_sha256':hashlib.sha256(p.read_bytes()).hexdigest(),
+              },indent=2,sort_keys=True))
+              if rebuilt!=frozen:
+                  raise SystemExit('recovered router does not reproduce frozen metrics exactly')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m31-p1-recovered
+          path: |
+            recovered-p1
+            m31-p1-recovery.log
+          if-no-files-found: error
+          retention-days: 30
