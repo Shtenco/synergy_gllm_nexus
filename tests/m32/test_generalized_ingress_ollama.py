@@ -1,19 +1,28 @@
 import json
 import pytest
 
-from nexus_gllm.unified_v3.cognitive.generalized_ingress import GeneralizedIngressRequest
+from nexus_gllm.unified_v3.cognitive.generalized_ingress import GeneralizedIngressR1, GeneralizedIngressRequest
 from nexus_gllm.unified_v3.cognitive.generalized_ingress_ollama import OllamaGeneralizedIngressBackend
 from nexus_gllm.unified_v3.cognitive.ollama_surface import OllamaModelRef
 from nexus_gllm.unified_v3.cognitive.program_ast import ProgramKind
 
 
 class Transport:
-    def __init__(self, response=None):
+    def __init__(self, response=None, exc=None):
         self.response=response
+        self.exc=exc
         self.calls=[]
     def post_json(self,url,payload,timeout):
         self.calls.append((url,payload,timeout))
+        if self.exc:
+            raise self.exc
         return {'response': json.dumps(self.response)}
+
+
+class MalformedJSONTransport(Transport):
+    def post_json(self,url,payload,timeout):
+        self.calls.append((url,payload,timeout))
+        return {'response':'{'}
 
 
 def make_request():
@@ -52,3 +61,30 @@ def test_single_call_returns_semantic_task_and_program_proposals():
     assert proposal.program.node.kind is ProgramKind.ATOM
     assert transport.calls[0][1]['format']=='json'
     assert transport.calls[0][1]['options']['temperature']==0
+
+
+def test_malformed_json_fails_closed_without_partial_output():
+    result=GeneralizedIngressR1(OllamaGeneralizedIngressBackend(ref(),MalformedJSONTransport())).parse(make_request())
+    assert not result.admission.accepted
+    assert result.semantic_atoms==() and result.task is None and result.program is None
+
+
+def test_unknown_source_id_is_rejected_by_deterministic_gate():
+    req=make_request(); data=make_response(req)
+    data['semantic_atoms'][0]['spans'][0]['source_id']='missing:0'
+    result=GeneralizedIngressR1(OllamaGeneralizedIngressBackend(ref(),Transport(data))).parse(req)
+    assert not result.admission.accepted
+    assert any('unknown_source_id' in reason for reason in result.admission.reasons)
+
+
+def test_bad_ast_fails_closed_without_partial_output():
+    req=make_request(); data=make_response(req); data['program']['node']['kind']='TELEPORT'
+    result=GeneralizedIngressR1(OllamaGeneralizedIngressBackend(ref(),Transport(data))).parse(req)
+    assert not result.admission.accepted
+    assert result.semantic_atoms==() and result.task is None and result.program is None
+
+
+def test_transport_exception_fails_closed_without_partial_output():
+    result=GeneralizedIngressR1(OllamaGeneralizedIngressBackend(ref(),Transport(exc=RuntimeError('offline')))).parse(make_request())
+    assert not result.admission.accepted
+    assert result.semantic_atoms==() and result.task is None and result.program is None
