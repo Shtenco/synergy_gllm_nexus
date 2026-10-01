@@ -47,6 +47,14 @@ def _sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
+def _task_opcode(value) -> TaskOpcode:
+    raw = str(value)
+    try:
+        return TaskOpcode[raw]
+    except KeyError:
+        return TaskOpcode(raw)
+
+
 class LlamaCppGeneralizedIngressBackend:
     """Proposal-only llama.cpp adapter bound to exact GGUF bytes."""
 
@@ -151,7 +159,7 @@ class LlamaCppGeneralizedIngressBackend:
         if task_row is not None:
             operator_id = task_row.get("operator_id")
             task = GeneralizedTaskProposal(
-                TaskOpcode(str(task_row["opcode"])),
+                _task_opcode(task_row["opcode"]),
                 None if operator_id is None else str(operator_id),
                 tuple(str(x) for x in task_row.get("arguments", [])),
                 float(task_row["confidence"]),
