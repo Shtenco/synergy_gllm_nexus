@@ -241,6 +241,8 @@ class GeneralizedIngressR1:
         task_program = None
         if proposal.task is not None:
             task = proposal.task
+            if not isinstance(task.opcode, TaskOpcode):
+                reasons.append("task:invalid_opcode")
             if not (0.0 <= task.confidence <= 1.0) or task.confidence < self.task_min_confidence:
                 reasons.append("task:low_confidence")
             if len(task.arguments) > self.max_args or any(
@@ -254,7 +256,7 @@ class GeneralizedIngressR1:
                 reasons.append("task:missing_provenance")
             for j, supporting_span in enumerate(task.supporting_spans):
                 reasons.extend(self._span_reasons(supporting_span, source_map, f"task:span_{j}"))
-            if task.opcode in (
+            if isinstance(task.opcode, TaskOpcode) and task.opcode in (
                 TaskOpcode.QUERY_RELATION,
                 TaskOpcode.FIND_PROOF,
                 TaskOpcode.FIND_MINIMAL_PROOF,
