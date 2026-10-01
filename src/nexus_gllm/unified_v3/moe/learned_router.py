@@ -27,6 +27,11 @@ def _sha256(path: Path) -> str:
 def _clamp01(x: float) -> float:
     return max(0.0, min(1.0, float(x)))
 
+def _safe_error(exc: Exception) -> str:
+    """Compact deterministic loader diagnostics without paths or multiline payloads."""
+    msg = " ".join(str(exc).split())
+    return msg[:240]
+
 class _RouterNet(nn.Module):
     def __init__(self):
         super().__init__();self.m=nn.Sequential(nn.Linear(8,32),nn.Tanh(),nn.Linear(32,6))
@@ -87,7 +92,7 @@ class LoadableCapabilityRouter:
             return RouterLoadStatus("learned_p1",True,"verified",str(self.artifact_dir),integrity_source)
         except Exception as exc:
             self.router=self.calibrator=self.novelty=None
-            return RouterLoadStatus("heuristic_fallback",False,f"load_error:{type(exc).__name__}",str(self.artifact_dir))
+            return RouterLoadStatus("heuristic_fallback",False,f"load_error:{type(exc).__name__}:{_safe_error(exc)}",str(self.artifact_dir))
     @staticmethod
     def feature_vector(f:RouterFeatures):
         ru=(1.0 if f.language=="ru" else 0.0) if f.ru_signal is None else _clamp01(f.ru_signal)
