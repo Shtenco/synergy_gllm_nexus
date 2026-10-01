@@ -1,0 +1,31 @@
+{
+  "schema": "nexus.m32_1.model_pin.v1",
+  "m32_implementation_commit": "0ef170b88f29abf4d24aa52685b35a4bd9b6f32d",
+  "pin_origin_date": "2026-09-24",
+  "pin_origin": "Qwen3.5-0.8B MVP Artifact Manifest",
+  "model": {
+    "canonical_model": "Qwen/Qwen3.5-0.8B",
+    "gguf_repository": "bartowski/Qwen_Qwen3.5-0.8B-GGUF",
+    "filename": "Qwen_Qwen3.5-0.8B-Q4_K_M.gguf",
+    "download_url": "https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF/resolve/main/Qwen_Qwen3.5-0.8B-Q4_K_M.gguf",
+    "expected_sha256": "fb044e93939a70469c905781334f5de1e6c8b608ced6cbc8c9249bd4127d9526",
+    "expected_size_bytes": 580000000
+  },
+  "inference_engine": {
+    "repository": "ggml-org/llama.cpp",
+    "release": "b11193",
+    "source_commit": "4e7481175cbd4759df8bee2f1c1a0073effbebd7",
+    "backend": "llama-server OpenAI-compatible HTTP"
+  },
+  "generation": {
+    "temperature": 0.0,
+    "seed": 42,
+    "max_tokens": 768
+  },
+  "scientific_boundary": {
+    "ftx1_status": "CONSUMED_FTX1",
+    "ftx1_used_for_prompt_or_threshold_tuning": false,
+    "m32_meta_open_count": 0,
+    "ftx2_authored": false
+  }
+}
