@@ -85,6 +85,16 @@ jobs:
             --output artifacts/m32_1_neural/M32_1_NEURAL_DEV_RESULT.json \
             | tee artifacts/m32_1_neural/M32_1_NEURAL_DEV_STDOUT.txt
 
+      - name: Capture raw unique DEV completions for diagnostics
+        run: |
+          python -m benchmarks.m32_1_neural.diagnose_dev \
+            --model "$RUNNER_TEMP/$MODEL_FILE" \
+            --sha256 "$MODEL_SHA256" \
+            --endpoint http://127.0.0.1:8080 \
+            --max-tokens "$DEV_MAX_TOKENS" \
+            --output artifacts/m32_1_neural/M32_1_NEURAL_DEV_DIAGNOSTIC.json \
+            | tee artifacts/m32_1_neural/M32_1_NEURAL_DEV_DIAGNOSTIC_STDOUT.txt
+
       - name: Record immutable execution identities
         if: always()
         run: |
@@ -94,15 +104,18 @@ jobs:
           root=Path('artifacts/m32_1_neural')
           backend=Path('src/nexus_gllm/unified_v3/cognitive/generalized_ingress_llamacpp.py')
           evaluator=Path('benchmarks/m32_1_neural/evaluate_dev.py')
+          diagnostic=Path('benchmarks/m32_1_neural/diagnose_dev.py')
           payload={
-            'schema':'nexus.m32_1.neural_dev.execution.v2',
+            'schema':'nexus.m32_1.neural_dev.execution.v3',
             'workflow_commit':os.environ['GITHUB_SHA'],
             'model_sha256':os.environ['MODEL_SHA256'],
             'llamacpp_source_commit':os.environ['LLAMACPP_COMMIT'],
             'backend_sha256':hashlib.sha256(backend.read_bytes()).hexdigest(),
             'evaluator_sha256':hashlib.sha256(evaluator.read_bytes()).hexdigest(),
+            'diagnostic_sha256':hashlib.sha256(diagnostic.read_bytes()).hexdigest(),
             'generation':{'temperature':0.0,'seed':42,'max_tokens':int(os.environ['DEV_MAX_TOKENS'])},
             'deterministic_failure_memoization':True,
+            'raw_dev_diagnostics':True,
             'm32_meta_open_count':0,
             'ftx1_status':'CONSUMED_FTX1',
             'ftx2_authored':False,
