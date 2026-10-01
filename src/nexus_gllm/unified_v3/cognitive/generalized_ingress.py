@@ -122,6 +122,11 @@ class GeneralizedIngressResult:
     backend_id: str = ""
     admission: GeneralizedIngressAdmission = GeneralizedIngressAdmission(False, ("not_evaluated",))
     proposal_only: bool = True
+    sources: tuple[SourceEnvelope, ...] = ()
+
+    @property
+    def source_map(self) -> dict[str, SourceEnvelope]:
+        return {source.source_id: source for source in self.sources}
 
 
 class GeneralizedIngressBackend(Protocol):
@@ -184,25 +189,32 @@ class GeneralizedIngressR1:
             return [f"{label}:span_hash_mismatch"]
         return []
 
+    def _rejected(self, request: GeneralizedIngressRequest, *, backend_id: str = "", reasons: tuple[str, ...]) -> GeneralizedIngressResult:
+        return GeneralizedIngressResult(
+            backend_id=backend_id,
+            admission=GeneralizedIngressAdmission(False, reasons),
+            sources=request.sources,
+        )
+
     def parse(self, request: GeneralizedIngressRequest) -> GeneralizedIngressResult:
         source_reasons = self._validate_sources(request)
         if source_reasons:
-            return GeneralizedIngressResult(
-                admission=GeneralizedIngressAdmission(False, tuple(sorted(set(source_reasons))))
-            )
+            return self._rejected(request, reasons=tuple(sorted(set(source_reasons))))
 
         try:
             proposal = self.backend.propose(request)
         except Exception as exc:
-            return GeneralizedIngressResult(
+            return self._rejected(
+                request,
                 backend_id=getattr(self.backend, "backend_id", type(self.backend).__name__),
-                admission=GeneralizedIngressAdmission(False, (f"backend_exception:{type(exc).__name__}",)),
+                reasons=(f"backend_exception:{type(exc).__name__}",),
             )
 
         if proposal is None:
-            return GeneralizedIngressResult(
+            return self._rejected(
+                request,
                 backend_id=getattr(self.backend, "backend_id", type(self.backend).__name__),
-                admission=GeneralizedIngressAdmission(False, ("empty_proposal",)),
+                reasons=("empty_proposal",),
             )
 
         reasons: list[str] = []
@@ -250,9 +262,10 @@ class GeneralizedIngressR1:
                 reasons.append("task:relation_query_shape_mismatch")
 
         if reasons:
-            return GeneralizedIngressResult(
+            return self._rejected(
+                request,
                 backend_id=proposal.backend_id,
-                admission=GeneralizedIngressAdmission(False, tuple(sorted(set(reasons)))),
+                reasons=tuple(sorted(set(reasons))),
             )
 
         if proposal.task is not None:
@@ -270,4 +283,5 @@ class GeneralizedIngressR1:
             backend_id=proposal.backend_id,
             admission=GeneralizedIngressAdmission(True, ()),
             proposal_only=True,
+            sources=request.sources,
         )
