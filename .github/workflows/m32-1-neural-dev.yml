@@ -1,0 +1,115 @@
+name: m32-1-neural-dev
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'artifacts/m32_1/**'
+      - 'benchmarks/m32_1_neural/**'
+      - 'src/nexus_gllm/unified_v3/cognitive/generalized_ingress_llamacpp.py'
+      - '.github/workflows/m32-1-neural-dev.yml'
+
+jobs:
+  neural-dev:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      MODEL_URL: https://huggingface.co/bartowski/Qwen_Qwen3.5-0.8B-GGUF/resolve/main/Qwen_Qwen3.5-0.8B-Q4_K_M.gguf?download=true
+      MODEL_FILE: Qwen_Qwen3.5-0.8B-Q4_K_M.gguf
+      MODEL_SHA256: fb044e93939a70469c905781334f5de1e6c8b608ced6cbc8c9249bd4127d9526
+      LLAMACPP_COMMIT: 4e7481175cbd4759df8bee2f1c1a0073effbebd7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest httpx numpy
+          pip install --index-url https://download.pytorch.org/whl/cpu torch
+          pip install -e . --no-deps
+
+      - name: Contract tests before real model execution
+        run: pytest tests/m32_1 -q
+
+      - name: Download exact preregistered GGUF
+        run: |
+          mkdir -p artifacts/m32_1_neural
+          curl -L --fail --retry 5 --retry-all-errors --connect-timeout 30 \
+            -o "$RUNNER_TEMP/$MODEL_FILE" "$MODEL_URL"
+          ACTUAL="$(sha256sum "$RUNNER_TEMP/$MODEL_FILE" | awk '{print $1}')"
+          SIZE="$(stat -c%s "$RUNNER_TEMP/$MODEL_FILE")"
+          printf '%s  %s\n' "$ACTUAL" "$MODEL_FILE" | tee artifacts/m32_1_neural/MODEL_SHA256.txt
+          printf '%s\n' "$SIZE" | tee artifacts/m32_1_neural/MODEL_SIZE_BYTES.txt
+          test "$ACTUAL" = "$MODEL_SHA256"
+
+      - name: Build pinned llama.cpp server
+        run: |
+          git clone --filter=blob:none https://github.com/ggml-org/llama.cpp.git "$RUNNER_TEMP/llama.cpp"
+          git -C "$RUNNER_TEMP/llama.cpp" checkout "$LLAMACPP_COMMIT"
+          test "$(git -C "$RUNNER_TEMP/llama.cpp" rev-parse HEAD)" = "$LLAMACPP_COMMIT"
+          cmake -S "$RUNNER_TEMP/llama.cpp" -B "$RUNNER_TEMP/llama.cpp/build" \
+            -DCMAKE_BUILD_TYPE=Release -DGGML_NATIVE=OFF -DGGML_CUDA=OFF -DLLAMA_CURL=OFF
+          cmake --build "$RUNNER_TEMP/llama.cpp/build" --config Release -j2 --target llama-server
+          SERVER="$RUNNER_TEMP/llama.cpp/build/bin/llama-server"
+          test -x "$SERVER"
+          sha256sum "$SERVER" | tee artifacts/m32_1_neural/LLAMA_SERVER_SHA256.txt
+          printf '%s\n' "$LLAMACPP_COMMIT" > artifacts/m32_1_neural/LLAMACPP_SOURCE_COMMIT.txt
+
+      - name: Start pinned llama-server
+        run: |
+          SERVER="$RUNNER_TEMP/llama.cpp/build/bin/llama-server"
+          "$SERVER" -m "$RUNNER_TEMP/$MODEL_FILE" --host 127.0.0.1 --port 8080 -c 4096 -ngl 0 \
+            > artifacts/m32_1_neural/llama-server.log 2>&1 &
+          echo $! > artifacts/m32_1_neural/llama-server.pid
+          for i in $(seq 1 120); do
+            if curl -fsS http://127.0.0.1:8080/health >/dev/null; then
+              echo 'llama-server healthy'
+              exit 0
+            fi
+            sleep 2
+          done
+          cat artifacts/m32_1_neural/llama-server.log
+          exit 1
+
+      - name: Run real neural M32-DEV baseline
+        run: |
+          python -m benchmarks.m32_1_neural.evaluate_dev \
+            --model "$RUNNER_TEMP/$MODEL_FILE" \
+            --sha256 "$MODEL_SHA256" \
+            --endpoint http://127.0.0.1:8080 \
+            --output artifacts/m32_1_neural/M32_1_NEURAL_DEV_RESULT.json \
+            | tee artifacts/m32_1_neural/M32_1_NEURAL_DEV_STDOUT.txt
+
+      - name: Record immutable execution identities
+        run: |
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          root=Path('artifacts/m32_1_neural')
+          backend=Path('src/nexus_gllm/unified_v3/cognitive/generalized_ingress_llamacpp.py')
+          evaluator=Path('benchmarks/m32_1_neural/evaluate_dev.py')
+          payload={
+            'schema':'nexus.m32_1.neural_dev.execution.v1',
+            'workflow_commit':os.environ['GITHUB_SHA'],
+            'model_sha256':os.environ['MODEL_SHA256'],
+            'llamacpp_source_commit':os.environ['LLAMACPP_COMMIT'],
+            'backend_sha256':hashlib.sha256(backend.read_bytes()).hexdigest(),
+            'evaluator_sha256':hashlib.sha256(evaluator.read_bytes()).hexdigest(),
+            'generation':{'temperature':0.0,'seed':42,'max_tokens':768},
+            'm32_meta_open_count':0,
+            'ftx1_status':'CONSUMED_FTX1',
+            'ftx2_authored':False,
+          }
+          (root/'EXECUTION_IDENTITY.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Upload neural DEV evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m32-1-neural-dev-${{ github.sha }}
+          path: artifacts/m32_1_neural
+          retention-days: 90
