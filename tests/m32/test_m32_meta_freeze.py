@@ -3,7 +3,7 @@ import json
 import pytest
 
 from benchmarks.m32_dev.generator import FAMILIES as DEV_FAMILIES
-from benchmarks.m32_meta.generator import META_FAMILIES, META_SEED, generate, generator_fingerprint
+from benchmarks.m32_meta.generator import META_FAMILIES, META_SEED, generate, generator_fingerprint, source_fingerprint
 from benchmarks.m32_meta.freeze import build_manifest, write_manifest
 
 
@@ -14,6 +14,15 @@ def test_meta_generator_is_deterministic_and_independent_from_dev_configuration(
     assert META_SEED!=32001
     assert set(META_FAMILIES)!=set(DEV_FAMILIES)
     assert len({case.case_id for case in a})==len(a)
+
+
+def test_meta_generator_fingerprint_is_newline_canonical(tmp_path):
+    lf=tmp_path/'lf.py'
+    crlf=tmp_path/'crlf.py'
+    text='def generate():\n    return 1\n'
+    lf.write_bytes(text.encode('utf-8'))
+    crlf.write_bytes(text.replace('\n','\r\n').encode('utf-8'))
+    assert source_fingerprint(lf)==source_fingerprint(crlf)
 
 
 def test_meta_manifest_binds_generator_seed_case_count_and_implementation_commit():
