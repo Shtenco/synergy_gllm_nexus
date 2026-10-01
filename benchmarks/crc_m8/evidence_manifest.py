@@ -49,7 +49,7 @@ def build(root,*,commit=None):
 
     payload={
       'schema':'nexus.crc_r1.validation.v3',
-      'commit':commit or os.getenv('GITHUB_SHA'),
+      'commit':commit or os.getenv('NEXUS_VALIDATED_COMMIT') or os.getenv('GITHUB_SHA'),
       'p1_integrity':integrity,
       'gates':gates,
       'ready_for_pre_ftx1_freeze':all(gates.values()),
@@ -73,6 +73,6 @@ def build(root,*,commit=None):
 
 def main():
     import argparse
-    ap=argparse.ArgumentParser();ap.add_argument('--root',required=True);ap.add_argument('--out',required=True)
-    a=ap.parse_args();p=build(a.root);Path(a.out).write_text(json.dumps(p,indent=2,sort_keys=True));print(json.dumps(p,indent=2,sort_keys=True))
+    ap=argparse.ArgumentParser();ap.add_argument('--root',required=True);ap.add_argument('--out',required=True);ap.add_argument('--commit')
+    a=ap.parse_args();p=build(a.root,commit=a.commit);Path(a.out).write_text(json.dumps(p,indent=2,sort_keys=True));print(json.dumps(p,indent=2,sort_keys=True))
 if __name__=='__main__':main()
