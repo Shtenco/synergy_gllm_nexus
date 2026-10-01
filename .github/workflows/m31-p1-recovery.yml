@@ -19,6 +19,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -26,10 +27,31 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e '.[dev]'
+      - name: Extract and test historical Git object
+        run: |
+          mkdir -p historical-git-object
+          git cat-file blob 0441ffd94f8632c754c8053ee7d35ef186979e79 > historical-git-object/router.pt
+          python - <<'PY' | tee historical-git-object/report.log
+          import hashlib,zipfile,torch
+          from pathlib import Path
+          from training.v3_moe.train_router import logical_state_hash
+          p=Path('historical-git-object/router.pt')
+          print('GIT_OBJECT_BYTES',p.stat().st_size)
+          print('GIT_OBJECT_SHA256',hashlib.sha256(p.read_bytes()).hexdigest())
+          print('GIT_OBJECT_IS_ZIP',zipfile.is_zipfile(p))
+          try:
+              state=torch.load(p,map_location='cpu',weights_only=True)
+              class Box:
+                  def state_dict(self): return state
+              print('GIT_OBJECT_TORCH_LOAD','PASS')
+              print('GIT_OBJECT_LOGICAL_SHA256',logical_state_hash(Box()))
+          except Exception as exc:
+              print('GIT_OBJECT_TORCH_LOAD','FAIL',type(exc).__name__,str(exc))
+          PY
       - name: Diagnose committed checkpoints and rebuild from frozen provenance
         run: |
           python - <<'PY' | tee m31-p1-recovery.log
-          import base64, hashlib, json, tempfile, zipfile
+          import hashlib, json, tempfile, zipfile
           from pathlib import Path
           import torch
           from training.v3_moe.train_router import run_training, logical_state_hash
@@ -60,7 +82,7 @@ jobs:
               print('LOGICAL_ROUTER_SHA256',out['checkpoint_sha256'])
               print('LOGICAL_NOVELTY_SHA256',out['novelty_sha256'])
               print('LOGICAL_CALIBRATOR_SHA256',out['calibrator_sha256'])
-              recovered=Path('recovered-p1');recovered.mkdir()
+              recovered=Path('recovered-p1');recovered.mkdir(exist_ok=True)
               rebuilt_sha={}
               for name in ('router.pt','novelty.pt','calibrator.pt','metrics.json','manifest.json'):
                   data=(td/name).read_bytes();(recovered/name).write_bytes(data);rebuilt_sha[name]=hashlib.sha256(data).hexdigest()
@@ -83,6 +105,7 @@ jobs:
           name: m31-p1-recovered
           path: |
             recovered-p1
+            historical-git-object
             m31-p1-recovery.log
           if-no-files-found: error
           retention-days: 30
