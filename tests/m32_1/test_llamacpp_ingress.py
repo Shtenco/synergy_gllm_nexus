@@ -47,6 +47,10 @@ def _json_response():
     return {'choices':[{'message':{'content':json.dumps(body)}}]}
 
 
+def _typed_ir_response(body):
+    return {'choices':[{'message':{'content':json.dumps(body)}}]}
+
+
 def test_model_bytes_must_match_pinned_sha(tmp_path):
     path,digest=_model(tmp_path)
     bad=LlamaCppModelRef(str(path),'0'*64,'http://127.0.0.1:8080')
@@ -97,8 +101,8 @@ def test_prompt_contract_spells_out_required_json_shape_and_all_task_opcodes(tmp
     GeneralizedIngressR1(backend).parse(_request())
     system=transport.calls[0][1]['messages'][0]['content']
     for required in (
-        'semantic_atoms','operator_id','arguments','polarity','confidence','spans',
-        'source_id','start','end','task','opcode','program',
+        'semantic_atoms','operator_id','arguments','polarity','confidence',
+        'source_ids','task','opcode','program_recipe',
     ):
         assert required in system
     for opcode in (
@@ -108,30 +112,67 @@ def test_prompt_contract_spells_out_required_json_shape_and_all_task_opcodes(tmp
     ):
         assert opcode in system
     assert 'Never emit top-level summary' in system
-    assert '{"semantic_atoms":[],"task":null,"program":null}' in system
+    assert '{"semantic_atoms":[],"task":null,"program_recipe":null}' in system
 
 
-def test_prompt_teaches_grounded_relation_and_program_ontology(tmp_path):
-    path,digest=_model(tmp_path);transport=FakeTransport(_json_response())
+def test_typed_ir_compiles_transitive_recipe_and_full_source_provenance(tmp_path):
+    path,digest=_model(tmp_path)
+    body={
+      'semantic_atoms':[
+        {'operator_id':'parent','arguments':['alice','bob'],'polarity':True,'confidence':.95,'source_ids':['history:0']},
+        {'operator_id':'parent','arguments':['bob','carol'],'polarity':True,'confidence':.95,'source_ids':['document:0']},
+      ],
+      'task':{'opcode':'query_relation','operator_id':'parent','arguments':['alice','carol'],'confidence':.95,'source_ids':['prompt:0']},
+      'program_recipe':{'kind':'transitive','operators':['parent'],'confidence':.95,'source_ids':['history:0','document:0']},
+    }
     backend=LlamaCppGeneralizedIngressBackend(
         LlamaCppModelRef(str(path),digest,'http://127.0.0.1:8080'),
-        transport=transport,
+        transport=FakeTransport(_typed_ir_response(body)),
     )
-    GeneralizedIngressR1(backend).parse(_request())
-    messages=transport.calls[0][1]['messages']
-    system=messages[0]['content']
-    sources=json.loads(messages[1]['content'].removeprefix('SOURCES='))
+    result=GeneralizedIngressR1(backend).parse(_request())
+    assert result.admission.accepted
+    assert result.task is not None
+    assert result.program is not None
+    assert result.program.node.kind.value=='ATOM'
+    assert result.program.node.symbol=='rule:transitive:parent'
+    assert {s.source_id for s in result.program.supporting_spans}=={'history:0','document:0'}
 
-    # A tiny model must not have to infer NEXUS ontology or do character-count arithmetic.
-    assert all(row['span_all']=={'source_id':row['source_id'],'start':0,'end':len(row['text'])} for row in sources)
-    for required in (
-        'operator_id is the relation/predicate token from the source',
-        'QUERY_RELATION',
-        'rule:transitive:<operator>',
-        'rule:composition:<left>:<right>:<query>',
-        'COUNTERFACTUAL',
-        'ADD_FACT',
-        'Use span_all exactly',
-        'Do not abstain merely because a supported relation query needs inference',
+
+def test_typed_ir_compiles_counterfactual_recipe_without_recursive_model_ast(tmp_path):
+    path,digest=_model(tmp_path)
+    request=GeneralizedIngressRequest.from_texts(
+        'If Bob parent Carol, is Alice parent Carol?',
+        history=('alice parent bob',),
+    )
+    body={
+      'semantic_atoms':[{'operator_id':'parent','arguments':['alice','bob'],'polarity':True,'confidence':.95,'source_ids':['history:0']}],
+      'task':{'opcode':'query_relation','operator_id':'parent','arguments':['alice','carol'],'confidence':.95,'source_ids':['prompt:0']},
+      'program_recipe':{
+        'kind':'counterfactual_transitive','operators':['parent'],'add_fact':['parent','bob','carol'],
+        'confidence':.95,'source_ids':['prompt:0','history:0'],
+      },
+    }
+    backend=LlamaCppGeneralizedIngressBackend(
+        LlamaCppModelRef(str(path),digest,'http://127.0.0.1:8080'),
+        transport=FakeTransport(_typed_ir_response(body)),
+    )
+    result=GeneralizedIngressR1(backend).parse(request)
+    assert result.admission.accepted
+    assert result.program.node.kind.value=='COUNTERFACTUAL'
+    assert result.program.node.children[0].symbol=='rule:transitive:parent'
+    assert dict(result.program.node.params)=={'kind':'ADD_FACT','operator':'parent','src':'bob','dst':'carol'}
+
+
+def test_typed_ir_recipe_is_fail_closed_for_unknown_kind_or_source(tmp_path):
+    path,digest=_model(tmp_path)
+    for recipe in (
+        {'kind':'magic','operators':['parent'],'confidence':.95,'source_ids':['prompt:0']},
+        {'kind':'transitive','operators':['parent'],'confidence':.95,'source_ids':['missing:9']},
     ):
-        assert required in system
+        body={'semantic_atoms':[],'task':None,'program_recipe':recipe}
+        backend=LlamaCppGeneralizedIngressBackend(
+            LlamaCppModelRef(str(path),digest,'http://127.0.0.1:8080'),
+            transport=FakeTransport(_typed_ir_response(body)),
+        )
+        result=GeneralizedIngressR1(backend).parse(_request())
+        assert not result.admission.accepted
