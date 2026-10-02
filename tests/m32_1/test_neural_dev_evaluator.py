@@ -44,7 +44,7 @@ def test_neural_dev_evaluator_caches_identical_inputs_and_never_exposes_gold():
         n_per_family=2,
         generation_max_tokens=DEV_GENERATION_MAX_TOKENS,
     )
-    assert report["schema"] == "nexus.m32_1.neural_dev.v1"
+    assert report["schema"] == "nexus.m32_1.neural_dev.v2"
     assert report["benchmark"] == "M32-DEV-NEURAL"
     assert report["cases"] == 18
     assert report["unique_neural_calls"] == 9
@@ -54,15 +54,25 @@ def test_neural_dev_evaluator_caches_identical_inputs_and_never_exposes_gold():
     assert report["neural_quality_claim"] is True
     assert report["clean_oos"] is False
     assert report["ftx1_used_as_clean_oos"] is False
-    assert "task_admission" in report
-    assert "provenance_validity" in report
-    assert "program_admission_solvable" in report
-    assert "e2e_strict_solvable" in report
-    assert "unsafe_authority_promotions" in report
+    for key in (
+        "task_admission", "provenance_validity", "program_admission_solvable",
+        "e2e_strict_solvable", "unsafe_authority_promotions",
+        "semantic_exact_expected", "task_exact_expected",
+        "program_shape_exact_solvable", "negative_rejection_rate",
+    ):
+        assert key in report
+    assert report["semantic_exact_expected"] == 0.0
+    assert report["task_exact_expected"] == 0.0
+    assert report["program_shape_exact_solvable"] == 0.0
+    # Empty stub proposals are currently admitted by core, so the negative
+    # adversarial family is not rejected in this direct evaluator stub.
+    assert report["negative_rejection_rate"] == 0.0
     assert set(report["by_family"]) == {
         "ru", "en", "mixed", "history", "documents", "composition",
         "counterfactual", "conflict", "adversarial",
     }
+    assert all("semantic_exact" in row for row in report["by_family"].values())
+    assert all("task_exact" in row for row in report["by_family"].values())
 
 
 def test_deterministic_backend_failures_are_memoized_by_exact_input():
@@ -81,4 +91,8 @@ def test_deterministic_backend_failures_are_memoized_by_exact_input():
     assert len(backend.calls) == 9
     assert report["ingress_acceptance"] == 0.0
     assert report["task_admission"] == 0.0
+    assert report["semantic_exact_expected"] == 0.0
+    assert report["task_exact_expected"] == 0.0
+    assert report["program_shape_exact_solvable"] == 0.0
+    assert report["negative_rejection_rate"] == 1.0
     assert report["generation"]["max_tokens"] == 320

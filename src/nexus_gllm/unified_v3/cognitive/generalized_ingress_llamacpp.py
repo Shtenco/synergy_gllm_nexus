@@ -133,10 +133,32 @@ class LlamaCppGeneralizedIngressBackend:
             "program":{"confidence":0.95,"spans":[{"source_id":"prompt:0","start":0,"end":40}],"node":{"kind":"COUNTERFACTUAL","symbol":"","children":[{"kind":"ATOM","symbol":"rule:transitive:ancestor","children":[],"params":[]}],"params":[["kind","ADD_FACT"],["operator","ancestor"],["src","jo"],["dst","kai"]]}},
         }
 
+        mixed_source_sources = [
+            {"source_id":"prompt:0","source_kind":"PROMPT","text":"Query trusts uma wren."},
+            {"source_id":"history:0","source_kind":"HISTORY","text":"uma trusts vix"},
+            {"source_id":"document:0","source_kind":"DOCUMENT","text":"vix trusts wren"},
+        ]
+        mixed_source_output = {
+            "semantic_atoms":[
+                {"operator_id":"trusts","arguments":["uma","vix"],"polarity":True,"confidence":0.95,"spans":[{"source_id":"history:0","start":0,"end":14}]},
+                {"operator_id":"trusts","arguments":["vix","wren"],"polarity":True,"confidence":0.95,"spans":[{"source_id":"document:0","start":0,"end":15}]},
+            ],
+            "task":{"opcode":"query_relation","operator_id":"trusts","arguments":["uma","wren"],"confidence":0.95,"spans":[{"source_id":"prompt:0","start":0,"end":22}]},
+            "program":{"confidence":0.95,"spans":[{"source_id":"prompt:0","start":0,"end":22}],"node":{"kind":"ATOM","symbol":"rule:transitive:trusts","children":[],"params":[]}},
+        }
+
+        negative_sources = [
+            {"source_id":"prompt:0","source_kind":"PROMPT","text":"Request malformed provenance."},
+            {"source_id":"document:0","source_kind":"DOCUMENT","text":"pax knows quin"},
+        ]
+        negative_output = {"semantic_atoms":[],"task":None,"program":None}
+
         examples = (
             (transitive_sources, transitive_output),
             (composition_sources, composition_output),
             (counterfactual_sources, counterfactual_output),
+            (mixed_source_sources, mixed_source_output),
+            (negative_sources, negative_output),
         )
         messages = []
         for sources, output in examples:
@@ -148,24 +170,29 @@ class LlamaCppGeneralizedIngressBackend:
     def _messages(cls, request):
         system = (
             "You are a proposal-only semantic parser for NEXUS. Return one compact strict JSON object only. "
-            "Do not answer the user's question. Do not invent facts. Never emit top-level summary or explanatory keys. "
+            "Do not answer the user's question. Do not invent or derive semantic facts. Never emit top-level summary or explanatory keys. "
             "The only top-level keys are semantic_atoms, task, program. "
-            "Extract explicit binary relation facts from HISTORY and DOCUMENT sources into semantic_atoms. "
-            "Infer the user's typed task from PROMPT. Do not turn hypothetical IF facts into semantic_atoms; encode them in a COUNTERFACTUAL program. "
-            "Normalize entity identifiers to stable lowercase IDs; transliterate or canonicalize names when needed. Keep relation/operator identifiers lowercase. "
+            "Extract explicit binary relation facts from HISTORY and DOCUMENT sources into semantic_atoms: one semantic atom per explicit relation clause. "
+            "Never collapse a two-hop chain into a derived semantic atom; derivation belongs only in program. "
+            "Each semantic atom normally cites exactly one span containing that explicit clause. Offsets reset independently for every source; start/end are never carried across HISTORY/DOCUMENT boundaries. "
+            "Infer the user's typed task from PROMPT. If PROMPT explicitly names a relation token, use it as task.operator_id. "
+            "If PROMPT asks generically about a relation and all explicit source facts use one operator, use that source operator. If source facts use different operators, use the generic output relation named by PROMPT. "
+            "For a short disputed/check query that names an operator but omits entities, and exactly one explicit binary fact is available, use that fact's two entities as task arguments. Words like disputed/check are not operators. "
+            "Do not turn hypothetical IF facts into semantic_atoms. In a COUNTERFACTUAL, ADD_FACT operator/src/dst come only from the IF antecedent, while task arguments come from the query conclusion. "
+            "Normalize entity identifiers to stable lowercase IDs; keep relation/operator identifiers lowercase. Preserve consistent identity across sources and languages. "
             "Use source-local Python character offsets exactly as provided by the source text. Never cite a source_id that is not present. "
-            "If the prompt is not a supported task, provenance cannot be grounded, or no meaningful proposal can be formed, return exactly {\"semantic_atoms\":[],\"task\":null,\"program\":null}. "
+            "If PROMPT is a metalinguistic or malformed-provenance request rather than a supported semantic task, or provenance cannot be grounded, return exactly {\"semantic_atoms\":[],\"task\":null,\"program\":null}. "
             "Each semantic_atoms item MUST be {\"operator_id\":string,\"arguments\":[string,...],"
             "\"polarity\":boolean,\"confidence\":number,\"spans\":[{\"source_id\":string,\"start\":integer,\"end\":integer},...]}. "
             "task is null or {\"opcode\":string,\"operator_id\":string|null,\"arguments\":[string,...],"
             "\"confidence\":number,\"spans\":[...]}. opcode MUST be one of: "
             "query_relation, select_entity, extract_set, order_tuple, epistemic_status, find_proof, "
             "find_minimal_proof, compare_worlds, counterfactual_query, current_state, historical_state. "
-            "For a binary relation query use arguments [source_entity,target_entity]. "
+            "For a binary relation query use exactly two arguments [source_entity,target_entity]. "
             "program is null or {\"node\":object,\"confidence\":number,\"spans\":[...]}. "
-            "Use ATOM symbol rule:transitive:R for a two-hop same-relation chain. "
-            "Use ATOM symbol rule:composition:R1:R2:OUT for a two-hop mixed-relation chain. "
-            "For a hypothetical added fact use COUNTERFACTUAL with child rule and params [[\"kind\",\"ADD_FACT\"],[\"operator\",R],[\"src\",A],[\"dst\",B]]. "
+            "For a two-hop same-relation chain use ATOM symbol rule:transitive:R with exactly one relation identifier after rule:transitive:. Never emit rule:transitive:R:R. "
+            "For a two-hop mixed-relation chain use ATOM symbol rule:composition:R1:R2:OUT. "
+            "For a hypothetical added fact use COUNTERFACTUAL with child rule and params [[\"kind\",\"ADD_FACT\"],[\"operator\",R],[\"src\",A],[\"dst\",B]], where R/A/B are the IF antecedent. "
             "Program node kinds: ATOM, SEQUENCE, COMPOSE, IF, INHIBIT, TEMPORAL, COUNTERFACTUAL. "
             "Every emitted semantic/task/program object must cite source-local Python character offsets with source_id/start/end. "
             "Keep output minimal: no prose, summaries, duplicated evidence, or unused fields."
