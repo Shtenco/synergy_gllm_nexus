@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from nexus_gllm.unified_v3.cognitive.generalized_ingress import GeneralizedIngressProposal
-from benchmarks.m32_1_neural.evaluate_dev import run_with_backend
+from benchmarks.m32_1_neural.evaluate_dev import DEV_GENERATION_MAX_TOKENS, run_with_backend
 
 
 class CountingBackend:
@@ -31,6 +31,10 @@ class DeterministicFailingBackend:
         raise ValueError("deterministic_bad_proposal")
 
 
+def test_dev_v3_generation_budget_is_pinned():
+    assert DEV_GENERATION_MAX_TOKENS == 320
+
+
 def test_neural_dev_evaluator_caches_identical_inputs_and_never_exposes_gold():
     backend = CountingBackend()
     report = run_with_backend(
@@ -38,7 +42,7 @@ def test_neural_dev_evaluator_caches_identical_inputs_and_never_exposes_gold():
         model_sha256="a" * 64,
         seed=32001,
         n_per_family=2,
-        generation_max_tokens=192,
+        generation_max_tokens=DEV_GENERATION_MAX_TOKENS,
     )
     assert report["schema"] == "nexus.m32_1.neural_dev.v1"
     assert report["benchmark"] == "M32-DEV-NEURAL"
@@ -46,7 +50,7 @@ def test_neural_dev_evaluator_caches_identical_inputs_and_never_exposes_gold():
     assert report["unique_neural_calls"] == 9
     assert len(backend.calls) == 9
     assert report["model_sha256"] == "a" * 64
-    assert report["generation"] == {"temperature": 0.0, "seed": 42, "max_tokens": 192}
+    assert report["generation"] == {"temperature": 0.0, "seed": 42, "max_tokens": 320}
     assert report["neural_quality_claim"] is True
     assert report["clean_oos"] is False
     assert report["ftx1_used_as_clean_oos"] is False
@@ -68,7 +72,7 @@ def test_deterministic_backend_failures_are_memoized_by_exact_input():
         model_sha256="b" * 64,
         seed=32001,
         n_per_family=2,
-        generation_max_tokens=192,
+        generation_max_tokens=DEV_GENERATION_MAX_TOKENS,
     )
     # Nine linguistic/source tuples exist. A deterministic failure must be
     # replayed from cache for duplicate DEV cases, not re-run on the model.
@@ -77,4 +81,4 @@ def test_deterministic_backend_failures_are_memoized_by_exact_input():
     assert len(backend.calls) == 9
     assert report["ingress_acceptance"] == 0.0
     assert report["task_admission"] == 0.0
-    assert report["generation"]["max_tokens"] == 192
+    assert report["generation"]["max_tokens"] == 320
