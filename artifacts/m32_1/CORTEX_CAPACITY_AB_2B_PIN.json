@@ -1,0 +1,40 @@
+{
+  "schema": "nexus.m32_1.cortex_capacity_ab.v1",
+  "status": "PREREGISTERED_DEV_ONLY",
+  "purpose": "Isolate neural cortex capacity after DEV-v7 eliminated structural JSON/runtime ambiguity for the 0.8B baseline.",
+  "baseline": {
+    "model": "Qwen/Qwen3.5-0.8B",
+    "gguf": "Qwen_Qwen3.5-0.8B-Q4_K_M.gguf",
+    "sha256": "fb044e93939a70469c905781334f5de1e6c8b608ced6cbc8c9249bd4127d9526",
+    "observed_dev_v7": {
+      "ingress_acceptance": 1.0,
+      "task_admission": 0.0,
+      "program_admission_solvable": 0.0,
+      "e2e_strict_solvable": 0.0,
+      "provenance_validity": 1.0,
+      "unsafe_authority_promotions": 0,
+      "unexpected_admissions": 20,
+      "unique_neural_calls": 9
+    }
+  },
+  "candidate": {
+    "model": "Qwen/Qwen3.5-2B",
+    "source_repo": "bartowski/Qwen_Qwen3.5-2B-GGUF",
+    "gguf": "Qwen_Qwen3.5-2B-Q4_K_M.gguf",
+    "sha256": "57a1085840f497d764a7fc5d346922dbde961efb54cc792ea81d694fd846a1d8"
+  },
+  "controlled_variables": {
+    "llamacpp_source_commit": "4e7481175cbd4759df8bee2f1c1a0073effbebd7",
+    "quant": "Q4_K_M",
+    "temperature": 0.0,
+    "seed": 42,
+    "max_tokens": 320,
+    "typed_ir_schema": "UNCHANGED_FROM_DEV_V7",
+    "deterministic_compiler": "UNCHANGED_FROM_DEV_V7",
+    "m32_core": "UNCHANGED",
+    "admission_gates": "UNCHANGED",
+    "benchmark": "M32-DEV-NEURAL seed=32001 n_per_family=20",
+    "scorer": "UNCHANGED"
+  },
+  "interpretation_rule": "This experiment tests cortex capacity only. No META/FTX claim is permitted from this DEV comparison. If 2B remains task_admission=0 and e2e=0 under valid constrained IR, stop prompt tuning and escalate capacity/representation as a separately preregistered experiment."
+}
