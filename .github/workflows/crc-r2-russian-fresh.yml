@@ -1,0 +1,33 @@
+name: CRC-R2 Fresh Russian Dialogue
+
+on:
+  push:
+    branches: ["crc-r2-learned-loop-russian-benchmark"]
+  workflow_dispatch:
+
+jobs:
+  fresh-russian-dialogue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Record commit
+        run: |
+          mkdir -p artifacts/crc_r2_russian_fresh
+          git rev-parse HEAD | tee artifacts/crc_r2_russian_fresh/VALIDATED_COMMIT.txt
+      - name: Run frozen fresh Russian dialogue benchmark
+        run: |
+          PYTHONPATH=. python3 recovery/benchmarks/run_crc_r2_russian_fresh.py | tee artifacts/crc_r2_russian_fresh/stdout.log
+      - name: Hash evidence
+        run: |
+          find artifacts/crc_r2_russian_fresh -type f -print0 | sort -z | xargs -0 sha256sum > artifacts/crc_r2_russian_fresh/EVIDENCE_SHA256.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: crc-r2-russian-fresh-evidence
+          path: artifacts/crc_r2_russian_fresh
+          if-no-files-found: error
+          retention-days: 90
