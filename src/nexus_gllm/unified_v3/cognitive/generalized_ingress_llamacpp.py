@@ -60,9 +60,19 @@ class LlamaCppGeneralizedIngressBackend:
     """Proposal-only llama.cpp adapter bound to exact GGUF bytes.
 
     The neural model emits a deliberately shallow typed IR. Recursive NEXUS
-    program structure and source-span provenance are compiled deterministically
-    here so syntax/offset arithmetic do not consume neural capacity.
+    program structure and source-span provenance are compiled deterministically.
+    DEV-v6 additionally constrains token generation with a request-bound JSON
+    schema so malformed/repetitive structures cannot be sampled in the first
+    place.
     """
+
+    TASK_OPCODES = (
+        "query_relation", "select_entity", "extract_set", "order_tuple",
+        "epistemic_status", "find_proof", "find_minimal_proof",
+        "compare_worlds", "counterfactual_query", "current_state",
+        "historical_state",
+    )
+    RECIPE_KINDS = ("transitive", "composition", "counterfactual_transitive")
 
     def __init__(self, model_ref: LlamaCppModelRef, transport=None):
         path = Path(model_ref.model_path)
@@ -94,27 +104,101 @@ class LlamaCppGeneralizedIngressBackend:
     @classmethod
     def _messages(cls, request):
         system = (
-            "You are the neural semantic front-end for NEXUS. Return one compact strict JSON object only. "
+            "You are the neural semantic front-end for NEXUS. Return one compact JSON object only. "
             "Do not answer the user's question. Do not invent facts. Never emit top-level summary or explanatory keys. "
-            "Return exactly the top-level keys semantic_atoms, task, program_recipe. "
-            "If nothing supported can be proposed, return exactly {\"semantic_atoms\":[],\"task\":null,\"program_recipe\":null}. "
+            "Return semantic_atoms, task, program_recipe. The runtime enforces their exact JSON schema. "
+            "If nothing supported can be proposed, use {\"semantic_atoms\":[],\"task\":null,\"program_recipe\":null}. "
             "Do NOT emit recursive AST nodes and do NOT calculate character offsets. The deterministic NEXUS compiler does that. "
-            "semantic_atoms items use {\"operator_id\":string,\"arguments\":[string,...],\"polarity\":boolean,\"confidence\":number,\"source_ids\":[string,...]}. "
-            "operator_id is the relation/predicate token from the source; arguments are entity tokens in source order, lowercase when possible. "
-            "task is null or {\"opcode\":string,\"operator_id\":string|null,\"arguments\":[string,...],\"confidence\":number,\"source_ids\":[string,...]}. "
-            "For binary relation questions use query_relation with the queried relation and [source_entity,target_entity]. "
-            "opcode MUST be one of: query_relation, select_entity, extract_set, order_tuple, epistemic_status, find_proof, find_minimal_proof, compare_worlds, counterfactual_query, current_state, historical_state. "
-            "program_recipe is null or a shallow object. Supported kinds: "
-            "transitive => {kind:'transitive',operators:[relation],confidence:number,source_ids:[...]}; "
-            "composition => {kind:'composition',operators:[left,right,query],confidence:number,source_ids:[...]}; "
-            "counterfactual_transitive => {kind:'counterfactual_transitive',operators:[relation],add_fact:[relation,src,dst],confidence:number,source_ids:[...]}. "
-            "Choose only source_ids that exist in SOURCES. Do not abstain merely because a supported relation query needs inference. "
-            "Keep output minimal and never repeat or nest program structures."
+            "semantic_atoms contain relation/predicate operator_id, entity-string arguments in source order, polarity, confidence, and supporting source_ids. "
+            "For binary relation questions task should normally use query_relation with the queried relation and [source_entity,target_entity]. "
+            "opcode values are: query_relation, select_entity, extract_set, order_tuple, epistemic_status, find_proof, find_minimal_proof, compare_worlds, counterfactual_query, current_state, historical_state. "
+            "program_recipe kinds are transitive, composition, counterfactual_transitive. "
+            "transitive operators=[relation]; composition operators=[left,right,query]; counterfactual_transitive operators=[relation] and add_fact=[relation,src,dst]. "
+            "Choose only source_ids present in SOURCES. Do not abstain merely because a supported relation query needs inference. "
+            "Keep the proposal minimal."
         )
         return [
             {"role": "system", "content": system},
             {"role": "user", "content": "SOURCES=" + cls._source_block(request)},
         ]
+
+    @classmethod
+    def _response_schema(cls, request):
+        source_ids = [source.source_id for source in request.sources]
+        if not source_ids:
+            raise ValueError("empty_sources")
+
+        string_args = {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 1,
+            "maxItems": 4,
+        }
+        supporting_sources = {
+            "type": "array",
+            "items": {"type": "string", "enum": source_ids},
+            "minItems": 1,
+            "maxItems": min(4, len(source_ids)),
+        }
+        confidence = {"type": "number", "minimum": 0.0, "maximum": 1.0}
+
+        atom = {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["operator_id", "arguments", "polarity", "confidence", "source_ids"],
+            "properties": {
+                "operator_id": {"type": "string"},
+                "arguments": string_args,
+                "polarity": {"type": "boolean"},
+                "confidence": confidence,
+                "source_ids": supporting_sources,
+            },
+        }
+        task = {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["opcode", "operator_id", "arguments", "confidence", "source_ids"],
+            "properties": {
+                "opcode": {"type": "string", "enum": list(cls.TASK_OPCODES)},
+                "operator_id": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                "arguments": {
+                    "type": "array", "items": {"type": "string"},
+                    "minItems": 0, "maxItems": 4,
+                },
+                "confidence": confidence,
+                "source_ids": supporting_sources,
+            },
+        }
+        recipe = {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["kind", "operators", "add_fact", "confidence", "source_ids"],
+            "properties": {
+                "kind": {"type": "string", "enum": list(cls.RECIPE_KINDS)},
+                "operators": {
+                    "type": "array", "items": {"type": "string"},
+                    "minItems": 1, "maxItems": 3,
+                },
+                "add_fact": {
+                    "type": "array", "items": {"type": "string"},
+                    "minItems": 0, "maxItems": 3,
+                },
+                "confidence": confidence,
+                "source_ids": supporting_sources,
+            },
+        }
+        return {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["semantic_atoms", "task", "program_recipe"],
+            "properties": {
+                "semantic_atoms": {
+                    "type": "array", "items": atom, "minItems": 0, "maxItems": 4,
+                },
+                "task": {"anyOf": [{"type": "null"}, task]},
+                "program_recipe": {"anyOf": [{"type": "null"}, recipe]},
+            },
+        }
 
     def _call(self, request):
         payload = {
@@ -122,7 +206,10 @@ class LlamaCppGeneralizedIngressBackend:
             "temperature": 0,
             "seed": self.ref.seed,
             "max_tokens": self.ref.max_tokens,
-            "response_format": {"type": "json_object"},
+            "response_format": {
+                "type": "json_schema",
+                "schema": self._response_schema(request),
+            },
         }
         data = self.transport.post_json(
             self.ref.endpoint.rstrip("/") + "/v1/chat/completions",
@@ -245,7 +332,6 @@ class LlamaCppGeneralizedIngressBackend:
         if typed is not None:
             return typed
 
-        # Backward-compatible strict decoder for already frozen legacy contract tests.
         atoms = []
         for row in data.get("semantic_atoms", []):
             atoms.append(
