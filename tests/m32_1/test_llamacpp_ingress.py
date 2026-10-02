@@ -72,7 +72,8 @@ def test_single_call_returns_grounded_semantic_task_and_program(tmp_path):
     payload=transport.calls[0][1]
     assert payload['temperature']==0
     assert payload['seed']==42
-    assert payload['response_format']=={'type':'json_object'}
+    assert payload['response_format']['type']=='json_schema'
+    assert payload['response_format']['schema']['additionalProperties'] is False
 
 
 def test_transport_failure_is_fail_closed(tmp_path):
@@ -115,6 +116,32 @@ def test_prompt_contract_spells_out_required_json_shape_and_all_task_opcodes(tmp
     assert '{"semantic_atoms":[],"task":null,"program_recipe":null}' in system
 
 
+def test_schema_constrains_typed_ir_cardinality_types_and_source_ids(tmp_path):
+    path,digest=_model(tmp_path);transport=FakeTransport(_json_response())
+    backend=LlamaCppGeneralizedIngressBackend(
+        LlamaCppModelRef(str(path),digest,'http://127.0.0.1:8080'),
+        transport=transport,
+    )
+    GeneralizedIngressR1(backend).parse(_request())
+    schema=transport.calls[0][1]['response_format']['schema']
+    assert schema['required']==['semantic_atoms','task','program_recipe']
+    atoms=schema['properties']['semantic_atoms']
+    assert atoms['maxItems']==4
+    atom=atoms['items']
+    assert atom['additionalProperties'] is False
+    assert atom['properties']['arguments']['items']=={'type':'string'}
+    assert atom['properties']['arguments']['maxItems']==4
+    source_ids=atom['properties']['source_ids']
+    assert source_ids['items']['enum']==['prompt:0','history:0','document:0']
+    assert source_ids['maxItems']==3
+    task=schema['properties']['task']['anyOf'][1]
+    assert 'query_relation' in task['properties']['opcode']['enum']
+    recipe=schema['properties']['program_recipe']['anyOf'][1]
+    assert recipe['properties']['kind']['enum']==['transitive','composition','counterfactual_transitive']
+    assert recipe['properties']['operators']['maxItems']==3
+    assert recipe['properties']['add_fact']['maxItems']==3
+
+
 def test_typed_ir_compiles_transitive_recipe_and_full_source_provenance(tmp_path):
     path,digest=_model(tmp_path)
     body={
@@ -123,7 +150,7 @@ def test_typed_ir_compiles_transitive_recipe_and_full_source_provenance(tmp_path
         {'operator_id':'parent','arguments':['bob','carol'],'polarity':True,'confidence':.95,'source_ids':['document:0']},
       ],
       'task':{'opcode':'query_relation','operator_id':'parent','arguments':['alice','carol'],'confidence':.95,'source_ids':['prompt:0']},
-      'program_recipe':{'kind':'transitive','operators':['parent'],'confidence':.95,'source_ids':['history:0','document:0']},
+      'program_recipe':{'kind':'transitive','operators':['parent'],'add_fact':[],'confidence':.95,'source_ids':['history:0','document:0']},
     }
     backend=LlamaCppGeneralizedIngressBackend(
         LlamaCppModelRef(str(path),digest,'http://127.0.0.1:8080'),
