@@ -109,3 +109,29 @@ def test_prompt_contract_spells_out_required_json_shape_and_all_task_opcodes(tmp
         assert opcode in system
     assert 'Never emit top-level summary' in system
     assert '{"semantic_atoms":[],"task":null,"program":null}' in system
+
+
+def test_prompt_teaches_grounded_relation_and_program_ontology(tmp_path):
+    path,digest=_model(tmp_path);transport=FakeTransport(_json_response())
+    backend=LlamaCppGeneralizedIngressBackend(
+        LlamaCppModelRef(str(path),digest,'http://127.0.0.1:8080'),
+        transport=transport,
+    )
+    GeneralizedIngressR1(backend).parse(_request())
+    messages=transport.calls[0][1]['messages']
+    system=messages[0]['content']
+    sources=json.loads(messages[1]['content'].removeprefix('SOURCES='))
+
+    # A tiny model must not have to infer NEXUS ontology or do character-count arithmetic.
+    assert all(row['span_all']=={'source_id':row['source_id'],'start':0,'end':len(row['text'])} for row in sources)
+    for required in (
+        'operator_id is the relation/predicate token from the source',
+        'QUERY_RELATION',
+        'rule:transitive:<operator>',
+        'rule:composition:<left>:<right>:<query>',
+        'COUNTERFACTUAL',
+        'ADD_FACT',
+        'Use span_all exactly',
+        'Do not abstain merely because a supported relation query needs inference',
+    ):
+        assert required in system
