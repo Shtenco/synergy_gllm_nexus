@@ -73,7 +73,8 @@ def test_single_call_returns_grounded_semantic_task_and_program(tmp_path):
     assert payload['temperature']==0
     assert payload['seed']==42
     assert payload['response_format']['type']=='json_schema'
-    assert payload['response_format']['schema']['additionalProperties'] is False
+    assert 'schema' not in payload['response_format']
+    assert payload['response_format']['json_schema']['schema']['additionalProperties'] is False
 
 
 def test_transport_failure_is_fail_closed(tmp_path):
@@ -123,7 +124,7 @@ def test_schema_constrains_typed_ir_cardinality_types_and_source_ids(tmp_path):
         transport=transport,
     )
     GeneralizedIngressR1(backend).parse(_request())
-    schema=transport.calls[0][1]['response_format']['schema']
+    schema=transport.calls[0][1]['response_format']['json_schema']['schema']
     assert schema['required']==['semantic_atoms','task','program_recipe']
     atoms=schema['properties']['semantic_atoms']
     assert atoms['maxItems']==4
