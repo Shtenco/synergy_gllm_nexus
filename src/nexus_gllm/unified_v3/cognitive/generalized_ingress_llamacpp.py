@@ -88,13 +88,20 @@ class LlamaCppGeneralizedIngressBackend:
     @classmethod
     def _messages(cls, request):
         system = (
-            "You are a proposal-only semantic parser for NEXUS. Return one strict JSON object only. "
-            "Do not answer the user's question. Do not invent facts. Extract semantic atoms, a typed task, "
-            "and an optional typed program AST. Every emitted semantic/task/program object must cite "
-            "source-local Python character offsets with source_id/start/end. "
-            "Top-level schema: semantic_atoms[], task|null, program|null. "
-            "Task opcode must be a NEXUS TaskOpcode such as QUERY_RELATION. "
-            "Program node kinds: ATOM, SEQUENCE, COMPOSE, IF, INHIBIT, TEMPORAL, COUNTERFACTUAL."
+            "You are a proposal-only semantic parser for NEXUS. Return one compact strict JSON object only. "
+            "Do not answer the user's question. Do not invent facts. Never emit top-level summary or explanatory keys. "
+            "The only top-level keys are semantic_atoms, task, program. "
+            "If nothing can be grounded, return exactly {\"semantic_atoms\":[],\"task\":null,\"program\":null}. "
+            "Each semantic_atoms item MUST be {\"operator_id\":string,\"arguments\":[string,...],"
+            "\"polarity\":boolean,\"confidence\":number,\"spans\":[{\"source_id\":string,\"start\":integer,\"end\":integer},...]}. "
+            "task is null or {\"opcode\":string,\"operator_id\":string|null,\"arguments\":[string,...],"
+            "\"confidence\":number,\"spans\":[...]}. opcode MUST be one of: "
+            "query_relation, select_entity, extract_set, order_tuple, epistemic_status, find_proof, "
+            "find_minimal_proof, compare_worlds, counterfactual_query, current_state, historical_state. "
+            "program is null or {\"node\":object,\"confidence\":number,\"spans\":[...]}. "
+            "Program node kinds: ATOM, SEQUENCE, COMPOSE, IF, INHIBIT, TEMPORAL, COUNTERFACTUAL. "
+            "Every emitted semantic/task/program object must cite source-local Python character offsets with source_id/start/end. "
+            "Keep output minimal: no prose, summaries, duplicated evidence, or unused fields."
         )
         return [
             {"role": "system", "content": system},
