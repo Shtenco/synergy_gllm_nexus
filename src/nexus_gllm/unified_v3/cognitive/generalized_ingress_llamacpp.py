@@ -78,6 +78,11 @@ class LlamaCppGeneralizedIngressBackend:
                     "source_id": source.source_id,
                     "source_kind": source.source_kind.value,
                     "text": source.text,
+                    "span_all": {
+                        "source_id": source.source_id,
+                        "start": 0,
+                        "end": len(source.text),
+                    },
                 }
                 for source in request.sources
             ],
@@ -92,15 +97,24 @@ class LlamaCppGeneralizedIngressBackend:
             "Do not answer the user's question. Do not invent facts. Never emit top-level summary or explanatory keys. "
             "The only top-level keys are semantic_atoms, task, program. "
             "If nothing can be grounded, return exactly {\"semantic_atoms\":[],\"task\":null,\"program\":null}. "
+            "Do not abstain merely because a supported relation query needs inference; emit grounded facts, the query task, and the matching supported rule program. "
+            "For relation facts, operator_id is the relation/predicate token from the source (for example parent or sibling), and arguments are the two entity tokens in source order, normalized to lowercase when possible. "
             "Each semantic_atoms item MUST be {\"operator_id\":string,\"arguments\":[string,...],"
             "\"polarity\":boolean,\"confidence\":number,\"spans\":[{\"source_id\":string,\"start\":integer,\"end\":integer},...]}. "
+            "For direct or inferential binary relation questions, use task opcode QUERY_RELATION with operator_id equal to the queried relation and arguments [source_entity,target_entity]. "
             "task is null or {\"opcode\":string,\"operator_id\":string|null,\"arguments\":[string,...],"
             "\"confidence\":number,\"spans\":[...]}. opcode MUST be one of: "
             "query_relation, select_entity, extract_set, order_tuple, epistemic_status, find_proof, "
             "find_minimal_proof, compare_worlds, counterfactual_query, current_state, historical_state. "
+            "The decoder accepts enum names such as QUERY_RELATION as well as the lowercase values above. "
             "program is null or {\"node\":object,\"confidence\":number,\"spans\":[...]}. "
+            "Program node shape is {\"kind\":string,\"symbol\":string,\"children\":[node,...],\"params\":[[key,value],...]}. "
+            "Use ATOM symbol rule:transitive:<operator> when the query follows a two-edge chain of the same relation. "
+            "Use ATOM symbol rule:composition:<left>:<right>:<query> when a left relation followed by a right relation implies the queried relation. "
+            "For a hypothetical added fact, use a COUNTERFACTUAL node with one supported child rule and params [[\"kind\",\"ADD_FACT\"],[\"operator\",relation],[\"src\",source],[\"dst\",target]]. "
             "Program node kinds: ATOM, SEQUENCE, COMPOSE, IF, INHIBIT, TEMPORAL, COUNTERFACTUAL. "
             "Every emitted semantic/task/program object must cite source-local Python character offsets with source_id/start/end. "
+            "Each source object includes span_all. Use span_all exactly when the whole source supports an emitted object; do not calculate offsets yourself. "
             "Keep output minimal: no prose, summaries, duplicated evidence, or unused fields."
         )
         return [
