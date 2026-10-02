@@ -61,9 +61,9 @@ class LlamaCppGeneralizedIngressBackend:
 
     The neural model emits a deliberately shallow typed IR. Recursive NEXUS
     program structure and source-span provenance are compiled deterministically.
-    DEV-v6 additionally constrains token generation with a request-bound JSON
-    schema so malformed/repetitive structures cannot be sampled in the first
-    place.
+    Token generation is constrained by a request-bound JSON schema. The schema
+    is wrapped using the exact wire contract expected by the preregistered
+    pinned llama.cpp commit.
     """
 
     TASK_OPCODES = (
@@ -208,7 +208,9 @@ class LlamaCppGeneralizedIngressBackend:
             "max_tokens": self.ref.max_tokens,
             "response_format": {
                 "type": "json_schema",
-                "schema": self._response_schema(request),
+                "json_schema": {
+                    "schema": self._response_schema(request),
+                },
             },
         }
         data = self.transport.post_json(
