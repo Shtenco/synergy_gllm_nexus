@@ -19,6 +19,9 @@ from nexus_gllm.unified_v3.cognitive.generalized_ingress_llamacpp import (
 )
 
 
+DEV_GENERATION_MAX_TOKENS = 320
+
+
 class CachingBackend:
     """Cache deterministic neural outcomes by the exact source identities.
 
@@ -69,7 +72,7 @@ def run_with_backend(
     model_sha256: str,
     seed: int = 32001,
     n_per_family: int = 20,
-    generation_max_tokens: int = 192,
+    generation_max_tokens: int = DEV_GENERATION_MAX_TOKENS,
 ):
     cases = generate(seed, n_per_family)
     cached = CachingBackend(backend)
@@ -190,7 +193,7 @@ def run(
     expected_sha256: str,
     seed: int = 32001,
     n_per_family: int = 20,
-    max_tokens: int = 192,
+    max_tokens: int = DEV_GENERATION_MAX_TOKENS,
 ):
     backend = LlamaCppGeneralizedIngressBackend(
         LlamaCppModelRef(
@@ -218,7 +221,7 @@ def main():
     ap.add_argument("--endpoint", default="http://127.0.0.1:8080")
     ap.add_argument("--seed", type=int, default=32001)
     ap.add_argument("--n-per-family", type=int, default=20)
-    ap.add_argument("--max-tokens", type=int, default=192)
+    ap.add_argument("--max-tokens", type=int, default=DEV_GENERATION_MAX_TOKENS)
     ap.add_argument("--output")
     args = ap.parse_args()
     report = run(
