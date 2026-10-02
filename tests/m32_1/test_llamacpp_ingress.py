@@ -86,3 +86,26 @@ def test_malformed_chat_completion_is_fail_closed(tmp_path):
     result=GeneralizedIngressR1(backend).parse(_request())
     assert not result.admission.accepted
     assert result.semantic_atoms==()
+
+
+def test_prompt_contract_spells_out_required_json_shape_and_all_task_opcodes(tmp_path):
+    path,digest=_model(tmp_path);transport=FakeTransport(_json_response())
+    backend=LlamaCppGeneralizedIngressBackend(
+        LlamaCppModelRef(str(path),digest,'http://127.0.0.1:8080'),
+        transport=transport,
+    )
+    GeneralizedIngressR1(backend).parse(_request())
+    system=transport.calls[0][1]['messages'][0]['content']
+    for required in (
+        'semantic_atoms','operator_id','arguments','polarity','confidence','spans',
+        'source_id','start','end','task','opcode','program',
+    ):
+        assert required in system
+    for opcode in (
+        'query_relation','select_entity','extract_set','order_tuple','epistemic_status',
+        'find_proof','find_minimal_proof','compare_worlds','counterfactual_query',
+        'current_state','historical_state',
+    ):
+        assert opcode in system
+    assert 'Never emit top-level summary' in system
+    assert '{"semantic_atoms":[],"task":null,"program":null}' in system
