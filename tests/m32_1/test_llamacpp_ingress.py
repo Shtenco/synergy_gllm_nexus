@@ -47,6 +47,11 @@ def _json_response():
     return {'choices':[{'message':{'content':json.dumps(body)}}]}
 
 
+def _empty_json_response():
+    body={'semantic_atoms':[],'task':None,'program':None}
+    return {'choices':[{'message':{'content':json.dumps(body,separators=(',',':'))}}]}
+
+
 def test_model_bytes_must_match_pinned_sha(tmp_path):
     path,digest=_model(tmp_path)
     bad=LlamaCppModelRef(str(path),'0'*64,'http://127.0.0.1:8080')
@@ -88,6 +93,19 @@ def test_malformed_chat_completion_is_fail_closed(tmp_path):
     assert result.semantic_atoms==()
 
 
+def test_empty_neural_proposal_is_fail_closed(tmp_path):
+    path,digest=_model(tmp_path)
+    backend=LlamaCppGeneralizedIngressBackend(
+        LlamaCppModelRef(str(path),digest,'http://127.0.0.1:8080'),
+        transport=FakeTransport(_empty_json_response()),
+    )
+    result=GeneralizedIngressR1(backend).parse(_request())
+    assert not result.admission.accepted
+    assert result.semantic_atoms==()
+    assert result.task is None and result.program is None
+    assert result.admission.reasons == ('backend_exception:ValueError',)
+
+
 def test_prompt_contract_spells_out_required_json_shape_and_all_task_opcodes(tmp_path):
     path,digest=_model(tmp_path);transport=FakeTransport(_json_response())
     backend=LlamaCppGeneralizedIngressBackend(
@@ -109,3 +127,23 @@ def test_prompt_contract_spells_out_required_json_shape_and_all_task_opcodes(tmp
         assert opcode in system
     assert 'Never emit top-level summary' in system
     assert '{"semantic_atoms":[],"task":null,"program":null}' in system
+
+
+def test_prompt_contains_synthetic_grounded_fewshot_before_live_sources(tmp_path):
+    path,digest=_model(tmp_path);transport=FakeTransport(_json_response())
+    backend=LlamaCppGeneralizedIngressBackend(
+        LlamaCppModelRef(str(path),digest,'http://127.0.0.1:8080'),
+        transport=transport,
+    )
+    GeneralizedIngressR1(backend).parse(_request())
+    messages=transport.calls[0][1]['messages']
+    assert messages[0]['role']=='system'
+    assert messages[-1]['role']=='user'
+    assert 'Is Alice parent Carol?' in messages[-1]['content']
+    assistant_examples=[m['content'] for m in messages[1:-1] if m['role']=='assistant']
+    assert len(assistant_examples) >= 3
+    joined='\n'.join(assistant_examples)
+    assert 'mira' in joined and 'rule:transitive:follows' in joined
+    assert 'rule:composition:mentor:colleague:connected' in joined
+    assert 'COUNTERFACTUAL' in joined and 'ADD_FACT' in joined
+    assert 'Alice parent Carol' not in joined
