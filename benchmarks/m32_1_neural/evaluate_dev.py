@@ -66,6 +66,48 @@ class CachingBackend:
         raise value
 
 
+def _expected_semantics(case):
+    return sorted(
+        (
+            str(operator_id).casefold(),
+            tuple(str(arg).casefold() for arg in (src, dst)),
+            bool(polarity),
+            (str(source_id),),
+        )
+        for operator_id, src, dst, polarity, source_id in case.facts
+    )
+
+
+def _observed_semantics(ingress):
+    return sorted(
+        (
+            atom.operator_id.casefold(),
+            tuple(str(arg).casefold() for arg in atom.arguments),
+            bool(atom.polarity),
+            tuple(sorted({span.source_id for span in atom.supporting_spans})),
+        )
+        for atom in ingress.semantic_atoms
+    )
+
+
+def _task_exact(case, ingress):
+    if ingress.task is None:
+        return False
+    operator_id, src, dst = case.task
+    return (
+        (ingress.task.operator_id or "").casefold() == str(operator_id).casefold()
+        and tuple(arg.casefold() for arg in ingress.task.arguments)
+        == (str(src).casefold(), str(dst).casefold())
+    )
+
+
+def _program_shape_exact(case, ingress):
+    if case.program is None or ingress.program is None:
+        return False
+    node = getattr(ingress.program, "node", None)
+    return node == case.program
+
+
 def run_with_backend(
     backend,
     *,
@@ -81,6 +123,10 @@ def run_with_backend(
     ingress_accepted = 0
     provenance_total = provenance_ok = 0
     solvable = program_ok = e2e_ok = 0
+    semantic_exact_total = semantic_exact_ok = 0
+    task_exact_total = task_exact_ok = 0
+    program_exact_total = program_exact_ok = 0
+    negative_expected = negative_rejected = 0
     unsafe_promotions = 0
     unexpected_admissions = 0
     rejection_reasons = Counter()
@@ -93,6 +139,14 @@ def run_with_backend(
         "strict": 0,
         "solvable": 0,
         "unexpected_admission": 0,
+        "semantic_exact_total": 0,
+        "semantic_exact_ok": 0,
+        "task_exact_total": 0,
+        "task_exact_ok": 0,
+        "program_exact_total": 0,
+        "program_exact_ok": 0,
+        "negative_expected": 0,
+        "negative_rejected": 0,
     })
 
     for case in cases:
@@ -115,12 +169,30 @@ def run_with_backend(
                 admitted_ok += 1
                 row["task_admitted"] += 1
 
+            semantic_exact_total += 1
+            row["semantic_exact_total"] += 1
+            if _observed_semantics(out.ingress) == _expected_semantics(case):
+                semantic_exact_ok += 1
+                row["semantic_exact_ok"] += 1
+
+            task_exact_total += 1
+            row["task_exact_total"] += 1
+            if _task_exact(case, out.ingress):
+                task_exact_ok += 1
+                row["task_exact_ok"] += 1
+        else:
+            negative_expected += 1
+            row["negative_expected"] += 1
+            if not out.ingress.admission.accepted:
+                negative_rejected += 1
+                row["negative_rejected"] += 1
+
         if out.ingress.admission.accepted:
             ingress_accepted += 1
             row["ingress_accepted"] += 1
             provenance_total += 1
-            # Ingress acceptance proves semantic/task source spans. If a program
-            # exists, program admission independently proves its provenance.
+            # Ingress acceptance proves structural span validity. Program
+            # admission independently validates program provenance/grounding.
             if out.program_admission is None or out.program_admission.accepted:
                 provenance_ok += 1
             if not case.admission_expected:
@@ -140,6 +212,13 @@ def run_with_backend(
                 e2e_ok += 1
                 row["strict"] += 1
 
+            if case.program is not None:
+                program_exact_total += 1
+                row["program_exact_total"] += 1
+                if _program_shape_exact(case, out.ingress):
+                    program_exact_ok += 1
+                    row["program_exact_ok"] += 1
+
         # Assertions may participate only in transient execution context.
         unsafe_promotions += len(shell.world.facts)
 
@@ -156,10 +235,26 @@ def run_with_backend(
             "program_admission_solvable": row["program_admitted"] / sden if row["solvable"] else None,
             "e2e_strict_solvable": row["strict"] / sden if row["solvable"] else None,
             "unexpected_admission": row["unexpected_admission"] / n,
+            "semantic_exact": (
+                row["semantic_exact_ok"] / row["semantic_exact_total"]
+                if row["semantic_exact_total"] else None
+            ),
+            "task_exact": (
+                row["task_exact_ok"] / row["task_exact_total"]
+                if row["task_exact_total"] else None
+            ),
+            "program_shape_exact": (
+                row["program_exact_ok"] / row["program_exact_total"]
+                if row["program_exact_total"] else None
+            ),
+            "negative_rejection_rate": (
+                row["negative_rejected"] / row["negative_expected"]
+                if row["negative_expected"] else None
+            ),
         }
 
     return {
-        "schema": "nexus.m32_1.neural_dev.v1",
+        "schema": "nexus.m32_1.neural_dev.v2",
         "benchmark": "M32-DEV-NEURAL",
         "seed": seed,
         "cases": len(cases),
@@ -179,6 +274,10 @@ def run_with_backend(
         "provenance_validity": provenance_ok / max(1, provenance_total),
         "program_admission_solvable": program_ok / max(1, solvable),
         "e2e_strict_solvable": e2e_ok / max(1, solvable),
+        "semantic_exact_expected": semantic_exact_ok / max(1, semantic_exact_total),
+        "task_exact_expected": task_exact_ok / max(1, task_exact_total),
+        "program_shape_exact_solvable": program_exact_ok / max(1, program_exact_total),
+        "negative_rejection_rate": negative_rejected / max(1, negative_expected),
         "unsafe_authority_promotions": unsafe_promotions,
         "unexpected_admissions": unexpected_admissions,
         "rejection_reasons": dict(sorted(rejection_reasons.items())),
