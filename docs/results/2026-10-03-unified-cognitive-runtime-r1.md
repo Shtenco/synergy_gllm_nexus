@@ -33,6 +33,8 @@ The checkpoint contains no autoregressive LM head. It is treated as a cognitive 
 
 A PyTorch `state_dict` does not encode the Transformer attention-head count. The adapter therefore carries `reconstruction_nhead` and `reconstruction_exact_source` in every feature result. Current wiring uses `nhead=8` but marks `reconstruction_exact_source=false`. Exact V7.2 training/tokenizer source remains unrecovered.
 
+Searches by checkpoint name and internal signatures (`16385`, `13,774,043`, `i_curriculum`, `i_plan_acc`, temporal/Russian cortex wording) have not recovered an exact tokenizer/preprocessor source in the currently indexed GitHub/Drive material.
+
 This is a deliberate scientific boundary: structural integration can proceed, but no neural-Russian quality claim is made until tokenizer/source provenance is recovered.
 
 ## Learned MetaPolicy
@@ -41,7 +43,43 @@ This is a deliberate scientific boundary: structural integration can proceed, bu
 
 `branch_depth(1..3) x branch_fanout(1..3) x expert_top_k(1..3)`.
 
-Observed reward produces RPE; recursive credit scales the policy advantage. Value and policy parameters are updated only when learning is enabled. `frozen_evaluation()` records a parameter hash, disables update, and rejects any parameter mutation.
+Value and policy parameters are updated only when learning is enabled. `frozen_evaluation()` records a parameter hash, disables update, and rejects any parameter mutation.
+
+## Native CRC organ bridge
+
+The runtime no longer accepts a caller-supplied scalar as the normal learned-policy credit path.
+
+`CRCOrganBridge` now uses the existing CRC-R1 primitives directly:
+
+- `HierarchicalMemoryStore` records each turn as RAW evidence with provenance;
+- `FutureTreePlanner` explores bounded cognitive-control alternatives using the learned MetaPolicy probabilities and selected depth/fanout;
+- `CognitiveTraceGraph` records `cortex -> learned_meta -> memory/future -> dialogue -> answer -> outcome`;
+- causal dialogue turns receive a dedicated causal-responsibility node in the trace;
+- `RewardVector` and `RPEngine` compute observed reward and prediction error;
+- `RecursiveCreditLearner` propagates responsibility through the trace and updates `NexusSelfModel`;
+- only the resulting `credit['learned_meta']` is passed to `LearnedMetaPolicy.update()`.
+
+Therefore the executable feedback chain is now:
+
+```text
+Outcome
+ -> RewardVector
+ -> CRC RPE
+ -> CognitiveTraceGraph
+ -> RecursiveCreditLearner
+ -> learned_meta responsibility
+ -> LearnedMetaPolicy.update
+ -> changed future policy
+```
+
+Counterfactual per-node credit may be supplied to `RecursiveCreditLearner` as an attribution measurement. It is blended by the CRC learner; it is not used as a direct replacement for the final policy credit.
+
+Direct propagation verification with the same CRC equations produced:
+
+- positive RPE example: `credit['learned_meta'] = +0.7597638`
+- negative RPE plus counterfactual attribution: `credit['learned_meta'] = -0.6282546`
+
+The self-model credit mass changes with those assignments.
 
 ## Russian dialogue compatibility
 
@@ -65,16 +103,21 @@ Russian text
   -> tokenizer callback
   -> real V7.2 checkpoint adapter
   -> CortexDecisionFeatures
-  -> LearnedMetaPolicy
-  -> Russian dialogue/governor compatibility layer
-  -> Russian response + trace + episode_id
-  -> observe(reward, credit)
-  -> RPE -> policy/value update
+  -> LearnedMetaPolicy decision
+  -> CRC RAW memory + FutureTree
+  -> R1.3-X-compatible Russian dialogue/governor
+  -> CognitiveTraceGraph
+  -> Russian response + episode_id
+  -> observe(reward vector)
+  -> CRC RPE
+  -> RecursiveCreditLearner
+  -> credit[learned_meta]
+  -> LearnedMetaPolicy update
 ```
 
-## Local TDD result
+## Tests and evidence
 
-Final local suite after RED->GREEN fixes:
+Earlier local RED->GREEN suite before the deeper CRC bridge:
 
 - **8 passed**
 - real 55 MB V7.2 checkpoint loaded by exact SHA
@@ -82,24 +125,39 @@ Final local suite after RED->GREEN fixes:
 - head dimensions verified: 14/2/8/3
 - wrong checkpoint hash fails closed
 - synthetic CI-safe state-dict contract passes
-- learned-policy hash changes after reward/credit update
+- learned-policy hash changes after update
 - learned-policy hash remains unchanged during frozen evaluation
 - Russian memory/world/anaphora/causal/relation/arithmetic/abstention tests pass
 - end-to-end real-checkpoint wiring reaches `observe()` and changes learned policy parameters
 
+A new checkpoint-independent `test_crc_bridge.py` additionally requires on GitHub/CI:
+
+- RAW memory provenance is preserved;
+- FutureTree produces a branch;
+- positive outcome produces positive `learned_meta` recursive credit;
+- negative/counterfactual outcome produces negative `learned_meta` credit;
+- self-model accumulates the credit mass.
+
+GitHub Actions for the current branch are presently queued; CI is **not** labelled GREEN until the hosted runner actually executes and reports success.
+
 ## Important benchmark boundary
 
-The end-to-end Russian test currently uses a **wiring-only tokenizer callback**. It is not the historical V7.2 tokenizer and therefore cannot support a claim that V7.2's neural plan/relation/role/temporal outputs are semantically valid for arbitrary Russian text.
+The end-to-end Russian wiring test currently uses a **wiring-only tokenizer callback**. It is not the historical V7.2 tokenizer and therefore cannot support a claim that V7.2's neural plan/relation/role/temporal outputs are semantically valid for arbitrary Russian text.
 
 Therefore current status is:
 
-- **Unified architecture / wiring:** GREEN locally
-- **Real V7.2 binary loading:** GREEN
-- **Learned closed-loop update:** GREEN
-- **R1.3-X-compatible Russian multi-turn state:** GREEN
+- **Unified architecture / wiring:** GREEN locally for the previously executed 8-test suite
+- **Real V7.2 binary loading:** GREEN locally
+- **Native CRC memory/FutureTree/RPE/recursive-credit path:** IMPLEMENTED; CI test queued
+- **Learned policy driven by CRC-derived meta credit:** IMPLEMENTED; direct propagation verified; CI queued
+- **R1.3-X-compatible Russian multi-turn state:** GREEN locally for the previously executed suite
 - **Exact V7.2 tokenizer provenance:** OPEN
 - **Fresh neural-Russian benchmark of the fully unified runtime:** BLOCKED on exact tokenizer/source recovery
 
-## Next gate
+## Next gates
 
-Recover the exact V7.2 tokenizer/training source or a byte-bound inference preprocessor. Then freeze a fresh Russian multi-turn benchmark before first open and evaluate the full chain without any wiring-only tokenizer substitution.
+1. Obtain an executed GitHub CI result for the new CRC-bridge tests; do not infer GREEN from queue state.
+2. Recover the exact V7.2 tokenizer/training source or a byte-bound inference preprocessor.
+3. Freeze fresh Russian multi-turn cases before first open.
+4. Run the full unified runtime with parameter hashes locked during evaluation and preserve raw transcripts/category metrics.
+5. Only after that evaluate whether the integrated learned loop improves fresh Russian/OOD performance rather than merely proving wiring.
