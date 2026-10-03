@@ -6,6 +6,7 @@ from typing import Any
 from nexus_gllm.unified_v3.contracts import TaskProgram, WorldHypothesis
 from nexus_gllm.unified_v3.temporal import TemporalLedger
 
+from .causal_model import CausalEdge,CausalEvidence,CausalGraph
 from .credit import CognitiveTraceGraph
 from .higher_order import HigherOrderContext,HigherOrderExecutor,HigherOrderResult
 from .learned_planner import LearnedFuturePlanner,PlannedAction
@@ -30,6 +31,8 @@ class CognitiveRequest:
     planning_state:str|None=None
     predicted_outcome_reward:float=0.0
     capability_hints:tuple[str,...]=()
+    causal_query:tuple[str,str]|None=None
+    causal_evidence:tuple[CausalEvidence,...]=()
 
 
 @dataclass(frozen=True)
@@ -39,6 +42,7 @@ class CognitiveDecision:
     memories:tuple[MemoryRecord,...]
     execution:HigherOrderResult
     plan:PlannedAction|None
+    causal_edge:CausalEdge|None
     trace_graph:CognitiveTraceGraph
     answer:Any
 
@@ -90,14 +94,10 @@ class CognitiveLoopR1:
                 },
             )
 
-        # Execution paths, rather than semantic program IDs, define proof
-        # responsibility. This preserves repeated subprograms evaluated in
-        # different actual/temporal/counterfactual contexts.
         for path,child_id in graph_id_by_path.items():
             if not path:
                 continue
-            parent_path=path[:-1]
-            parent_id=graph_id_by_path.get(parent_path)
+            parent_id=graph_id_by_path.get(path[:-1])
             if parent_id is not None:
                 graph.connect(child_id,parent_id,1.0)
 
@@ -105,6 +105,16 @@ class CognitiveLoopR1:
         if root_id is None:
             raise ValueError('execution ledger has no root proof occurrence')
         return root_id
+
+    @staticmethod
+    def _causal_edge(req:CognitiveRequest)->CausalEdge|None:
+        if req.causal_query is None:
+            return None
+        cause,effect=req.causal_query
+        model=CausalGraph()
+        for evidence in req.causal_evidence:
+            model.add(evidence)
+        return model.edge(cause,effect)
 
     def deliberate(self,req:CognitiveRequest)->CognitiveDecision:
         state=NexusCognitiveState(
@@ -164,6 +174,22 @@ class CognitiveLoopR1:
             program_ids=tuple(step.program_id for step in state_steps),
         )
 
+        causal_edge=self._causal_edge(req)
+        if causal_edge is not None:
+            cause,effect=req.causal_query
+            state=state.transition(
+                'causal_inference',
+                ref_id=f'{cause}->{effect}',
+                data={
+                    'identified':causal_edge.identified,
+                    'confidence':causal_edge.confidence,
+                    'observational_mass':causal_edge.observational_mass,
+                    'interventional_mass':causal_edge.interventional_mass,
+                    'counterfactual_mass':causal_edge.counterfactual_mass,
+                    'contradiction_mass':causal_edge.contradiction_mass,
+                },
+            )
+
         plan=None
         if self.world_model is not None and req.planning_state is not None and not meta.abstain:
             plan=LearnedFuturePlanner(
@@ -182,9 +208,6 @@ class CognitiveLoopR1:
         graph.add_node('meta','meta',{'capability':'meta_control'})
         program_id=self._add_program_dag(graph,req.program,execution)
 
-        # Memories are parallel evidence/retrieval contributors to the root program,
-        # never an arbitrary ordered causal chain. Executed AST occurrences contribute
-        # through explicit path-specific dependency edges created above.
         if memories:
             for i,m in enumerate(memories):
                 nid=f'memory:{i}:{m.memory_id}'
@@ -201,6 +224,31 @@ class CognitiveLoopR1:
             graph.connect(program_id,branch_id,1.0)
             last=branch_id
 
+        causal_id=None
+        if causal_edge is not None:
+            cause,effect=req.causal_query
+            causal_id=f'causal:{cause}->{effect}'
+            graph.add_node(
+                causal_id,
+                'causal',
+                {
+                    'capability':'causal_inference',
+                    'cause':cause,
+                    'effect':effect,
+                    'identified':causal_edge.identified,
+                    'confidence':causal_edge.confidence,
+                    'observational_mass':causal_edge.observational_mass,
+                    'interventional_mass':causal_edge.interventional_mass,
+                    'counterfactual_mass':causal_edge.counterfactual_mass,
+                    'contradiction_mass':causal_edge.contradiction_mass,
+                },
+            )
+            graph.connect('meta',causal_id,1.0)
+
+        causal_gate_required=causal_edge is not None
+        causal_gate_open=(causal_edge.identified if causal_edge is not None else True)
+        answer=execution.execution.truth if causal_gate_open else None
+
         graph.add_node(
             'answer',
             'answer',
@@ -209,9 +257,13 @@ class CognitiveLoopR1:
                 'proof_complete':coverage.complete,
                 'proof_coverage':coverage.coverage,
                 'unverified_program_ids':coverage.unverified_node_ids,
+                'causal_gate_required':causal_gate_required,
+                'causal_gate_open':causal_gate_open,
             },
         )
         graph.connect(last,'answer',1.0)
+        if causal_id is not None:
+            graph.connect(causal_id,'answer',1.0)
 
         return CognitiveDecision(
             state,
@@ -219,8 +271,9 @@ class CognitiveLoopR1:
             tuple(memories),
             execution,
             plan,
+            causal_edge,
             graph,
-            execution.execution.truth,
+            answer,
         )
 
     def observe(self,decision:CognitiveDecision,reward:RewardVector,*,counterfactual_credit=None)->CognitiveOutcome:
