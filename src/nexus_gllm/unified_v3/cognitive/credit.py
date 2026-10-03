@@ -15,7 +15,12 @@ class CognitiveTraceGraph:
     def _incoming(self,child_id): return [e for e in self.edges if e.child_id==child_id]
     def _credit_eligible(self,node_id):
         node=self.nodes[node_id];payload=node.payload if isinstance(node.payload,dict) else {}
-        return bool(payload.get('credit_eligible',True))
+        if 'credit_eligible' in payload:return bool(payload['credit_eligible'])
+        if node.kind=='program' and 'verified' in payload:return bool(payload['verified'])
+        if node.kind=='memory' and 'grounded' in payload:return bool(payload['grounded'])
+        if node.kind=='meta' and 'adaptive' in payload:return bool(payload['adaptive'])
+        if node.kind=='causal' and 'identified' in payload:return bool(payload['identified'])
+        return True
     def propagate(self,outcome_node_id,rpe,*,decay=.9,max_hops=32):
         if outcome_node_id not in self.nodes: raise KeyError(outcome_node_id)
         credit={outcome_node_id:float(rpe)};frontier=[(outcome_node_id,float(rpe),0)]
