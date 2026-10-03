@@ -51,39 +51,35 @@ class CognitiveLoopR1:
         self.executor=HigherOrderExecutor()
 
     @staticmethod
-    def _program_nodes(root:ProgramNode)->tuple[ProgramNode,...]:
-        """Return root-first unique AST nodes for stable graph/state ordering."""
-        ordered=[]
-        seen=set()
-
-        def walk(node:ProgramNode):
-            if node.program_id in seen:
-                return
-            seen.add(node.program_id)
-            ordered.append(node)
-            for child in node.children:
-                walk(child)
-
-        walk(root)
-        return tuple(ordered)
-
-    @staticmethod
-    def _executed_program_nodes(root:ProgramNode,execution:HigherOrderResult)->tuple[ProgramNode,...]:
-        """Return only AST nodes that the higher-order interpreter actually evaluated."""
-        executed_ids={step.program_id for step in execution.steps}
-        return tuple(node for node in CognitiveLoopR1._program_nodes(root) if node.program_id in executed_ids)
+    def _program_nodes_by_path(root:ProgramNode)->dict[tuple[int,...],ProgramNode]:
+        """Map AST occurrence paths to nodes without collapsing repeated program IDs."""
+        out={}
+        def walk(node:ProgramNode,path:tuple[int,...]):
+            out[path]=node
+            for index,child in enumerate(node.children):
+                walk(child,path+(index,))
+        walk(root,())
+        return out
 
     @staticmethod
     def _add_program_dag(graph:CognitiveTraceGraph,root:ProgramNode,execution:HigherOrderResult)->str:
-        step_by_id={step.program_id:step for step in execution.steps}
-        nodes=CognitiveLoopR1._executed_program_nodes(root,execution)
-        for node in nodes:
-            step=step_by_id[node.program_id]
+        nodes_by_path=CognitiveLoopR1._program_nodes_by_path(root)
+        graph_id_by_path={}
+
+        for step in execution.steps:
+            node=nodes_by_path.get(step.step_path)
+            if node is None:
+                raise ValueError(f'executed proof step has no AST occurrence: {step.step_path}')
+            identity=execution.step_identity(step)
+            graph_id='program:'+identity
+            graph_id_by_path[step.step_path]=graph_id
             graph.add_node(
-                'program:'+node.program_id,
+                graph_id,
                 'program',
                 {
                     'capability':'program_execution',
+                    'program_id':step.program_id,
+                    'step_path':step.step_path,
                     'ast_kind':step.ast_kind.value,
                     'symbol':node.symbol,
                     'status':step.status.value,
@@ -93,13 +89,22 @@ class CognitiveLoopR1:
                     'verified':step.verified,
                 },
             )
-        executed_ids=set(step_by_id)
-        for parent in nodes:
-            parent_id='program:'+parent.program_id
-            for child in parent.children:
-                if child.program_id in executed_ids:
-                    graph.connect('program:'+child.program_id,parent_id,1.0)
-        return 'program:'+root.program_id
+
+        # Execution paths, rather than semantic program IDs, define proof
+        # responsibility. This preserves repeated subprograms evaluated in
+        # different actual/temporal/counterfactual contexts.
+        for path,child_id in graph_id_by_path.items():
+            if not path:
+                continue
+            parent_path=path[:-1]
+            parent_id=graph_id_by_path.get(parent_path)
+            if parent_id is not None:
+                graph.connect(child_id,parent_id,1.0)
+
+        root_id=graph_id_by_path.get(())
+        if root_id is None:
+            raise ValueError('execution ledger has no root proof occurrence')
+        return root_id
 
     def deliberate(self,req:CognitiveRequest)->CognitiveDecision:
         state=NexusCognitiveState(
@@ -143,19 +148,20 @@ class CognitiveLoopR1:
             HigherOrderContext(req.world,req.task,req.temporal_ledger),
         )
         coverage=execution.proof_coverage
-        program_nodes=self._executed_program_nodes(req.program,execution)
+        state_steps=tuple(sorted(execution.steps,key=lambda step:(len(step.step_path),step.step_path)))
         state=state.transition(
             'program_execute',
             ref_id=req.program.program_id,
             data={
                 'status':execution.status.value,
                 'truth':execution.execution.truth,
-                'program_node_count':len(program_nodes),
+                'program_node_count':len(execution.steps),
                 'verified_program_node_count':len(coverage.verified_node_ids),
+                'program_step_ids':tuple(execution.step_identity(step) for step in state_steps),
                 'proof_coverage':coverage.coverage,
                 'proof_complete':coverage.complete,
             },
-            program_ids=tuple(node.program_id for node in program_nodes),
+            program_ids=tuple(step.program_id for step in state_steps),
         )
 
         plan=None
@@ -177,8 +183,8 @@ class CognitiveLoopR1:
         program_id=self._add_program_dag(graph,req.program,execution)
 
         # Memories are parallel evidence/retrieval contributors to the root program,
-        # never an arbitrary ordered causal chain. Executed AST children contribute
-        # through explicit dependency edges created by _add_program_dag.
+        # never an arbitrary ordered causal chain. Executed AST occurrences contribute
+        # through explicit path-specific dependency edges created above.
         if memories:
             for i,m in enumerate(memories):
                 nid=f'memory:{i}:{m.memory_id}'
