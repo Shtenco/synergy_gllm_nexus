@@ -19,6 +19,7 @@ jobs:
         run: >-
           pytest -q
           tests/crc_r1/test_post_second_blind_planning_budget.py
+          tests/crc_r1/test_post_second_blind_cognitive_loop_planning.py
           tests/crc_r1/test_post_second_blind_signed_causal.py
           tests/crc_r1/test_post_far_oos_planning_depth.py
           tests/crc_r1/test_learned_future.py
