@@ -5,6 +5,7 @@ from nexus_gllm.unified_v3.cognitive.memory import MemoryLevel
 from nexus_gllm.unified_v3.cognitive.program_ast import ProgramKind, ProgramNode
 from nexus_gllm.unified_v3.cognitive.reward import RewardVector
 from nexus_gllm.unified_v3.cognitive.runtime import CognitiveRecursiveCoreR1
+from nexus_gllm.unified_v3.cognitive.world_model import EmpiricalWorldModel
 from nexus_gllm.unified_v3.contracts import Entity, OperatorSymbol, TaskOpcode, TaskProgram, WorldFact, WorldHypothesis
 
 
@@ -21,7 +22,15 @@ def _core_with_memory():
     return core
 
 
-def _request():
+def _world_model():
+    model = EmpiricalWorldModel()
+    model.observe("s0", "advance", "s1", 0.5)
+    model.observe("s1", "finish", "s2", 1.0)
+    model.observe("s0", "stall", "s0", -0.1)
+    return model
+
+
+def _request(*, planning_state=None):
     world = WorldHypothesis(
         "ablation-world",
         (WorldFact(OperatorSymbol("r", 2), (Entity("a"), Entity("b"))),),
@@ -37,6 +46,7 @@ def _request():
             CausalEvidence("i", "x", "y", CausalEvidenceKind.INTERVENTIONAL, 0.9, 0.95),
             CausalEvidence("cf", "x", "y", CausalEvidenceKind.COUNTERFACTUAL, 0.8, 0.9),
         ),
+        planning_state=planning_state,
         novelty=0.8,
         uncertainty=0.8,
     )
@@ -106,3 +116,45 @@ def test_stage_b_adds_causal_under_same_budget_and_records_compute_by_module():
     assert decision.meta.reason == "fixed_ablation_policy"
     assert set(decision.compute.by_module) <= {"memory", "causal", "program"}
     assert decision.compute.spent_units <= 1.0
+
+
+def test_stage_c_adds_future_tree_but_keeps_fixed_controller_and_same_budget():
+    config = CognitiveLoopConfig.for_stage(AblationStage.C_FUTURE, budget_units=1.0)
+    loop = CognitiveLoopR1(_core_with_memory(), _world_model(), config=config)
+    decision = loop.deliberate(_request(planning_state="s0"))
+
+    kinds = {event.kind for event in decision.state.trace}
+    assert {"memory_grounding", "causal_inference", "future_plan"}.issubset(kinds)
+    assert decision.plan is not None
+    assert decision.plan.action == "advance"
+    assert decision.meta.reason == "fixed_ablation_policy"
+    assert set(decision.compute.by_module) == {"memory", "program", "causal", "future"}
+    assert decision.compute.spent_units <= 1.0
+
+
+def test_stage_d_adds_rpe_recursive_credit_and_charges_episode_budget():
+    config = CognitiveLoopConfig.for_stage(AblationStage.D_CREDIT, budget_units=1.0)
+    loop = CognitiveLoopR1(_core_with_memory(), _world_model(), config=config)
+    decision = loop.deliberate(_request(planning_state="s0"))
+    before_remaining = decision.state.budget.remaining_units
+
+    outcome = loop.observe(decision, reward=RewardVector(task=1.0))
+
+    assert outcome.rpe == 1.0
+    assert outcome.credit
+    assert outcome.state.budget.remaining_units == before_remaining - config.costs.credit
+    assert outcome.state.budget.remaining_units >= 0.0
+    assert decision.meta.reason == "fixed_ablation_policy"
+
+
+def test_stage_e_adds_adaptive_meta_without_changing_budget_cap_or_cost_schedule():
+    config = CognitiveLoopConfig.for_stage(AblationStage.E_META, budget_units=1.0)
+    loop = CognitiveLoopR1(_core_with_memory(), _world_model(), config=config)
+    decision = loop.deliberate(_request(planning_state="s0"))
+
+    assert decision.meta.reason != "fixed_ablation_policy"
+    assert "meta" in decision.compute.by_module
+    assert set(decision.compute.by_module) == {"meta", "memory", "program", "causal", "future"}
+    assert decision.compute.budget_units == 1.0
+    assert decision.compute.spent_units <= 1.0
+    assert decision.state.budget.remaining_units == 1.0 - decision.compute.spent_units
