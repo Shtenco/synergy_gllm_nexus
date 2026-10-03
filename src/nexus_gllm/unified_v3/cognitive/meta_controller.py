@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass,replace
 from .state import ComputeBudget
 from .self_model import NexusSelfModel
 
@@ -31,7 +31,11 @@ class MetaController:
         if budget.remaining_units<=.05:
             return MetaDecision(1,1,1,min(4,budget.max_memory_records),True,'compute_budget_exhausted',3,tuple(sorted(weak)))
 
-        depth=min(budget.max_depth,1+int(hard>.35)+int(hard>.70))
+        # The current future module is charged a fixed normalized cost, not a
+        # depth-proportional cost. Reducing search depth therefore discards
+        # reachable delayed reward without producing a measured compute saving.
+        # Keep the full budget-authorized depth until depth is explicitly priced.
+        depth=budget.max_depth
         fanout=min(budget.max_fanout,2+int(hard>.50)+int(hard>.80))
         topk=min(budget.max_experts,2+int(hard>.55))
         mem=min(budget.max_memory_records,8+8*int(hard>.65))
