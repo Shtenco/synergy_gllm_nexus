@@ -142,6 +142,7 @@ class CognitiveLoopR1:
             req.program,
             HigherOrderContext(req.world,req.task,req.temporal_ledger),
         )
+        coverage=execution.proof_coverage
         program_nodes=self._executed_program_nodes(req.program,execution)
         state=state.transition(
             'program_execute',
@@ -150,7 +151,9 @@ class CognitiveLoopR1:
                 'status':execution.status.value,
                 'truth':execution.execution.truth,
                 'program_node_count':len(program_nodes),
-                'verified_program_node_count':sum(1 for step in execution.steps if step.verified),
+                'verified_program_node_count':len(coverage.verified_node_ids),
+                'proof_coverage':coverage.coverage,
+                'proof_complete':coverage.complete,
             },
             program_ids=tuple(node.program_id for node in program_nodes),
         )
@@ -192,7 +195,16 @@ class CognitiveLoopR1:
             graph.connect(program_id,branch_id,1.0)
             last=branch_id
 
-        graph.add_node('answer','answer',{'capability':'answer_selection'})
+        graph.add_node(
+            'answer',
+            'answer',
+            {
+                'capability':'answer_selection',
+                'proof_complete':coverage.complete,
+                'proof_coverage':coverage.coverage,
+                'unverified_program_ids':coverage.unverified_node_ids,
+            },
+        )
         graph.connect(last,'answer',1.0)
 
         return CognitiveDecision(
