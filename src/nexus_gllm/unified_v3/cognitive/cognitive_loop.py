@@ -50,6 +50,42 @@ class CognitiveLoopR1:
         self.world_model=world_model
         self.executor=HigherOrderExecutor()
 
+    @staticmethod
+    def _program_nodes(root:ProgramNode)->tuple[ProgramNode,...]:
+        """Return root-first unique AST nodes for state and proof dependencies."""
+        ordered=[]
+        seen=set()
+
+        def walk(node:ProgramNode):
+            if node.program_id in seen:
+                return
+            seen.add(node.program_id)
+            ordered.append(node)
+            for child in node.children:
+                walk(child)
+
+        walk(root)
+        return tuple(ordered)
+
+    @staticmethod
+    def _add_program_dag(graph:CognitiveTraceGraph,root:ProgramNode)->str:
+        nodes=CognitiveLoopR1._program_nodes(root)
+        for node in nodes:
+            graph.add_node(
+                'program:'+node.program_id,
+                'program',
+                {
+                    'capability':'program_execution',
+                    'ast_kind':node.kind.value,
+                    'symbol':node.symbol,
+                },
+            )
+        for parent in nodes:
+            parent_id='program:'+parent.program_id
+            for child in parent.children:
+                graph.connect('program:'+child.program_id,parent_id,1.0)
+        return 'program:'+root.program_id
+
     def deliberate(self,req:CognitiveRequest)->CognitiveDecision:
         state=NexusCognitiveState(
             req.episode_id,
@@ -91,11 +127,16 @@ class CognitiveLoopR1:
             req.program,
             HigherOrderContext(req.world,req.task,req.temporal_ledger),
         )
+        program_nodes=self._program_nodes(req.program)
         state=state.transition(
             'program_execute',
             ref_id=req.program.program_id,
-            data={'status':execution.status.value,'truth':execution.execution.truth},
-            program_ids=(req.program.program_id,),
+            data={
+                'status':execution.status.value,
+                'truth':execution.execution.truth,
+                'program_node_count':len(program_nodes),
+            },
+            program_ids=tuple(node.program_id for node in program_nodes),
         )
 
         plan=None
@@ -114,12 +155,11 @@ class CognitiveLoopR1:
 
         graph=CognitiveTraceGraph()
         graph.add_node('meta','meta',{'capability':'meta_control'})
+        program_id=self._add_program_dag(graph,req.program)
 
-        program_id='program:'+req.program.program_id
-        graph.add_node(program_id,'program',{'capability':'program_execution'})
-
-        # Memories are parallel evidence/retrieval contributors to the program,
-        # never an arbitrary ordered causal chain.
+        # Memories are parallel evidence/retrieval contributors to the root program,
+        # never an arbitrary ordered causal chain. AST children contribute through
+        # explicit dependency edges created by _add_program_dag.
         if memories:
             for i,m in enumerate(memories):
                 nid=f'memory:{i}:{m.memory_id}'
