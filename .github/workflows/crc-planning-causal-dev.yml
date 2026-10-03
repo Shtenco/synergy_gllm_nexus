@@ -7,6 +7,7 @@ on:
 jobs:
   planning-causal-dev:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -23,4 +24,41 @@ jobs:
           tests/crc_r1/test_learned_future.py
           tests/crc_r1/test_causal_model.py
           tests/crc_r1/test_cognitive_causal_integration.py
-      - run: python -m compileall src/nexus_gllm/unified_v3/cognitive benchmarks/crc_second_blind
+          tests/crc_r1/test_planning_causal_dev_benchmark.py
+          tests/crc_r1/test_crc_statistics.py
+      - name: Execute stratified DEV surface
+        run: |
+          mkdir -p artifacts
+          python -m benchmarks.crc_planning_causal_dev.run \
+            --seed 20261003 \
+            --out artifacts/crc_planning_causal_dev.json
+      - name: Validate DEV gates
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('artifacts/crc_planning_causal_dev.json').read_text(encoding='utf-8'))
+          q=p['protocol']
+          assert q['reuses_second_blind_cases'] is False
+          assert q['m32_meta_opened'] is False
+          assert q['ftx2_authored'] is False
+          planning=p['planning']
+          causal=p['causal']
+          assert planning['horizons'] == list(range(2,9))
+          assert planning['accuracy_monotone_non_decreasing'] is True
+          assert planning['by_budget']['64']['accuracy'] >= .95
+          assert min(planning['by_budget']['64']['by_horizon'].values()) >= .90
+          assert causal['accuracy'] >= .95
+          assert causal['false_identification_rate'] == 0.0
+          print('PLANNING @64:', planning['by_budget']['64']['accuracy'])
+          print('PLANNING H2-H8:', planning['by_budget']['64']['by_horizon'])
+          print('CAUSAL:', causal['accuracy'])
+          print('FALSE IDENTIFICATION:', causal['false_identification_rate'])
+          PY
+      - run: python -m compileall src/nexus_gllm/unified_v3/cognitive benchmarks/crc_planning_causal_dev benchmarks/crc_statistics.py
+      - name: Upload DEV evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: crc-planning-causal-dev-${{ github.sha }}
+          path: artifacts/crc_planning_causal_dev.json
+          retention-days: 90
