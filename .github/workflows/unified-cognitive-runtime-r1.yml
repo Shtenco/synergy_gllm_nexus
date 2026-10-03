@@ -1,0 +1,26 @@
+name: NEXUS Unified Cognitive Runtime R1
+
+on:
+  push:
+    branches: ["nexus-unified-cognitive-runtime-r1"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unified-runtime-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Run unified runtime tests
+        env:
+          PYTHONPATH: src
+        run: pytest -q tests/unified_runtime
