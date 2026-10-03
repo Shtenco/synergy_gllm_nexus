@@ -1,0 +1,26 @@
+name: crc-planning-causal-dev
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  planning-causal-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --upgrade pip
+      - run: pip install -e '.[dev]'
+      - name: Focused CRC planning + causal regressions
+        run: >-
+          pytest -q
+          tests/crc_r1/test_post_second_blind_planning_budget.py
+          tests/crc_r1/test_post_second_blind_signed_causal.py
+          tests/crc_r1/test_post_far_oos_planning_depth.py
+          tests/crc_r1/test_learned_future.py
+          tests/crc_r1/test_causal_model.py
+          tests/crc_r1/test_cognitive_causal_integration.py
+      - run: python -m compileall src/nexus_gllm/unified_v3/cognitive benchmarks/crc_second_blind
