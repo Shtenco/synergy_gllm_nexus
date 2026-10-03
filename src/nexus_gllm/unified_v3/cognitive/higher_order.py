@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections import Counter
+from dataclasses import dataclass, replace
 from enum import Enum
 from typing import Any
 
@@ -33,7 +34,7 @@ class HigherOrderContext:
 
 @dataclass(frozen=True)
 class HigherOrderStep:
-    """Execution evidence for one AST node that was actually evaluated."""
+    """Execution evidence for one AST occurrence that was actually evaluated."""
 
     program_id: str
     ast_kind: ProgramKind
@@ -42,11 +43,12 @@ class HigherOrderStep:
     world_id: str | None = None
     evidence_kind: str = "UNRESOLVED"
     verified: bool = False
+    step_path: tuple[int, ...] = ()
 
 
 @dataclass(frozen=True)
 class ProofCoverageCertificate:
-    """Coverage over answer-dependent AST nodes that were actually evaluated."""
+    """Coverage over answer-dependent AST occurrences that were actually evaluated."""
 
     required_node_ids: tuple[str, ...]
     verified_node_ids: tuple[str, ...]
@@ -63,11 +65,21 @@ class HigherOrderResult:
     world_id: str | None = None
     steps: tuple[HigherOrderStep, ...] = ()
 
+    @staticmethod
+    def _path_suffix(path: tuple[int, ...]) -> str:
+        return "root" if not path else ".".join(str(i) for i in path)
+
+    def step_identity(self, step: HigherOrderStep) -> str:
+        counts = Counter(s.program_id for s in self.steps)
+        if counts[step.program_id] == 1:
+            return step.program_id
+        return f"{step.program_id}@{self._path_suffix(step.step_path)}"
+
     @property
     def proof_coverage(self) -> ProofCoverageCertificate:
-        required = tuple(step.program_id for step in self.steps)
-        verified = tuple(step.program_id for step in self.steps if step.verified)
-        unverified = tuple(step.program_id for step in self.steps if not step.verified)
+        required = tuple(self.step_identity(step) for step in self.steps)
+        verified = tuple(self.step_identity(step) for step in self.steps if step.verified)
+        unverified = tuple(self.step_identity(step) for step in self.steps if not step.verified)
         coverage = (len(verified) / len(required)) if required else 0.0
         return ProofCoverageCertificate(
             required_node_ids=required,
@@ -89,10 +101,10 @@ class HigherOrderExecutor:
     Primitive rule atoms are delegated to the existing V3 Executor. No
     benchmark-specific solver or name-similarity fallback is used.
 
-    Every result also carries an execution ledger containing only AST nodes
-    that were actually evaluated. Primitive nodes are verified by concrete
-    derivation evidence; higher-order nodes are deterministic transformations
-    whose verification depends on the executed children they consumed.
+    Every result carries an execution ledger containing only AST occurrences
+    that were actually evaluated. step_path is root-relative, so repeated
+    semantic programs executed in different temporal/counterfactual contexts
+    remain distinct proof and credit-assignment occurrences.
     """
 
     def __init__(self):
@@ -149,7 +161,11 @@ class HigherOrderExecutor:
         evidence_kind: str = "DETERMINISTIC",
         verified: bool = False,
     ) -> HigherOrderResult:
-        child_steps = tuple(step for child in children for step in child.steps)
+        child_steps = tuple(
+            replace(step, step_path=(child_index,) + step.step_path)
+            for child_index, child in enumerate(children)
+            for step in child.steps
+        )
         step = HigherOrderExecutor._step(
             node,
             status,
@@ -302,202 +318,57 @@ class HigherOrderExecutor:
 
         if node.kind is ProgramKind.IF:
             if len(node.children) != 2:
-                return self._result(
-                    node,
-                    HigherOrderStatus.MALFORMED,
-                    trace=("IF:arity",),
-                    world_id=ctx.world.world_id,
-                    evidence_kind="INVALID",
-                    verified=False,
-                )
+                return self._result(node, HigherOrderStatus.MALFORMED, trace=("IF:arity",), world_id=ctx.world.world_id, evidence_kind="INVALID", verified=False)
             cond = self.execute(node.children[0], ctx)
             if cond.status is not HigherOrderStatus.EXECUTED:
-                return self._result(
-                    node,
-                    cond.status,
-                    cond.execution,
-                    cond.trace,
-                    ctx.world.world_id,
-                    children=(cond,),
-                    verified=False,
-                )
+                return self._result(node, cond.status, cond.execution, cond.trace, ctx.world.world_id, children=(cond,), verified=False)
             if cond.execution.truth is None:
-                execution = cond.execution
-                return self._result(
-                    node,
-                    HigherOrderStatus.UNRESOLVED,
-                    execution,
-                    cond.trace + ("IF:unresolved",),
-                    ctx.world.world_id,
-                    children=(cond,),
-                    verified=False,
-                )
+                return self._result(node, HigherOrderStatus.UNRESOLVED, cond.execution, cond.trace + ("IF:unresolved",), ctx.world.world_id, children=(cond,), verified=False)
             if cond.execution.truth is False:
-                return self._result(
-                    node,
-                    HigherOrderStatus.CONDITION_FALSE,
-                    cond.execution,
-                    cond.trace + ("IF:false",),
-                    ctx.world.world_id,
-                    children=(cond,),
-                    verified=self._terminal_verified(cond),
-                )
+                return self._result(node, HigherOrderStatus.CONDITION_FALSE, cond.execution, cond.trace + ("IF:false",), ctx.world.world_id, children=(cond,), verified=self._terminal_verified(cond))
             body = self.execute(node.children[1], ctx)
-            return self._result(
-                node,
-                body.status,
-                body.execution,
-                cond.trace + ("IF:true",) + body.trace,
-                body.world_id,
-                children=(cond, body),
-                verified=self._terminal_verified(cond) and self._terminal_verified(body),
-            )
+            return self._result(node, body.status, body.execution, cond.trace + ("IF:true",) + body.trace, body.world_id, children=(cond, body), verified=self._terminal_verified(cond) and self._terminal_verified(body))
 
         if node.kind is ProgramKind.INHIBIT:
             if len(node.children) != 2:
-                return self._result(
-                    node,
-                    HigherOrderStatus.MALFORMED,
-                    trace=("INHIBIT:arity",),
-                    world_id=ctx.world.world_id,
-                    evidence_kind="INVALID",
-                    verified=False,
-                )
+                return self._result(node, HigherOrderStatus.MALFORMED, trace=("INHIBIT:arity",), world_id=ctx.world.world_id, evidence_kind="INVALID", verified=False)
             blocker = self.execute(node.children[0], ctx)
             if blocker.status is not HigherOrderStatus.EXECUTED:
-                return self._result(
-                    node,
-                    blocker.status,
-                    blocker.execution,
-                    blocker.trace,
-                    ctx.world.world_id,
-                    children=(blocker,),
-                    verified=False,
-                )
+                return self._result(node, blocker.status, blocker.execution, blocker.trace, ctx.world.world_id, children=(blocker,), verified=False)
             if blocker.execution.truth is None:
-                return self._result(
-                    node,
-                    HigherOrderStatus.UNRESOLVED,
-                    blocker.execution,
-                    blocker.trace + ("INHIBIT:unresolved",),
-                    ctx.world.world_id,
-                    children=(blocker,),
-                    verified=False,
-                )
+                return self._result(node, HigherOrderStatus.UNRESOLVED, blocker.execution, blocker.trace + ("INHIBIT:unresolved",), ctx.world.world_id, children=(blocker,), verified=False)
             if blocker.execution.truth is True:
-                execution = ExecutionResult(None)
-                return self._result(
-                    node,
-                    HigherOrderStatus.INHIBITED,
-                    execution,
-                    blocker.trace + ("INHIBIT:blocked",),
-                    ctx.world.world_id,
-                    children=(blocker,),
-                    verified=self._terminal_verified(blocker),
-                )
+                return self._result(node, HigherOrderStatus.INHIBITED, ExecutionResult(None), blocker.trace + ("INHIBIT:blocked",), ctx.world.world_id, children=(blocker,), verified=self._terminal_verified(blocker))
             body = self.execute(node.children[1], ctx)
-            return self._result(
-                node,
-                body.status,
-                body.execution,
-                blocker.trace + ("INHIBIT:open",) + body.trace,
-                body.world_id,
-                children=(blocker, body),
-                verified=self._terminal_verified(blocker) and self._terminal_verified(body),
-            )
+            return self._result(node, body.status, body.execution, blocker.trace + ("INHIBIT:open",) + body.trace, body.world_id, children=(blocker, body), verified=self._terminal_verified(blocker) and self._terminal_verified(body))
 
         if node.kind is ProgramKind.TEMPORAL:
             if len(node.children) != 1:
-                return self._result(
-                    node,
-                    HigherOrderStatus.MALFORMED,
-                    trace=("TEMPORAL:arity",),
-                    world_id=ctx.world.world_id,
-                    evidence_kind="INVALID",
-                    verified=False,
-                )
+                return self._result(node, HigherOrderStatus.MALFORMED, trace=("TEMPORAL:arity",), world_id=ctx.world.world_id, evidence_kind="INVALID", verified=False)
             if ctx.temporal_ledger is None:
-                return self._result(
-                    node,
-                    HigherOrderStatus.MISSING_CONTEXT,
-                    trace=("TEMPORAL:no_ledger",),
-                    world_id=ctx.world.world_id,
-                    evidence_kind="MISSING_CONTEXT",
-                    verified=False,
-                )
+                return self._result(node, HigherOrderStatus.MISSING_CONTEXT, trace=("TEMPORAL:no_ledger",), world_id=ctx.world.world_id, evidence_kind="MISSING_CONTEXT", verified=False)
             p = self._params(node)
             if "time" in p:
                 try:
                     time = int(p["time"])
                 except ValueError:
-                    return self._result(
-                        node,
-                        HigherOrderStatus.MALFORMED,
-                        trace=("TEMPORAL:bad_time",),
-                        world_id=ctx.world.world_id,
-                        evidence_kind="INVALID",
-                        verified=False,
-                    )
+                    return self._result(node, HigherOrderStatus.MALFORMED, trace=("TEMPORAL:bad_time",), world_id=ctx.world.world_id, evidence_kind="INVALID", verified=False)
                 mode = "at"
             elif p.get("mode") == "current":
                 mode, time = "current", None
             else:
-                return self._result(
-                    node,
-                    HigherOrderStatus.MALFORMED,
-                    trace=("TEMPORAL:missing_mode",),
-                    world_id=ctx.world.world_id,
-                    evidence_kind="INVALID",
-                    verified=False,
-                )
+                return self._result(node, HigherOrderStatus.MALFORMED, trace=("TEMPORAL:missing_mode",), world_id=ctx.world.world_id, evidence_kind="INVALID", verified=False)
             world = self._temporal_world(ctx.world, ctx.temporal_ledger, mode=mode, time=time)
             out = self.execute(node.children[0], HigherOrderContext(world, ctx.task, ctx.temporal_ledger))
-            return self._result(
-                node,
-                out.status,
-                out.execution,
-                (f"TEMPORAL:{mode}:{time}",) + out.trace,
-                world.world_id,
-                children=(out,),
-                verified=self._terminal_verified(out),
-            )
+            return self._result(node, out.status, out.execution, (f"TEMPORAL:{mode}:{time}",) + out.trace, world.world_id, children=(out,), verified=self._terminal_verified(out))
 
         if node.kind is ProgramKind.COUNTERFACTUAL:
             if len(node.children) != 1:
-                return self._result(
-                    node,
-                    HigherOrderStatus.MALFORMED,
-                    trace=("COUNTERFACTUAL:arity",),
-                    world_id=ctx.world.world_id,
-                    evidence_kind="INVALID",
-                    verified=False,
-                )
+                return self._result(node, HigherOrderStatus.MALFORMED, trace=("COUNTERFACTUAL:arity",), world_id=ctx.world.world_id, evidence_kind="INVALID", verified=False)
             cf = self._counterfactual_context(node, ctx)
             if cf is None:
-                return self._result(
-                    node,
-                    HigherOrderStatus.MALFORMED,
-                    trace=("COUNTERFACTUAL:bad_intervention",),
-                    world_id=ctx.world.world_id,
-                    evidence_kind="INVALID",
-                    verified=False,
-                )
+                return self._result(node, HigherOrderStatus.MALFORMED, trace=("COUNTERFACTUAL:bad_intervention",), world_id=ctx.world.world_id, evidence_kind="INVALID", verified=False)
             out = self.execute(node.children[0], cf)
-            return self._result(
-                node,
-                out.status,
-                out.execution,
-                ("COUNTERFACTUAL:applied",) + out.trace,
-                cf.world.world_id,
-                children=(out,),
-                verified=self._terminal_verified(out),
-            )
+            return self._result(node, out.status, out.execution, ("COUNTERFACTUAL:applied",) + out.trace, cf.world.world_id, children=(out,), verified=self._terminal_verified(out))
 
-        return self._result(
-            node,
-            HigherOrderStatus.MALFORMED,
-            trace=(f"unknown:{node.kind}",),
-            world_id=ctx.world.world_id,
-            evidence_kind="INVALID",
-            verified=False,
-        )
+        return self._result(node, HigherOrderStatus.MALFORMED, trace=(f"unknown:{node.kind}",), world_id=ctx.world.world_id, evidence_kind="INVALID", verified=False)
