@@ -26,6 +26,7 @@ jobs:
           tests/crc_r1/test_cognitive_causal_integration.py
           tests/crc_r1/test_planning_causal_dev_benchmark.py
           tests/crc_r1/test_crc_statistics.py
+          tests/crc_r1/test_crc_scm_oracle.py
       - name: Execute stratified DEV surface
         run: |
           mkdir -p artifacts
@@ -55,7 +56,7 @@ jobs:
           print('CAUSAL:', causal['accuracy'])
           print('FALSE IDENTIFICATION:', causal['false_identification_rate'])
           PY
-      - run: python -m compileall src/nexus_gllm/unified_v3/cognitive benchmarks/crc_planning_causal_dev benchmarks/crc_statistics.py
+      - run: python -m compileall src/nexus_gllm/unified_v3/cognitive benchmarks/crc_planning_causal_dev benchmarks/crc_statistics.py benchmarks/crc_scm_oracle.py
       - name: Upload DEV evidence
         uses: actions/upload-artifact@v4
         with:
