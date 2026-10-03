@@ -1,0 +1,47 @@
+name: crc-planning-causal-diagnostics
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --upgrade pip
+      - run: pip install -e '.[dev]'
+      - name: Capture focused pytest diagnostics
+        shell: bash
+        run: |
+          set +e
+          : > crc_planning_causal_diagnostics.txt
+          status=0
+          for t in \
+            tests/crc_r1/test_post_second_blind_planning_budget.py \
+            tests/crc_r1/test_post_second_blind_signed_causal.py \
+            tests/crc_r1/test_post_far_oos_planning_depth.py \
+            tests/crc_r1/test_learned_future.py \
+            tests/crc_r1/test_causal_model.py \
+            tests/crc_r1/test_cognitive_causal_integration.py
+          do
+            echo "===== $t =====" | tee -a crc_planning_causal_diagnostics.txt
+            pytest -q "$t" 2>&1 | tee -a crc_planning_causal_diagnostics.txt
+            rc=${PIPESTATUS[0]}
+            echo "EXIT=$rc" | tee -a crc_planning_causal_diagnostics.txt
+            if [ "$rc" -ne 0 ]; then status=1; fi
+          done
+          echo "$status" > crc_planning_causal_status.txt
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: crc-planning-causal-diagnostics
+          path: |
+            crc_planning_causal_diagnostics.txt
+            crc_planning_causal_status.txt
+      - name: Fail if focused suite is red
+        shell: bash
+        run: test "$(cat crc_planning_causal_status.txt)" = "0"
