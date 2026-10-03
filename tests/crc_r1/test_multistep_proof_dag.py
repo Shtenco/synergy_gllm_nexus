@@ -141,3 +141,40 @@ def test_if_false_excludes_unexecuted_body_from_proof_dag_and_state():
     assert condition_payload["truth"] is False
     assert condition_payload["evidence_kind"] == "PROOF"
     assert condition_payload["verified"] is True
+
+
+def test_proof_coverage_certificate_rejects_unresolved_dependency():
+    proved = ProgramNode(ProgramKind.ATOM, "rule:transitive:r", params=(("step", "proved"),))
+    unresolved = ProgramNode(
+        ProgramKind.ATOM,
+        "rule:transitive:r",
+        params=(("query_operator", "r"), ("query_src", "a"), ("query_dst", "z")),
+    )
+    root = ProgramNode(ProgramKind.COMPOSE, children=(proved, unresolved))
+
+    decision = CognitiveLoopR1().deliberate(_request(root))
+    coverage = decision.execution.proof_coverage
+
+    assert coverage.required_node_ids == (proved.program_id, unresolved.program_id, root.program_id)
+    assert coverage.verified_node_ids == (proved.program_id,)
+    assert coverage.unverified_node_ids == (unresolved.program_id, root.program_id)
+    assert coverage.coverage == 1 / 3
+    assert coverage.complete is False
+    assert decision.trace_graph.nodes["answer"].payload["proof_complete"] is False
+    assert decision.trace_graph.nodes["answer"].payload["proof_coverage"] == 1 / 3
+
+
+def test_proof_coverage_certificate_is_complete_for_verified_composition():
+    left = ProgramNode(ProgramKind.ATOM, "rule:transitive:r", params=(("step", "left"),))
+    right = ProgramNode(ProgramKind.ATOM, "rule:transitive:r", params=(("step", "right"),))
+    root = ProgramNode(ProgramKind.COMPOSE, children=(left, right))
+
+    decision = CognitiveLoopR1().deliberate(_request(root))
+    coverage = decision.execution.proof_coverage
+
+    assert coverage.required_node_ids == (left.program_id, right.program_id, root.program_id)
+    assert coverage.unverified_node_ids == ()
+    assert coverage.coverage == 1.0
+    assert coverage.complete is True
+    assert decision.trace_graph.nodes["answer"].payload["proof_complete"] is True
+    assert decision.trace_graph.nodes["answer"].payload["proof_coverage"] == 1.0
