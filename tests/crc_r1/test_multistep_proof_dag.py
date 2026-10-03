@@ -178,3 +178,48 @@ def test_proof_coverage_certificate_is_complete_for_verified_composition():
     assert coverage.complete is True
     assert decision.trace_graph.nodes["answer"].payload["proof_complete"] is True
     assert decision.trace_graph.nodes["answer"].payload["proof_coverage"] == 1.0
+
+
+def test_same_program_in_actual_and_counterfactual_contexts_keeps_distinct_proof_occurrences():
+    relation = OperatorSymbol("r", 2)
+    world = WorldHypothesis(
+        "proof-dag-context-world",
+        (WorldFact(relation, (Entity("a"), Entity("b"))),),
+    )
+    task = TaskProgram(TaskOpcode.QUERY_RELATION, "r", ("a", "c"))
+    shared = ProgramNode(ProgramKind.ATOM, "rule:transitive:r")
+    counterfactual = ProgramNode(
+        ProgramKind.COUNTERFACTUAL,
+        children=(shared,),
+        params=(("kind", "ADD_FACT"), ("operator", "r"), ("src", "b"), ("dst", "c")),
+    )
+    root = ProgramNode(ProgramKind.COMPOSE, children=(shared, counterfactual))
+
+    decision = CognitiveLoopR1().deliberate(_request_with_world(root, world, task))
+
+    shared_steps = [step for step in decision.execution.steps if step.program_id == shared.program_id]
+    assert len(shared_steps) == 2
+    assert {step.step_path for step in shared_steps} == {(0,), (1, 0)}
+    assert {step.world_id for step in shared_steps} == {"proof-dag-context-world", "proof-dag-context-world:cf"}
+    assert {step.execution.truth for step in shared_steps} == {None, True}
+
+    actual_id = "program:" + shared.program_id + "@0"
+    counterfactual_id = "program:" + shared.program_id + "@1.0"
+    cf_id = "program:" + counterfactual.program_id
+    root_id = "program:" + root.program_id
+
+    assert {actual_id, counterfactual_id, cf_id, root_id}.issubset(decision.trace_graph.nodes)
+    assert decision.trace_graph.nodes[actual_id].payload["world_id"] == "proof-dag-context-world"
+    assert decision.trace_graph.nodes[actual_id].payload["truth"] is None
+    assert decision.trace_graph.nodes[counterfactual_id].payload["world_id"] == "proof-dag-context-world:cf"
+    assert decision.trace_graph.nodes[counterfactual_id].payload["truth"] is True
+
+    edges = {(edge.parent_id, edge.child_id) for edge in decision.trace_graph.edges}
+    assert (actual_id, root_id) in edges
+    assert (counterfactual_id, cf_id) in edges
+    assert (cf_id, root_id) in edges
+
+    coverage = decision.execution.proof_coverage
+    assert actual_id.removeprefix("program:") in coverage.unverified_node_ids
+    assert counterfactual_id.removeprefix("program:") in coverage.verified_node_ids
+    assert coverage.complete is False
