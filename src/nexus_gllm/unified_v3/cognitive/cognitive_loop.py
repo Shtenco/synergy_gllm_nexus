@@ -254,9 +254,14 @@ class CognitiveLoopR1:
                 data={
                     'identified':causal_edge.identified,
                     'confidence':causal_edge.confidence,
+                    'effect_sign':causal_edge.effect_sign,
+                    'causal_agreement':causal_edge.causal_agreement,
                     'observational_mass':causal_edge.observational_mass,
                     'interventional_mass':causal_edge.interventional_mass,
                     'counterfactual_mass':causal_edge.counterfactual_mass,
+                    'observational_signed':causal_edge.observational_signed,
+                    'interventional_signed':causal_edge.interventional_signed,
+                    'counterfactual_signed':causal_edge.counterfactual_signed,
                     'contradiction_mass':causal_edge.contradiction_mass,
                 },
             )
@@ -264,15 +269,24 @@ class CognitiveLoopR1:
         plan=None
         if self.config.enable_future and self.world_model is not None and req.planning_state is not None and not meta.abstain:
             compute=self._spend(compute,'future')
+            expansion_cap=max(1,int(state.budget.max_planning_expansions*self.config.budget_units))
             plan=LearnedFuturePlanner(
                 self.world_model,
                 max_depth=meta.branch_depth,
                 fanout=meta.branch_fanout,
+                max_expansions=expansion_cap,
             ).plan(req.planning_state)
             state=state.transition(
                 'future_plan',
                 ref_id=plan.branch_id,
-                data={'action':plan.action,'planning_value':plan.value,'depth':plan.depth},
+                data={
+                    'action':plan.action,
+                    'planning_value':plan.value,
+                    'depth':plan.depth,
+                    'expanded_nodes':plan.expanded_nodes,
+                    'max_expansions':plan.max_expansions,
+                    'budget_exhausted':plan.budget_exhausted,
+                },
                 branch_id=plan.branch_id,
             )
 
@@ -303,7 +317,18 @@ class CognitiveLoopR1:
         last=program_id
         if plan is not None:
             branch_id='branch:'+str(plan.branch_id)
-            graph.add_node(branch_id,'branch',{'capability':'future_planning','action':plan.action,'planning_value':plan.value})
+            graph.add_node(
+                branch_id,
+                'branch',
+                {
+                    'capability':'future_planning',
+                    'action':plan.action,
+                    'planning_value':plan.value,
+                    'expanded_nodes':plan.expanded_nodes,
+                    'max_expansions':plan.max_expansions,
+                    'budget_exhausted':plan.budget_exhausted,
+                },
+            )
             graph.connect(program_id,branch_id,1.0)
             last=branch_id
 
@@ -320,9 +345,14 @@ class CognitiveLoopR1:
                     'effect':effect,
                     'identified':causal_edge.identified,
                     'confidence':causal_edge.confidence,
+                    'effect_sign':causal_edge.effect_sign,
+                    'causal_agreement':causal_edge.causal_agreement,
                     'observational_mass':causal_edge.observational_mass,
                     'interventional_mass':causal_edge.interventional_mass,
                     'counterfactual_mass':causal_edge.counterfactual_mass,
+                    'observational_signed':causal_edge.observational_signed,
+                    'interventional_signed':causal_edge.interventional_signed,
+                    'counterfactual_signed':causal_edge.counterfactual_signed,
                     'contradiction_mass':causal_edge.contradiction_mass,
                 },
             )
