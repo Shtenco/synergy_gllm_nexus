@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from nexus_gllm.unified_v3.contracts import TaskProgram, WorldFact, WorldHypothesis
 from nexus_gllm.unified_v3.temporal import TemporalLedger
 
+from .ablation import CognitiveLoopConfig, ComputeLedger
 from .causal_model import CausalEdge,CausalEvidence,CausalGraph
 from .credit import CognitiveTraceGraph
 from .higher_order import HigherOrderContext,HigherOrderExecutor,HigherOrderResult
@@ -15,7 +16,7 @@ from .meta_controller import MetaDecision
 from .program_ast import ProgramNode
 from .reward import RewardVector
 from .runtime import CognitiveRecursiveCoreR1,CognitiveOutcome
-from .state import NexusCognitiveState
+from .state import ComputeBudget,NexusCognitiveState
 
 
 @dataclass(frozen=True)
@@ -43,16 +44,23 @@ class CognitiveDecision:
     execution:HigherOrderResult
     plan:PlannedAction|None
     causal_edge:CausalEdge|None
+    compute:ComputeLedger
     trace_graph:CognitiveTraceGraph
     answer:Any
 
 
 class CognitiveLoopR1:
-    """Single typed CRC deliberation/observation loop."""
-    def __init__(self,core=None,world_model=None):
+    """Single typed CRC deliberation/observation loop.
+
+    A cumulative ablation config can disable organs without changing the shared
+    execution path or the frozen normalized compute-price schedule. ``config``
+    defaults to the full pre-ablation CRC behavior.
+    """
+    def __init__(self,core=None,world_model=None,*,config:CognitiveLoopConfig|None=None):
         self.core=core or CognitiveRecursiveCoreR1()
         self.world_model=world_model
         self.executor=HigherOrderExecutor()
+        self.config=config or CognitiveLoopConfig.full()
 
     @staticmethod
     def _program_nodes_by_path(root:ProgramNode)->dict[tuple[int,...],ProgramNode]:
@@ -137,6 +145,22 @@ class CognitiveLoopR1:
         )
         return grounded,tuple(accepted)
 
+    @staticmethod
+    def _fixed_meta(budget:ComputeBudget)->MetaDecision:
+        return MetaDecision(
+            branch_depth=budget.max_depth,
+            branch_fanout=budget.max_fanout,
+            expert_top_k=budget.max_experts,
+            memory_limit=budget.max_memory_records,
+            abstain=False,
+            reason='fixed_ablation_policy',
+            verification_level=3,
+            weak_capabilities=(),
+        )
+
+    def _spend(self,ledger:ComputeLedger,module:str)->ComputeLedger:
+        return ledger.spend(module,self.config.costs.for_module(module))
+
     def deliberate(self,req:CognitiveRequest)->CognitiveDecision:
         state=NexusCognitiveState(
             req.episode_id,
@@ -144,18 +168,26 @@ class CognitiveLoopR1:
             novelty=req.novelty,
             uncertainty=req.uncertainty,
             predicted_reward=float(req.predicted_outcome_reward),
+            budget=ComputeBudget(remaining_units=self.config.budget_units),
         )
-        meta=self.core.meta.decide(
-            novelty=req.novelty,
-            uncertainty=req.uncertainty,
-            budget=state.budget,
-            self_model=self.core.self_model,
-            capability_hints=req.capability_hints,
-            calibration_ledger=self.core.calibration,
-        )
+        compute=ComputeLedger(self.config.budget_units)
+
+        if self.config.enable_meta:
+            compute=self._spend(compute,'meta')
+            meta=self.core.meta.decide(
+                novelty=req.novelty,
+                uncertainty=req.uncertainty,
+                budget=state.budget,
+                self_model=self.core.self_model,
+                capability_hints=req.capability_hints,
+                calibration_ledger=self.core.calibration,
+            )
+        else:
+            meta=self._fixed_meta(state.budget)
         state=state.transition(
             'meta_control',
             data={
+                'adaptive':self.config.enable_meta,
                 'depth':meta.branch_depth,
                 'fanout':meta.branch_fanout,
                 'experts':meta.expert_top_k,
@@ -166,7 +198,10 @@ class CognitiveLoopR1:
             },
         )
 
-        memories=self.core.memory.retrieve(req.memory_tags,limit=meta.memory_limit) if req.memory_tags else ()
+        memories=()
+        if self.config.enable_memory and req.memory_tags:
+            compute=self._spend(compute,'memory')
+            memories=self.core.memory.retrieve(req.memory_tags,limit=meta.memory_limit)
         if memories:
             state=state.transition(
                 'memory_retrieve',
@@ -185,6 +220,7 @@ class CognitiveLoopR1:
                 world_id=reasoning_world.world_id,
             )
 
+        compute=self._spend(compute,'program')
         execution=self.executor.execute(
             req.program,
             HigherOrderContext(reasoning_world,req.task,req.temporal_ledger),
@@ -206,7 +242,10 @@ class CognitiveLoopR1:
             program_ids=tuple(step.program_id for step in state_steps),
         )
 
-        causal_edge=self._causal_edge(req)
+        causal_edge=None
+        if self.config.enable_causal and req.causal_query is not None:
+            compute=self._spend(compute,'causal')
+            causal_edge=self._causal_edge(req)
         if causal_edge is not None:
             cause,effect=req.causal_query
             state=state.transition(
@@ -223,7 +262,8 @@ class CognitiveLoopR1:
             )
 
         plan=None
-        if self.world_model is not None and req.planning_state is not None and not meta.abstain:
+        if self.config.enable_future and self.world_model is not None and req.planning_state is not None and not meta.abstain:
+            compute=self._spend(compute,'future')
             plan=LearnedFuturePlanner(
                 self.world_model,
                 max_depth=meta.branch_depth,
@@ -236,8 +276,10 @@ class CognitiveLoopR1:
                 branch_id=plan.branch_id,
             )
 
+        state=replace(state,budget=state.budget.spend(compute.spent_units))
+
         graph=CognitiveTraceGraph()
-        graph.add_node('meta','meta',{'capability':'meta_control'})
+        graph.add_node('meta','meta',{'capability':'meta_control','adaptive':self.config.enable_meta})
         program_id=self._add_program_dag(graph,req.program,execution)
 
         if memories:
@@ -286,8 +328,8 @@ class CognitiveLoopR1:
             )
             graph.connect('meta',causal_id,1.0)
 
-        causal_gate_required=causal_edge is not None
-        causal_gate_open=(causal_edge.identified if causal_edge is not None else True)
+        causal_gate_required=self.config.enable_causal and req.causal_query is not None
+        causal_gate_open=(causal_edge.identified if causal_edge is not None else not causal_gate_required)
         answer=execution.execution.truth if causal_gate_open else None
 
         graph.add_node(
@@ -300,6 +342,8 @@ class CognitiveLoopR1:
                 'unverified_program_ids':coverage.unverified_node_ids,
                 'causal_gate_required':causal_gate_required,
                 'causal_gate_open':causal_gate_open,
+                'compute_spent':compute.spent_units,
+                'compute_budget':compute.budget_units,
             },
         )
         graph.connect(last,'answer',1.0)
@@ -313,6 +357,7 @@ class CognitiveLoopR1:
             execution,
             plan,
             causal_edge,
+            compute,
             graph,
             answer,
         )
@@ -322,6 +367,19 @@ class CognitiveLoopR1:
         if 'outcome' not in graph.nodes:
             graph.add_node('outcome','outcome',{'capability':'outcome'})
             graph.connect('answer','outcome',1.0)
+
+        if not self.config.enable_credit:
+            observed=self.core.rpe.observed(reward)
+            final=decision.state.transition(
+                'outcome',
+                ref_id='outcome',
+                data={'rpe':0.0,'credit_disabled':True},
+                observed_reward=observed,
+            )
+            return CognitiveOutcome(final,decision.answer,observed,0.0,{})
+
+        # D/E reserve the frozen credit cost from the same episode budget.
+        self._spend(decision.compute,'credit')
         return self.core.close_episode(
             decision.state,
             answer=decision.answer,
