@@ -101,12 +101,73 @@ class LlamaCppGeneralizedIngressBackend:
             separators=(",", ":"),
         )
 
+    @staticmethod
+    def _example_source_block(rows) -> str:
+        return "SOURCES=" + json.dumps(rows, ensure_ascii=False, separators=(",", ":"))
+
+    @staticmethod
+    def _example_output(payload) -> str:
+        return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+
+    @classmethod
+    def _few_shot_messages(cls):
+        transitive_sources = [
+            {"source_id":"prompt:0","source_kind":"PROMPT","text":"Is mira follows oren?"},
+            {"source_id":"document:0","source_kind":"DOCUMENT","text":"mira follows noah; noah follows oren"},
+        ]
+        transitive_output = {
+            "semantic_atoms":[
+                {"operator_id":"follows","arguments":["mira","noah"],"polarity":True,"confidence":0.95,"source_ids":["document:0"]},
+                {"operator_id":"follows","arguments":["noah","oren"],"polarity":True,"confidence":0.95,"source_ids":["document:0"]},
+            ],
+            "task":{"opcode":"query_relation","operator_id":"follows","arguments":["mira","oren"],"confidence":0.95,"source_ids":["prompt:0"]},
+            "program_recipe":{"kind":"transitive","operators":["follows"],"add_fact":[],"confidence":0.95,"source_ids":["document:0"]},
+        }
+
+        composition_sources = [
+            {"source_id":"prompt:0","source_kind":"PROMPT","text":"Is ava connected to cyra?"},
+            {"source_id":"document:0","source_kind":"DOCUMENT","text":"ava mentor ben; ben colleague cyra"},
+        ]
+        composition_output = {
+            "semantic_atoms":[
+                {"operator_id":"mentor","arguments":["ava","ben"],"polarity":True,"confidence":0.95,"source_ids":["document:0"]},
+                {"operator_id":"colleague","arguments":["ben","cyra"],"polarity":True,"confidence":0.95,"source_ids":["document:0"]},
+            ],
+            "task":{"opcode":"query_relation","operator_id":"connected","arguments":["ava","cyra"],"confidence":0.95,"source_ids":["prompt:0"]},
+            "program_recipe":{"kind":"composition","operators":["mentor","colleague","connected"],"add_fact":[],"confidence":0.95,"source_ids":["document:0"]},
+        }
+
+        counterfactual_sources = [
+            {"source_id":"prompt:0","source_kind":"PROMPT","text":"If jo ancestor kai, is ivy ancestor kai?"},
+            {"source_id":"history:0","source_kind":"HISTORY","text":"ivy ancestor jo"},
+        ]
+        counterfactual_output = {
+            "semantic_atoms":[
+                {"operator_id":"ancestor","arguments":["ivy","jo"],"polarity":True,"confidence":0.95,"source_ids":["history:0"]},
+            ],
+            "task":{"opcode":"counterfactual_query","operator_id":"ancestor","arguments":["ivy","kai"],"confidence":0.95,"source_ids":["prompt:0"]},
+            "program_recipe":{"kind":"counterfactual_transitive","operators":["ancestor"],"add_fact":["ancestor","jo","kai"],"confidence":0.95,"source_ids":["prompt:0","history:0"]},
+        }
+
+        examples = (
+            (transitive_sources, transitive_output),
+            (composition_sources, composition_output),
+            (counterfactual_sources, counterfactual_output),
+        )
+        messages = []
+        for sources, output in examples:
+            messages.append({"role":"user","content":cls._example_source_block(sources)})
+            messages.append({"role":"assistant","content":cls._example_output(output)})
+        return messages
+
     @classmethod
     def _messages(cls, request):
         system = (
             "You are the neural semantic front-end for NEXUS. Return one compact JSON object only. "
             "Do not answer the user's question. Do not invent facts. Never emit top-level summary or explanatory keys. "
             "Return semantic_atoms, task, program_recipe. The runtime enforces their exact JSON schema. "
+            "Schema labels are not source values. query_relation is an opcode, never a relation operator_id. "
+            "operator_id must come from the relation/predicate expressed in SOURCES; arguments must identify source entities, not schema field names. "
             "If nothing supported can be proposed, use {\"semantic_atoms\":[],\"task\":null,\"program_recipe\":null}. "
             "Do NOT emit recursive AST nodes and do NOT calculate character offsets. The deterministic NEXUS compiler does that. "
             "semantic_atoms contain relation/predicate operator_id, entity-string arguments in source order, polarity, confidence, and supporting source_ids. "
@@ -119,6 +180,7 @@ class LlamaCppGeneralizedIngressBackend:
         )
         return [
             {"role": "system", "content": system},
+            *cls._few_shot_messages(),
             {"role": "user", "content": "SOURCES=" + cls._source_block(request)},
         ]
 
