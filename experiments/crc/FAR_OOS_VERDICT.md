@@ -78,6 +78,21 @@ Observed exact success was 0.8571428571, but `LONG_HORIZON_PLAN=0.0`. Therefore:
 
 This verdict is intentionally preserved rather than tuning the frozen architecture after seeing FAR-OOS results.
 
+## Post-verdict root-cause analysis
+
+The planning failure is reproducible from the frozen control path without changing the architecture:
+
+1. the FAR-OOS planning cases used `novelty=0.35`, `uncertainty=0.25`;
+2. the initially untrained self-model reports reliability `0.5`, producing capability difficulty `0.5`;
+3. the frozen `MetaController` therefore chooses `branch_depth=2`;
+4. `CognitiveLoopR1` passes that adaptive depth directly to `LearnedFuturePlanner(max_depth=meta.branch_depth)`;
+5. the held-out reward requires three transitions to become visible;
+6. the planner therefore cannot observe the terminal reward and prefers the locally larger immediate reward.
+
+This exposes a resource-accounting inconsistency in the frozen architecture: the current future-module compute ledger charges a fixed module cost, but the meta-controller can still reduce search depth. In this case the system loses horizon capability without receiving a corresponding measured compute-budget saving.
+
+This diagnosis does **not** alter the frozen FAR-OOS verdict. Any correction belongs to a new post-FAR-OOS DEV cycle and requires a later fresh freeze and a new unseen transfer evaluation.
+
 ## Scientific interpretation
 
 The frozen cognitive architecture shows transfer on six held-out capability families: grounded memory chaining with Russian identifiers, temporal snapshots, intervention/counterfactual causal reversal, post-feedback responsibility transfer, unseen program composition, and calibrated abstention. The current evidence does **not** support robust long-horizon planning transfer: that family failed on every scored instance.
