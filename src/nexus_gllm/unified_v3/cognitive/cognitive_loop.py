@@ -378,10 +378,16 @@ class CognitiveLoopR1:
             )
             return CognitiveOutcome(final,decision.answer,observed,0.0,{})
 
-        # D/E reserve the frozen credit cost from the same episode budget.
+        # D/E charge recursive credit against the same immutable episode budget.
+        # ComputeLedger.spend validates that the shared cap is not exceeded;
+        # the charged cognitive state is then the authority passed to close_episode.
         self._spend(decision.compute,'credit')
-        return self.core.close_episode(
+        charged_state=replace(
             decision.state,
+            budget=decision.state.budget.spend(self.config.costs.credit),
+        )
+        return self.core.close_episode(
+            charged_state,
             answer=decision.answer,
             reward=reward,
             trace_graph=graph,
