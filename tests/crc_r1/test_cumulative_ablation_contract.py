@@ -3,6 +3,7 @@ from nexus_gllm.unified_v3.cognitive.cognitive_loop import CognitiveLoopR1, Cogn
 from nexus_gllm.unified_v3.cognitive.causal_model import CausalEvidence, CausalEvidenceKind
 from nexus_gllm.unified_v3.cognitive.memory import MemoryLevel
 from nexus_gllm.unified_v3.cognitive.program_ast import ProgramKind, ProgramNode
+from nexus_gllm.unified_v3.cognitive.reward import RewardVector
 from nexus_gllm.unified_v3.cognitive.runtime import CognitiveRecursiveCoreR1
 from nexus_gllm.unified_v3.contracts import Entity, OperatorSymbol, TaskOpcode, TaskProgram, WorldFact, WorldHypothesis
 
@@ -62,8 +63,6 @@ def test_ablation_stages_are_strictly_cumulative_under_one_budget_contract():
         assert config.budget_units == 1.0
         assert config.costs.total_declared > 0
 
-    # Same frozen cost schedule for every stage: variants differ only by enabled
-    # capabilities, never by a hidden per-stage compute allowance.
     cost_schedules = {config.costs for config in configs.values()}
     assert len(cost_schedules) == 1
 
@@ -87,12 +86,10 @@ def test_stage_a_does_not_silently_execute_causal_future_credit_or_adaptive_meta
     assert ledger.spent_units <= ledger.budget_units
     assert set(ledger.by_module) <= {"memory", "program"}
 
-    # Credit/RPE is disabled in A. Observation may report reward but must not
-    # update recursive credit or self-model reliability.
-    before = dict(loop.core.self_model._stats)
-    outcome = loop.observe(decision, reward=loop.core.rpe.reward_vector_for_correctness(True))
+    before = loop.core.self_model.snapshot()
+    outcome = loop.observe(decision, reward=RewardVector(task=1.0))
     assert outcome.credit == {}
-    assert dict(loop.core.self_model._stats) == before
+    assert loop.core.self_model.snapshot() == before
 
 
 def test_stage_b_adds_causal_under_same_budget_and_records_compute_by_module():
