@@ -45,12 +45,37 @@ class HigherOrderStep:
 
 
 @dataclass(frozen=True)
+class ProofCoverageCertificate:
+    """Coverage over answer-dependent AST nodes that were actually evaluated."""
+
+    required_node_ids: tuple[str, ...]
+    verified_node_ids: tuple[str, ...]
+    unverified_node_ids: tuple[str, ...]
+    coverage: float
+    complete: bool
+
+
+@dataclass(frozen=True)
 class HigherOrderResult:
     status: HigherOrderStatus
     execution: ExecutionResult = ExecutionResult(None)
     trace: tuple[str, ...] = ()
     world_id: str | None = None
     steps: tuple[HigherOrderStep, ...] = ()
+
+    @property
+    def proof_coverage(self) -> ProofCoverageCertificate:
+        required = tuple(step.program_id for step in self.steps)
+        verified = tuple(step.program_id for step in self.steps if step.verified)
+        unverified = tuple(step.program_id for step in self.steps if not step.verified)
+        coverage = (len(verified) / len(required)) if required else 0.0
+        return ProofCoverageCertificate(
+            required_node_ids=required,
+            verified_node_ids=verified,
+            unverified_node_ids=unverified,
+            coverage=coverage,
+            complete=bool(required) and not unverified,
+        )
 
 
 class HigherOrderExecutor:
