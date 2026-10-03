@@ -3,14 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from nexus_gllm.unified_v3.contracts import TaskProgram, WorldHypothesis
+from nexus_gllm.unified_v3.contracts import TaskProgram, WorldFact, WorldHypothesis
 from nexus_gllm.unified_v3.temporal import TemporalLedger
 
 from .causal_model import CausalEdge,CausalEvidence,CausalGraph
 from .credit import CognitiveTraceGraph
 from .higher_order import HigherOrderContext,HigherOrderExecutor,HigherOrderResult
 from .learned_planner import LearnedFuturePlanner,PlannedAction
-from .memory import MemoryRecord
+from .memory import MemoryLevel,MemoryRecord
 from .meta_controller import MetaDecision
 from .program_ast import ProgramNode
 from .reward import RewardVector
@@ -56,7 +56,6 @@ class CognitiveLoopR1:
 
     @staticmethod
     def _program_nodes_by_path(root:ProgramNode)->dict[tuple[int,...],ProgramNode]:
-        """Map AST occurrence paths to nodes without collapsing repeated program IDs."""
         out={}
         def walk(node:ProgramNode,path:tuple[int,...]):
             out[path]=node
@@ -69,7 +68,6 @@ class CognitiveLoopR1:
     def _add_program_dag(graph:CognitiveTraceGraph,root:ProgramNode,execution:HigherOrderResult)->str:
         nodes_by_path=CognitiveLoopR1._program_nodes_by_path(root)
         graph_id_by_path={}
-
         for step in execution.steps:
             node=nodes_by_path.get(step.step_path)
             if node is None:
@@ -93,14 +91,12 @@ class CognitiveLoopR1:
                     'verified':step.verified,
                 },
             )
-
         for path,child_id in graph_id_by_path.items():
             if not path:
                 continue
             parent_id=graph_id_by_path.get(path[:-1])
             if parent_id is not None:
                 graph.connect(child_id,parent_id,1.0)
-
         root_id=graph_id_by_path.get(())
         if root_id is None:
             raise ValueError('execution ledger has no root proof occurrence')
@@ -115,6 +111,31 @@ class CognitiveLoopR1:
         for evidence in req.causal_evidence:
             model.add(evidence)
         return model.edge(cause,effect)
+
+    @staticmethod
+    def _ground_memory_world(base:WorldHypothesis,memories:tuple[MemoryRecord,...])->tuple[WorldHypothesis,tuple[str,...]]:
+        """Admit only provenance-backed semantic WorldFact memories as world evidence."""
+        accepted=[]
+        facts=list(base.facts)
+        for memory in memories:
+            if memory.level is not MemoryLevel.SEMANTIC:
+                continue
+            if memory.confidence < 0.9 or not memory.raw_provenance:
+                continue
+            if not isinstance(memory.payload,WorldFact):
+                continue
+            if memory.payload in facts:
+                continue
+            facts.append(memory.payload)
+            accepted.append(memory.memory_id)
+        if not accepted:
+            return base,()
+        grounded=WorldHypothesis(
+            base.world_id+':memory',
+            tuple(facts),
+            parent_world_id=base.world_id,
+        )
+        return grounded,tuple(accepted)
 
     def deliberate(self,req:CognitiveRequest)->CognitiveDecision:
         state=NexusCognitiveState(
@@ -153,9 +174,20 @@ class CognitiveLoopR1:
                 memory_ids=tuple(m.memory_id for m in memories),
             )
 
+        reasoning_world,accepted_memory_ids=self._ground_memory_world(req.world,tuple(memories))
+        if accepted_memory_ids:
+            state=state.transition(
+                'memory_grounding',
+                data={
+                    'accepted_fact_count':len(accepted_memory_ids),
+                    'accepted_memory_ids':accepted_memory_ids,
+                },
+                world_id=reasoning_world.world_id,
+            )
+
         execution=self.executor.execute(
             req.program,
-            HigherOrderContext(req.world,req.task,req.temporal_ledger),
+            HigherOrderContext(reasoning_world,req.task,req.temporal_ledger),
         )
         coverage=execution.proof_coverage
         state_steps=tuple(sorted(execution.steps,key=lambda step:(len(step.step_path),step.step_path)))
@@ -209,9 +241,18 @@ class CognitiveLoopR1:
         program_id=self._add_program_dag(graph,req.program,execution)
 
         if memories:
+            accepted=set(accepted_memory_ids)
             for i,m in enumerate(memories):
                 nid=f'memory:{i}:{m.memory_id}'
-                graph.add_node(nid,'memory',{'capability':'memory_retrieval','memory_id':m.memory_id})
+                graph.add_node(
+                    nid,
+                    'memory',
+                    {
+                        'capability':'memory_retrieval',
+                        'memory_id':m.memory_id,
+                        'grounded':m.memory_id in accepted,
+                    },
+                )
                 graph.connect('meta',nid,1.0)
                 graph.connect(nid,program_id,1.0)
         else:
