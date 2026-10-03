@@ -6,11 +6,12 @@ from typing import Any
 @dataclass(frozen=True)
 class ComputeBudget:
     remaining_units: float = 1.0
-    max_depth: int = 12
+    max_depth: int = 3
     max_fanout: int = 4
     max_experts: int = 3
     max_memory_records: int = 16
     max_planning_expansions: int = 64
+    max_planning_depth: int = 12
 
     def spend(self, units: float) -> "ComputeBudget":
         if units < 0:
