@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - nexus-cognitive-loop-reset-2026-10-03
+  pull_request:
+    branches:
+      - crc-r1-foundation
   workflow_dispatch:
 
 jobs:
