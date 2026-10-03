@@ -1,9 +1,9 @@
 name: crc-second-blind
 
+# Historical one-shot evidence only. The authoritative successful run is
+# 37143234492 at the frozen cognitive SHA 97a9c7ed12900969c68ba596e629c70adb398f06.
+# Do not auto-rerun this consumed blind after architecture changes.
 on:
-  pull_request:
-    branches:
-      - crc-r1-foundation
   workflow_dispatch:
 
 jobs:
