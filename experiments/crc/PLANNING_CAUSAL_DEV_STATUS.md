@@ -178,6 +178,16 @@ Example focused diagnostic run:
 - `runner_name=""`
 - `steps=[]`.
 
+A direct rerun of the current focused DEV workflow was requested on 2026-10-04 after the initial infrastructure failures:
+
+- workflow run `37146437204`, attempt `2`;
+- head SHA `a3434de3896823df7631951d63220d234093cc83`;
+- run started `2026-10-04T17:34:03Z` and completed failed at `2026-10-04T17:34:09Z`;
+- replacement job `111491145828`;
+- `steps=[]` again: checkout, setup-python, pytest, DEV evaluators and compileall did not execute.
+
+At the same time, GitHub's public service status reported Actions operational. Therefore this record does not attribute the new failure to a confirmed global GitHub Actions outage; the observed blocker remains runner allocation/execution for this repository/account context until more specific evidence exists.
+
 For comparison, the authoritative successful second blind actually received a GitHub-hosted runner:
 
 - run `37143234492`
