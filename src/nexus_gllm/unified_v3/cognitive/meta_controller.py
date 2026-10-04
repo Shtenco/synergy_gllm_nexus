@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass,replace
 from .state import ComputeBudget
 from .self_model import NexusSelfModel
 
@@ -31,7 +31,13 @@ class MetaController:
         if budget.remaining_units<=.05:
             return MetaDecision(1,1,1,min(4,budget.max_memory_records),True,'compute_budget_exhausted',3,tuple(sorted(weak)))
 
-        depth=min(budget.max_depth,1+int(hard>.35)+int(hard>.70))
+        # Preserve the legacy branch-depth contract for non-planning requests.
+        # Future planning uses a separate safety horizon; actual work is bounded
+        # by the planner's measured expansion budget rather than by this ceiling.
+        if 'future_planning' in capability_hints:
+            depth=budget.max_planning_depth
+        else:
+            depth=budget.max_depth
         fanout=min(budget.max_fanout,2+int(hard>.50)+int(hard>.80))
         topk=min(budget.max_experts,2+int(hard>.55))
         mem=min(budget.max_memory_records,8+8*int(hard>.65))

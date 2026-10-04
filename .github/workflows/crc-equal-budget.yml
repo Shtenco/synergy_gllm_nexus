@@ -1,0 +1,65 @@
+name: crc-equal-budget
+
+on:
+  pull_request:
+    branches: [crc-r1-foundation]
+    paths:
+      - 'src/nexus_gllm/unified_v3/cognitive/**'
+      - 'benchmarks/crc_equal_budget/**'
+      - 'tests/crc_r1/**'
+      - '.github/workflows/crc-equal-budget.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install benchmark package
+        run: |
+          python -m pip install --upgrade pip
+          pip install --index-url https://download.pytorch.org/whl/cpu torch
+          pip install -e . --no-deps
+      - name: Run discriminative equal-budget A-B-C-D-E benchmark
+        run: |
+          mkdir -p artifacts
+          python -m benchmarks.crc_equal_budget.run \
+            --seeds 1701,1702,1703,1704,1705 \
+            --repeats 32 \
+            --budget-units 1.0 \
+            --out artifacts/crc_equal_budget.json
+      - name: Validate scientific contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('artifacts/crc_equal_budget.json')
+          x=json.loads(p.read_text())
+          s=x['stages']
+          assert x['protocol']['kind']=='controlled_dev_discriminative_cumulative_ablation'
+          assert x['protocol']['same_case_ids_across_stages'] is True
+          assert x['protocol']['final_transfer_evidence'] is False
+          assert x['stability']['seed_count']==5
+          assert all(v['budget_violations']==0 for v in s.values())
+          assert all(v['max_compute_spent'] <= x['protocol']['budget_units'] + 1e-12 for v in s.values())
+          assert s['A_MEMORY']['memory_necessity_delta'] > 0.0
+          assert s['B_CAUSAL']['causal_trap_accuracy'] > s['A_MEMORY']['causal_trap_accuracy']
+          assert s['C_FUTURE']['long_horizon_planning_accuracy'] > s['B_CAUSAL']['long_horizon_planning_accuracy']
+          assert s['D_CREDIT']['post_feedback_adaptation'] > s['C_FUTURE']['post_feedback_adaptation']
+          assert s['D_CREDIT']['credit_leakage'] == 0.0
+          assert s['E_META']['calibrated_abstention'] > s['D_CREDIT']['calibrated_abstention']
+          exact=[s[k]['exact_task_success'] for k in ['A_MEMORY','B_CAUSAL','C_FUTURE','D_CREDIT','E_META']]
+          assert all(b>a for a,b in zip(exact,exact[1:]))
+          print(json.dumps(x, indent=2, sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: crc-equal-budget-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/crc_equal_budget.json
+          if-no-files-found: error

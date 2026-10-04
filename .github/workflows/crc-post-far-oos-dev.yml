@@ -1,0 +1,25 @@
+name: crc-post-far-oos-dev
+
+on:
+  pull_request:
+    branches:
+      - crc-r1-foundation
+  workflow_dispatch:
+
+jobs:
+  planning-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --no-deps -e .
+          python -m pip install pytest
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Run post-FAR-OOS planning regression
+        run: pytest -q tests/crc_r1/test_post_far_oos_planning_depth.py

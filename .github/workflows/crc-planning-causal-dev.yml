@@ -1,0 +1,83 @@
+name: crc-planning-causal-dev
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  planning-causal-dev:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --upgrade pip
+      - run: pip install -e '.[dev]'
+      - name: Focused CRC planning + causal regressions
+        run: >-
+          pytest -q
+          tests/crc_r1/test_post_second_blind_planning_budget.py
+          tests/crc_r1/test_post_second_blind_cognitive_loop_planning.py
+          tests/crc_r1/test_post_second_blind_signed_causal.py
+          tests/crc_r1/test_post_far_oos_planning_depth.py
+          tests/crc_r1/test_learned_future.py
+          tests/crc_r1/test_causal_model.py
+          tests/crc_r1/test_cognitive_causal_integration.py
+          tests/crc_r1/test_planning_causal_dev_benchmark.py
+          tests/crc_r1/test_crc_statistics.py
+          tests/crc_r1/test_crc_scm_oracle.py
+          tests/crc_r1/test_crc_scm_dev.py
+      - name: Execute stratified DEV surfaces
+        run: |
+          mkdir -p artifacts
+          python -m benchmarks.crc_planning_causal_dev.run \
+            --seed 20261003 \
+            --out artifacts/crc_planning_causal_dev.json
+          python -m benchmarks.crc_scm_dev.run \
+            --seed 2026100303 \
+            --cases-per-regime 70 \
+            --out artifacts/crc_scm_dev.json
+      - name: Validate DEV gates
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('artifacts/crc_planning_causal_dev.json').read_text(encoding='utf-8'))
+          q=p['protocol']
+          assert q['reuses_second_blind_cases'] is False
+          assert q['m32_meta_opened'] is False
+          assert q['ftx2_authored'] is False
+          planning=p['planning']
+          causal=p['causal']
+          assert planning['horizons'] == list(range(2,9))
+          assert planning['accuracy_monotone_non_decreasing'] is True
+          assert planning['by_budget']['64']['accuracy'] >= .95
+          assert min(planning['by_budget']['64']['by_horizon'].values()) >= .90
+          assert causal['accuracy'] >= .95
+          assert causal['false_identification_rate'] == 0.0
+
+          scm=json.loads(Path('artifacts/crc_scm_dev.json').read_text(encoding='utf-8'))
+          assert scm['protocol']['oracle'] == 'independent_linear_structural_causal_model'
+          assert scm['protocol']['reuses_second_blind_cases'] is False
+          assert scm['accuracy'] >= .95
+          assert scm['false_identification_rate'] == 0.0
+          assert min(scm['by_regime'].values()) >= .90
+          assert scm['graph_nodes_seen'] == list(range(4,11))
+
+          print('PLANNING @64:', planning['by_budget']['64']['accuracy'])
+          print('PLANNING H2-H8:', planning['by_budget']['64']['by_horizon'])
+          print('SIGNED CAUSAL:', causal['accuracy'])
+          print('SCM CAUSAL:', scm['accuracy'])
+          print('SCM FALSE IDENTIFICATION:', scm['false_identification_rate'])
+          PY
+      - run: python -m compileall src/nexus_gllm/unified_v3/cognitive benchmarks/crc_planning_causal_dev benchmarks/crc_scm_dev benchmarks/crc_statistics.py benchmarks/crc_scm_oracle.py
+      - name: Upload DEV evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: crc-planning-causal-dev-${{ github.sha }}
+          path: |
+            artifacts/crc_planning_causal_dev.json
+            artifacts/crc_scm_dev.json
+          retention-days: 90

@@ -1,0 +1,76 @@
+name: crc-far-oos
+
+on:
+  workflow_dispatch:
+
+jobs:
+  far-oos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify cognitive architecture is frozen
+        shell: bash
+        run: |
+          set -euo pipefail
+          FREEZE=6067746d3dbab7a5a0a7388545b73116fd23c25a
+          if ! git diff --quiet "$FREEZE" HEAD -- src/nexus_gllm/unified_v3/cognitive/; then
+            echo "Frozen cognitive architecture changed after PRE-FAR-OOS freeze"
+            git diff --stat "$FREEZE" HEAD -- src/nexus_gllm/unified_v3/cognitive/
+            exit 1
+          fi
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install benchmark package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --no-deps -e .
+          python -m pip install pytest
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Run FAR-OOS contract tests
+        run: pytest -q tests/crc_r1/test_far_oos_transfer.py
+
+      - name: Execute fresh frozen FAR-OOS benchmark
+        run: |
+          mkdir -p artifacts
+          python -m benchmarks.crc_far_oos.run \
+            --seeds 91001,91002,91003,91004,91005,91006,91007,91008 \
+            --repeats 12 \
+            --budget-units 1.0 \
+            --out artifacts/crc_far_oos.json
+
+      - name: Validate FAR-OOS protocol and emit verdict
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = json.loads(Path('artifacts/crc_far_oos.json').read_text(encoding='utf-8'))
+          q = p['protocol']
+          assert q['frozen_arch_sha'] == '6067746d3dbab7a5a0a7388545b73116fd23c25a'
+          assert q['uses_controlled_dev_generator'] is False
+          assert q['m32_meta_opened'] is False
+          assert q['ftx2_authored'] is False
+          assert q['seed_count'] == 8
+          assert p['budget_violations'] == 0
+          assert p['total_cases'] == 8 * 12 * 7
+          assert p['verdict'] in {'FAIL', 'PARTIAL_TRANSFER', 'TRANSFER_SUPPORTED'}
+          print('FAR-OOS VERDICT:', p['verdict'])
+          print('EXACT SUCCESS:', p['exact_task_success'])
+          print('FAMILY ACCURACY:', p['family_accuracy'])
+          print('SEED STD:', p['seed_success_std'])
+          print('CREDIT LEAKAGE:', p['credit_leakage'])
+          PY
+
+      - name: Upload FAR-OOS evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: crc-far-oos-${{ github.sha }}
+          path: artifacts/crc_far_oos.json
+          retention-days: 90
