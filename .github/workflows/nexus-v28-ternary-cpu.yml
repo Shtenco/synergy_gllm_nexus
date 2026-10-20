@@ -1,0 +1,47 @@
+name: NEXUS V28 Ternary CPU Decoder
+on:
+  push:
+    branches:
+      - experiment/nexus-v28-ternary-decoder
+    paths:
+      - experiments/v28/**
+      - .github/workflows/nexus-v28-ternary-cpu.yml
+  workflow_dispatch:
+jobs:
+  train-and-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify ternary packing and decoding
+        run: python experiments/v28/nexus_v28.py --mode selftest
+      - name: Train on natural Russian OpenCorpora corpus
+        run: |
+          python experiments/v28/nexus_v28.py \
+            --download \
+            --corpus data/annot.opcorpora.no_ambig.xml \
+            --positions 20000 \
+            --epochs 3 \
+            --output artifacts/v28_decoder.json.gz \
+            --mode train 2>&1 | tee artifacts-training.log
+      - name: Verify checkpoint can generate
+        if: success()
+        run: |
+          python experiments/v28/nexus_v28.py --mode generate \
+            --output artifacts/v28_decoder.json.gz \
+            --prompt "Русский язык содержит много слов"
+      - name: Attach report and trained checkpoint
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-v28-ternary-cpu-experiment
+          path: |
+            artifacts/
+            artifacts-training.log
+          retention-days: 30
+          if-no-files-found: warn
