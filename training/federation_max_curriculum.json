@@ -1,0 +1,70 @@
+{
+  "name": "NEXUS_FEDERATION_MAX_TRAIN_2026_10_20",
+  "base_checkpoint": {
+    "drive_file": "NEXUS_OMEGA_20X_CHECKPOINTS/last.pt",
+    "step": 8102,
+    "parameters": 13305097,
+    "training_complete": false,
+    "policy": "preserve_as_initial_and_teacher_checkpoint"
+  },
+  "data": {
+    "ru_sft_450mb": 0.35,
+    "verified_reasoning": 0.20,
+    "arc_procedural_operator_induction": 0.12,
+    "proof_dag_and_evidence": 0.10,
+    "causal_scm_counterfactual": 0.08,
+    "long_horizon_planning": 0.07,
+    "memory_context_retrieval": 0.05,
+    "abstention_calibration": 0.03
+  },
+  "federation": {
+    "active": ["r7l","r72","r718","r744","graph","v3"],
+    "shadow_teacher_targets": ["r76","r78","r710","r714","v10","unified_r13","v30"],
+    "router": {
+      "train_n": 200000,
+      "dev_n": 20000,
+      "oos_n": 40000,
+      "epochs": 24,
+      "top_k": 3,
+      "objectives": [
+        "useful_expert_recall",
+        "harmful_expert_avoidance",
+        "strict_routing_success",
+        "novelty_detection",
+        "calibration"
+      ]
+    }
+  },
+  "replay": {
+    "legacy_fraction": 0.30,
+    "protected_fraction_within_replay": 0.50,
+    "include": [
+      "R7L_operator_transfer",
+      "R72_language_binding",
+      "R710_proof",
+      "R718_evidence",
+      "R744_context",
+      "Omega15R2_graph",
+      "V10_procedural",
+      "Unified_R13_open_set",
+      "CRC_memory_causal_future_credit_meta"
+    ]
+  },
+  "promotion_gates": {
+    "free_generation_coherence_required": true,
+    "new_grammar_ood_min": 0.70,
+    "legacy_drop_max": 0.01,
+    "router_strict_success_min": 0.90,
+    "router_useful_recall_min": 0.97,
+    "causal_false_identification_max": 0.0,
+    "credit_leakage_max": 0.0,
+    "planning_h2_h8_min_accuracy": 0.90,
+    "memory_ablation_must_change_relevant_cases": true,
+    "blind_sets_allowed_in_training": false
+  },
+  "seals": {
+    "m32_meta_opened": false,
+    "ftx2_authored": false,
+    "third_blind_corpus_authored": false
+  }
+}
