@@ -135,17 +135,17 @@
 <!-- SYNERGY-FEDERATION-PASSPORT:START -->
 ---
 
-## 🧭 SYNERGY federation passport
+##  SYNERGY federation passport
 
-**Домен:** 🧠 Active NEXUS research runtime  
+**Домен:**  Active NEXUS research runtime  
 **Архитектурный родитель:** [`synergy_agi_nexus`](https://github.com/Shtenco/synergy_agi_nexus)  
 **Архитектурный корень:** [`synergy_system`](https://github.com/Shtenco/synergy_system)
 
 ```mermaid
 flowchart LR
-    SYS[🧭 synergy_system] --> P[synergy_agi_nexus]
+    SYS[ synergy_system] --> P[synergy_agi_nexus]
     P --> THIS[synergy_gllm_nexus]
-    THIS --> E[📦 Evidence / outputs]
+    THIS --> E[ Evidence / outputs]
 ```
 
 ### Документационный контракт
@@ -154,9 +154,9 @@ README должен показывать: проблему → архитект�
 
 ### Навигация
 
-- [📚 Атлас всех 75 репозиториев](https://github.com/Shtenco/synergy_system/blob/main/docs/SYNERGY_REPOSITORY_ATLAS.md)
-- [🧾 Машиночитаемый registry](https://github.com/Shtenco/synergy_system/blob/main/registry/SYNERGY_REPOSITORIES.json)
-- [🧭 SYNERGY SYSTEM](https://github.com/Shtenco/synergy_system)
+- [ Атлас всех 75 репозиториев](https://github.com/Shtenco/synergy_system/blob/main/docs/SYNERGY_REPOSITORY_ATLAS.md)
+- [ Машиночитаемый registry](https://github.com/Shtenco/synergy_system/blob/main/registry/SYNERGY_REPOSITORIES.json)
+- [ SYNERGY SYSTEM](https://github.com/Shtenco/synergy_system)
 
 ### Authority rule
 
@@ -166,7 +166,7 @@ README должен показывать: проблему → архитект�
 
 ---
 
-# 🧪 Роль `main` и активной research-ветки
+#  Роль `main` и активной research-ветки
 
 Текущий `main` этого репозитория минимален и содержит прежде всего:
 
@@ -181,9 +181,9 @@ NEXUS_REPORTS_BENCHMARKS_REGISTRY.md
 
 ```mermaid
 flowchart LR
-    MAIN[📚 main\nregistry + index]
-    RND[🧪 unified-v3-generalization-first\nbenchmarks + artifacts + runners]
-    CAN[🧠 synergy_agi_nexus\ncanonical promoted generations]
+    MAIN[ main\nregistry + index]
+    RND[ unified-v3-generalization-first\nbenchmarks + artifacts + runners]
+    CAN[ synergy_agi_nexus\ncanonical promoted generations]
     RND --> MAIN
     RND -->|evidence-gated promotion| CAN
 ```
